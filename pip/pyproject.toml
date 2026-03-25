@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orchstep"
+version = "0.0.1"
+description = "OrchStep — YAML-first workflow orchestration engine"
+readme = "README.md"
+license = {text = "Proprietary"}
+requires-python = ">=3.8"
+keywords = ["orchstep", "workflow", "orchestration", "yaml", "automation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://orchstep.dev"
+Repository = "https://github.com/orchstep/orchstep"
+
+[project.scripts]
+orchstep = "orchstep.cli:main"

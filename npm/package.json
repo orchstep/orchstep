@@ -1,0 +1,26 @@
+{
+  "name": "orchstep",
+  "version": "0.0.1",
+  "description": "OrchStep — YAML-first workflow orchestration engine",
+  "homepage": "https://orchstep.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orchstep/orchstep.git"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "bin": {
+    "orchstep": "bin/orchstep"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "keywords": [
+    "orchstep",
+    "workflow",
+    "orchestration",
+    "yaml",
+    "automation",
+    "devops",
+    "ci-cd"
+  ]
+}

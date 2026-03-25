@@ -1,0 +1,57 @@
+name: 'Setup OrchStep'
+description: 'Install OrchStep CLI for workflow orchestration'
+author: 'OrchStep'
+
+branding:
+  icon: 'terminal'
+  color: 'blue'
+
+inputs:
+  version:
+    description: 'OrchStep version to install (default: latest)'
+    required: false
+    default: 'latest'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Determine version
+      id: version
+      shell: bash
+      run: |
+        if [ "${{ inputs.version }}" = "latest" ]; then
+          VERSION=$(curl -fsSL https://api.github.com/repos/orchstep/orchstep/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+        else
+          VERSION="${{ inputs.version }}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Determine platform
+      id: platform
+      shell: bash
+      run: |
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+        case "$ARCH" in
+          x86_64|amd64) ARCH="amd64" ;;
+          arm64|aarch64) ARCH="arm64" ;;
+        esac
+        echo "os=$OS" >> $GITHUB_OUTPUT
+        echo "arch=$ARCH" >> $GITHUB_OUTPUT
+
+    - name: Install OrchStep
+      shell: bash
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        OS="${{ steps.platform.outputs.os }}"
+        ARCH="${{ steps.platform.outputs.arch }}"
+        URL="https://github.com/orchstep/orchstep/releases/download/v${VERSION}/orchstep_${VERSION}_${OS}_${ARCH}.tar.gz"
+
+        echo "Installing OrchStep v${VERSION} (${OS}/${ARCH})..."
+        curl -fsSL "$URL" -o /tmp/orchstep.tar.gz
+        tar -xzf /tmp/orchstep.tar.gz -C /tmp
+        sudo mv /tmp/orchstep /usr/local/bin/orchstep
+        chmod +x /usr/local/bin/orchstep
+        rm /tmp/orchstep.tar.gz
+
+        orchstep version
