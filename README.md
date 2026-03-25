@@ -35,6 +35,27 @@ orchstep run
 
 The OrchStep engine is distributed as a compiled binary. Install it using any method above, then use the spec and modules in this repo to build workflows.
 
+## Distribution
+
+| Channel | Install Command |
+|---------|----------------|
+| **curl** | `curl -fsSL https://orchstep.dev/install.sh \| sh` |
+| **Homebrew** | `brew tap orchstep/tap && brew install orchstep` |
+| **npm** | `npm install -g orchstep` |
+| **pip** | `pip install orchstep` |
+| **Docker** | `docker pull orchstep/orchstep:latest` |
+| **GitHub Action** | `uses: orchstep/orchstep/action@main` |
+
+All channels pull binaries from [GitHub Releases](https://github.com/orchstep/orchstep/releases).
+
+| Directory | Contents |
+|-----------|----------|
+| `homebrew/` | Homebrew formula (auto-updated by GoReleaser) |
+| `npm/` | npm wrapper package |
+| `pip/` | pip wrapper package |
+| `docker/` | Docker image configuration |
+| `action/` | GitHub Action for CI/CD |
+
 ## For LLM Agents
 
 OrchStep is designed for AI agent integration:
