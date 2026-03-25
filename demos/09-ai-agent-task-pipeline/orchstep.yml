@@ -1,0 +1,160 @@
+name: "AI Agent Task Pipeline"
+desc: "Demonstrates deterministic orchestration around AI agent tasks: logging, execution, quality validation, retry logic, and result persistence"
+
+defaults:
+  task_description: "Summarize the Q4 earnings report and extract key financial metrics"
+  max_retries: "3"
+  quality_threshold: "7"
+
+tasks:
+  run_pipeline:
+    desc: "Execute an AI task with quality gates and retry logic"
+    steps:
+      - name: log_task_start
+        desc: "Record task parameters and execution context"
+        func: shell
+        do: |
+          echo "=== AI Agent Task Pipeline Started ==="
+          echo ""
+          echo "Timestamp:         2026-03-11T14:23:07Z"
+          echo "Task ID:           ai-task-20260311-142307"
+          echo "Description:       {{ vars.task_description }}"
+          echo "Quality Threshold: {{ vars.quality_threshold }}/10"
+          echo "Max Retries:       {{ vars.max_retries }}"
+          echo "Model:             gpt-4-turbo"
+          echo "Temperature:       0.3"
+          echo ""
+          echo "Pipeline checkpoint: TASK_REGISTERED"
+          echo "task_id=ai-task-20260311-142307"
+        outputs:
+          task_id: '{{ result.output | regexFind "task_id=([a-z0-9-]+)" }}'
+
+      - name: execute_ai_agent
+        desc: "Simulate AI agent processing the task"
+        func: shell
+        do: |
+          echo "=== AI Agent Execution (Attempt 1) ==="
+          echo ""
+          echo "Sending prompt to model..."
+          echo "Token usage: input=1247 output=834 total=2081"
+          echo "Latency: 3.2s"
+          echo ""
+          echo "--- Agent Response ---"
+          echo "Q4 Earnings Summary:"
+          echo "- Revenue: $4.2B (+12% YoY)"
+          echo "- Net Income: $890M (+8% YoY)"
+          echo "- EPS: $3.42 (beat estimate of $3.28)"
+          echo "- Cloud Revenue: $1.8B (+34% YoY)"
+          echo "- Operating Margin: 28.3% (up from 26.1%)"
+          echo "- Free Cash Flow: $1.1B"
+          echo "- Guidance: Q1 revenue $4.0-4.3B"
+          echo "--- End Response ---"
+          echo ""
+          echo "Pipeline checkpoint: FIRST_EXECUTION_COMPLETE"
+          echo "attempt=1 tokens=2081 latency_ms=3200"
+        outputs:
+          attempt: '{{ result.output | regexFind "attempt=([0-9]+)" }}'
+          tokens_used: '{{ result.output | regexFind "tokens=([0-9]+)" }}'
+
+      - name: validate_quality
+        desc: "Evaluate AI output against quality criteria"
+        func: shell
+        do: |
+          echo "=== Quality Validation ==="
+          echo ""
+          echo "Running quality checks..."
+          echo "  [PASS] Contains revenue figure: $4.2B"
+          echo "  [PASS] Contains YoY comparison: +12%"
+          echo "  [PASS] Contains EPS data: $3.42"
+          echo "  [PASS] Contains forward guidance: Q1 $4.0-4.3B"
+          echo "  [WARN] Missing gross margin breakdown"
+          echo "  [PASS] Factual consistency: no contradictions detected"
+          echo "  [PASS] Format compliance: structured bullet points"
+          echo ""
+          echo "Quality Score: 8/10"
+          echo "Threshold:     {{ vars.quality_threshold }}/10"
+          echo "Verdict:       PASS"
+          echo ""
+          echo "Pipeline checkpoint: QUALITY_VALIDATED"
+          echo "quality_score=8 verdict=PASS"
+        outputs:
+          quality_score: '{{ result.output | regexFind "quality_score=([0-9]+)" }}'
+          verdict: '{{ result.output | regexFind "verdict=([A-Z]+)" }}'
+
+      - name: handle_retry_logic
+        desc: "Log retry decision based on quality assessment"
+        func: shell
+        do: |
+          echo "=== Retry Decision ==="
+          echo ""
+          echo "Quality score {{ steps.validate_quality.quality_score }}/10 meets threshold {{ vars.quality_threshold }}/10"
+          echo "Verdict: {{ steps.validate_quality.verdict }}"
+          echo ""
+          echo "No retry needed - quality gate passed on attempt {{ steps.execute_ai_agent.attempt }}"
+          echo ""
+          echo "If quality had been below threshold:"
+          echo "  - Would append feedback to prompt: 'Missing gross margin breakdown'"
+          echo "  - Would re-execute with adjusted temperature (0.3 -> 0.5)"
+          echo "  - Would retry up to {{ vars.max_retries }} times"
+          echo "  - Would escalate to human review if all retries exhausted"
+          echo ""
+          echo "Pipeline checkpoint: RETRY_DECISION_MADE"
+          echo "retries_used=0 action=proceed"
+        outputs:
+          retries_used: '{{ result.output | regexFind "retries_used=([0-9]+)" }}'
+
+      - name: save_result
+        desc: "Persist the validated AI output"
+        func: shell
+        do: |
+          echo "=== Saving Validated Result ==="
+          echo ""
+          echo "Writing to storage..."
+          echo "  Location: s3://ai-results/{{ steps.log_task_start.task_id }}/output.json"
+          echo "  Size: 1.2 KB"
+          echo "  Checksum: sha256:a1b2c3d4e5f6..."
+          echo ""
+          echo "Metadata saved:"
+          echo "  Task ID:       {{ steps.log_task_start.task_id }}"
+          echo "  Quality Score: {{ steps.validate_quality.quality_score }}/10"
+          echo "  Attempts:      {{ steps.execute_ai_agent.attempt }}"
+          echo "  Total Tokens:  {{ steps.execute_ai_agent.tokens_used }}"
+          echo ""
+          echo "Pipeline checkpoint: RESULT_PERSISTED"
+          echo "storage_path=s3://ai-results/{{ steps.log_task_start.task_id }}/output.json"
+        outputs:
+          storage_path: '{{ result.output | regexFind "storage_path=(\\S+)" }}'
+
+      - name: log_completion
+        desc: "Record final execution metadata and summary"
+        func: shell
+        do: |
+          echo "=========================================="
+          echo "  AI TASK PIPELINE COMPLETE"
+          echo "=========================================="
+          echo ""
+          echo "Task ID:        {{ steps.log_task_start.task_id }}"
+          echo "Description:    {{ vars.task_description }}"
+          echo "Status:         SUCCESS"
+          echo "Quality Score:  {{ steps.validate_quality.quality_score }}/10 (threshold: {{ vars.quality_threshold }})"
+          echo "Attempts:       {{ steps.execute_ai_agent.attempt }} of {{ vars.max_retries }} max"
+          echo "Retries Used:   {{ steps.handle_retry_logic.retries_used }}"
+          echo "Tokens Used:    {{ steps.execute_ai_agent.tokens_used }}"
+          echo "Result Stored:  {{ steps.save_result.storage_path }}"
+          echo ""
+          echo "Deterministic Checkpoints Recorded:"
+          echo "  1. TASK_REGISTERED"
+          echo "  2. FIRST_EXECUTION_COMPLETE"
+          echo "  3. QUALITY_VALIDATED"
+          echo "  4. RETRY_DECISION_MADE"
+          echo "  5. RESULT_PERSISTED"
+          echo ""
+          echo "These checkpoints enable audit trails, cost tracking,"
+          echo "and reproducible AI task execution."
+
+  main:
+    desc: "Entry point - run the AI agent task pipeline"
+    steps:
+      - name: run_ai_pipeline
+        desc: "Execute the AI task pipeline"
+        task: run_pipeline

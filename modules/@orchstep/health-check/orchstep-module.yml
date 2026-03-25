@@ -1,0 +1,58 @@
+metadata:
+  name: demo-health-check
+  version: "1.0.0"
+  description: "HTTP endpoint health verification (demo mock)"
+  author: "orchstep"
+  tags: ["health", "monitoring", "http", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      timeout:
+        type: string
+        required: false
+        default: "5"
+        desc: "HTTP timeout in seconds"
+
+exports:
+  check:
+    desc: "Check a single endpoint"
+    params:
+      - name: url
+        type: string
+        required: true
+        desc: "URL to check"
+      - name: expected_status
+        type: string
+        required: false
+        default: "200"
+    returns:
+      type: object
+      properties:
+        healthy:
+          type: string
+        status_code:
+          type: string
+        url:
+          type: string
+
+  check_all:
+    desc: "Check multiple endpoints"
+    params:
+      - name: endpoints
+        type: string
+        required: true
+        desc: "Space-separated list of URLs"
+    returns:
+      type: object
+      properties:
+        overall:
+          type: string
+        summary:
+          type: string

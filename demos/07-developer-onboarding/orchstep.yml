@@ -1,0 +1,114 @@
+name: "Developer Onboarding Automation"
+desc: "Automates new developer environment setup: prerequisite checks, repo cloning, database seeding, service verification, and welcome messaging"
+
+defaults:
+  team: "backend"
+  developer_name: "Jane Doe"
+
+tasks:
+  onboard:
+    desc: "Full onboarding pipeline for a new developer"
+    steps:
+      - name: check_prerequisites
+        desc: "Verify required tools are installed based on team assignment"
+        func: shell
+        do: |
+          echo "=== Prerequisite Check for {{ vars.team }} team ==="
+          echo "Checking git... git version 2.43.0 [OK]"
+          echo "Checking docker... Docker version 24.0.7 [OK]"
+          if [ "{{ vars.team }}" = "backend" ]; then
+            echo "Checking go... go1.25.5 linux/amd64 [OK]"
+            echo "Checking postgresql-client... psql 16.1 [OK]"
+          elif [ "{{ vars.team }}" = "frontend" ]; then
+            echo "Checking node... v20.11.0 [OK]"
+            echo "Checking npm... 10.2.4 [OK]"
+          elif [ "{{ vars.team }}" = "sre" ]; then
+            echo "Checking terraform... v1.7.0 [OK]"
+            echo "Checking kubectl... v1.29.0 [OK]"
+          fi
+          echo "All prerequisites satisfied"
+        outputs:
+          status: "pass"
+
+      - name: clone_repos
+        desc: "Clone required repositories for the team"
+        func: shell
+        do: |
+          echo "=== Cloning Repositories for {{ vars.team }} ==="
+          if [ "{{ vars.team }}" = "backend" ]; then
+            echo "Cloning git@github.com:acme/api-service.git -> ~/repos/api-service [done]"
+            echo "Cloning git@github.com:acme/shared-libs.git -> ~/repos/shared-libs [done]"
+            echo "Cloning git@github.com:acme/data-models.git -> ~/repos/data-models [done]"
+            echo "repos_cloned=3"
+          elif [ "{{ vars.team }}" = "frontend" ]; then
+            echo "Cloning git@github.com:acme/web-app.git -> ~/repos/web-app [done]"
+            echo "Cloning git@github.com:acme/component-lib.git -> ~/repos/component-lib [done]"
+            echo "repos_cloned=2"
+          elif [ "{{ vars.team }}" = "sre" ]; then
+            echo "Cloning git@github.com:acme/infra-terraform.git -> ~/repos/infra-terraform [done]"
+            echo "Cloning git@github.com:acme/k8s-manifests.git -> ~/repos/k8s-manifests [done]"
+            echo "Cloning git@github.com:acme/monitoring-config.git -> ~/repos/monitoring-config [done]"
+            echo "repos_cloned=3"
+          fi
+        outputs:
+          repos_cloned: '{{ result.output | regexFind "repos_cloned=([0-9]+)" }}'
+
+      - name: seed_databases
+        desc: "Run database migrations and seed data for local development"
+        func: shell
+        do: |
+          echo "=== Database Setup ==="
+          echo "Starting PostgreSQL container... container_id=abc123def456"
+          echo "Waiting for database to be ready... OK"
+          echo "Running migrations... applied 47 migrations successfully"
+          echo "Seeding test data..."
+          echo "  - Users: 25 records inserted"
+          echo "  - Products: 150 records inserted"
+          echo "  - Orders: 500 records inserted"
+          echo "Database seeding complete"
+        outputs:
+          migration_count: "47"
+          seed_status: "complete"
+
+      - name: verify_services
+        desc: "Run health checks against local development services"
+        func: shell
+        do: |
+          echo "=== Service Health Checks ==="
+          echo "Checking API server at http://localhost:8080/health... HTTP 200 OK"
+          echo "Checking database at localhost:5432... connection OK"
+          echo "Checking Redis at localhost:6379... PONG"
+          echo "Checking message queue at localhost:5672... connection OK"
+          echo "All 4 services healthy"
+          echo "services_healthy=4"
+        outputs:
+          healthy_count: '{{ result.output | regexFind "services_healthy=([0-9]+)" }}'
+
+      - name: welcome_message
+        desc: "Display personalized welcome message with next steps"
+        func: shell
+        do: |
+          echo "============================================"
+          echo "  Welcome to Acme Corp, {{ vars.developer_name }}!"
+          echo "============================================"
+          echo ""
+          echo "Team: {{ vars.team }}"
+          echo "Repos cloned: {{ steps.clone_repos.repos_cloned }}"
+          echo "Database migrations: {{ steps.seed_databases.migration_count }} applied"
+          echo "Healthy services: {{ steps.verify_services.healthy_count }}"
+          echo ""
+          echo "Next Steps:"
+          echo "  1. Review the team wiki at https://wiki.acme.com/{{ vars.team }}"
+          echo "  2. Join #team-{{ vars.team }} on Slack"
+          echo "  3. Schedule 1:1 with your team lead"
+          echo "  4. Complete security training at https://learn.acme.com/security"
+          echo "  5. Submit your first PR within the first week"
+          echo ""
+          echo "Happy coding!"
+
+  main:
+    desc: "Entry point - run the full onboarding workflow"
+    steps:
+      - name: run_onboarding
+        desc: "Execute the onboarding pipeline"
+        task: onboard

@@ -1,0 +1,73 @@
+metadata:
+  name: demo-git-release
+  version: "1.0.0"
+  description: "Git tagging and release notes generation (demo)"
+  author: "orchstep"
+  tags: ["git", "release", "changelog", "demo"]
+
+permissions:
+  shell: true
+  git: true
+
+config:
+  schema:
+    properties: {}
+
+exports:
+  changelog:
+    desc: "Generate changelog between two refs"
+    params:
+      - name: from_ref
+        type: string
+        required: false
+        default: "HEAD~10"
+      - name: to_ref
+        type: string
+        required: false
+        default: "HEAD"
+    returns:
+      type: object
+      properties:
+        changelog:
+          type: string
+        generated_at:
+          type: string
+
+  tag:
+    desc: "Create a version tag"
+    params:
+      - name: version
+        type: string
+        required: true
+      - name: message
+        type: string
+        required: false
+    returns:
+      type: object
+      properties:
+        tag:
+          type: string
+        created:
+          type: string
+
+  release:
+    desc: "Full release: changelog + tag + publish"
+    params:
+      - name: version
+        type: string
+        required: true
+      - name: from_ref
+        type: string
+        required: false
+      - name: to_ref
+        type: string
+        required: false
+    returns:
+      type: object
+      properties:
+        published:
+          type: string
+        version:
+          type: string
+        tag:
+          type: string

@@ -1,0 +1,72 @@
+name: demo-report-gen
+desc: "Generate reports in multiple formats (demo)"
+
+tasks:
+  # Generate a summary report
+  summary:
+    desc: "Generate a summary report from key-value data"
+    steps:
+      - name: build_report
+        func: shell
+        do: |
+          TITLE="{{ vars.title | default "Report" }}"
+          FORMAT="{{ vars.format | default "text" }}"
+          DATA="{{ vars.data | default "No data provided" }}"
+
+          echo "=========================================="
+          echo "  ${TITLE}"
+          echo "  Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "=========================================="
+          echo ""
+          echo "${DATA}"
+          echo ""
+          echo "=========================================="
+          echo "  End of Report"
+          echo "=========================================="
+        outputs:
+          report: "{{ result.output }}"
+          format: "{{ vars.format | default "text" }}"
+
+  # Generate a checklist report (pass/fail items)
+  checklist:
+    desc: "Generate a checklist report with pass/fail items"
+    steps:
+      - name: render
+        func: shell
+        do: |
+          TITLE="{{ vars.title | default "Checklist" }}"
+          ITEMS="{{ vars.items | default "" }}"
+          PASS=0
+          FAIL=0
+          TOTAL=0
+
+          echo "# ${TITLE}"
+          echo ""
+
+          # Parse items format: "name:status name:status"
+          for ITEM in ${ITEMS}; do
+            NAME=$(echo "${ITEM}" | cut -d: -f1)
+            STATUS=$(echo "${ITEM}" | cut -d: -f2)
+            TOTAL=$((TOTAL + 1))
+
+            if [ "${STATUS}" = "pass" ] || [ "${STATUS}" = "ok" ] || [ "${STATUS}" = "true" ]; then
+              echo "[PASS] ${NAME}"
+              PASS=$((PASS + 1))
+            else
+              echo "[FAIL] ${NAME}"
+              FAIL=$((FAIL + 1))
+            fi
+          done
+
+          echo ""
+          echo "Score: ${PASS}/${TOTAL} passed"
+
+          if [ "${FAIL}" -eq 0 ]; then
+            echo "result=all_passed"
+          else
+            echo "result=has_failures"
+          fi
+        outputs:
+          report: "{{ result.output }}"
+          result: '{{ result.output | regexFind "result=(\\w+)" }}'
+          score: '{{ result.output | regexFind "Score: (.+)" }}'

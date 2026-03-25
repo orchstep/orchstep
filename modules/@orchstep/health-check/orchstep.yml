@@ -1,0 +1,81 @@
+name: demo-health-check
+desc: "HTTP endpoint health verification (demo: uses simulated responses)"
+
+tasks:
+  # Check a single endpoint
+  check:
+    desc: "Check if an endpoint is healthy"
+    steps:
+      - name: probe
+        func: shell
+        do: |
+          URL="{{ vars.url | default "http://localhost:8080/health" }}"
+          EXPECTED_STATUS="{{ vars.expected_status | default "200" }}"
+          TIMEOUT="{{ config.timeout | default "5" }}"
+
+          # DEMO: Simulate HTTP health check
+          # In production, replace with:
+          # STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time ${TIMEOUT} "${URL}")
+          echo "Checking: ${URL}"
+
+          # Simulate based on URL pattern
+          if echo "${URL}" | grep -q "fail\|down\|error"; then
+            STATUS="503"
+            BODY='{"status":"unhealthy","error":"service unavailable"}'
+          else
+            STATUS="200"
+            BODY='{"status":"healthy","uptime":"99.9%","response_ms":42}'
+          fi
+
+          echo "Status: ${STATUS}"
+          echo "Expected: ${EXPECTED_STATUS}"
+
+          if [ "${STATUS}" = "${EXPECTED_STATUS}" ]; then
+            echo "Result: HEALTHY"
+            echo "healthy=true"
+          else
+            echo "Result: UNHEALTHY (got ${STATUS}, expected ${EXPECTED_STATUS})"
+            echo "healthy=false"
+          fi
+        outputs:
+          healthy: '{{ result.output | regexFind "healthy=(\\w+)" }}'
+          status_code: '{{ result.output | regexFind "Status: (\\d+)" }}'
+          url: "{{ vars.url | default "http://localhost:8080/health" }}"
+
+  # Check multiple endpoints in sequence
+  check_all:
+    desc: "Check multiple endpoints and report summary"
+    steps:
+      - name: run_checks
+        func: shell
+        do: |
+          ENDPOINTS="{{ vars.endpoints | default "http://localhost:8080/health" }}"
+          PASS=0
+          FAIL=0
+          TOTAL=0
+
+          for URL in ${ENDPOINTS}; do
+            TOTAL=$((TOTAL + 1))
+            echo "---"
+            echo "Checking: ${URL}"
+
+            if echo "${URL}" | grep -q "fail\|down\|error"; then
+              echo "  Status: 503 UNHEALTHY"
+              FAIL=$((FAIL + 1))
+            else
+              echo "  Status: 200 HEALTHY"
+              PASS=$((PASS + 1))
+            fi
+          done
+
+          echo "==="
+          echo "Total: ${TOTAL} | Passed: ${PASS} | Failed: ${FAIL}"
+
+          if [ "${FAIL}" -gt 0 ]; then
+            echo "overall=unhealthy"
+          else
+            echo "overall=healthy"
+          fi
+        outputs:
+          overall: '{{ result.output | regexFind "overall=(\\w+)" }}'
+          summary: '{{ result.output | regexFind "Total:.*" }}'

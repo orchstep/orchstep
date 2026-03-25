@@ -1,0 +1,104 @@
+name: demo-env-check
+desc: "Verify development environment prerequisites (demo)"
+
+tasks:
+  # Check if required tools are installed
+  tools:
+    desc: "Verify required CLI tools are available"
+    steps:
+      - name: check_tools
+        func: shell
+        do: |
+          TOOLS="{{ vars.tools | default "git curl" }}"
+          PASS=0
+          FAIL=0
+          MISSING=""
+
+          for TOOL in ${TOOLS}; do
+            if command -v "${TOOL}" >/dev/null 2>&1; then
+              VERSION=$("${TOOL}" --version 2>/dev/null | head -1 || echo "installed")
+              echo "[OK] ${TOOL}: ${VERSION}"
+              PASS=$((PASS + 1))
+            else
+              echo "[MISSING] ${TOOL}: not found in PATH"
+              FAIL=$((FAIL + 1))
+              MISSING="${MISSING} ${TOOL}"
+            fi
+          done
+
+          echo ""
+          echo "Tools: ${PASS} found, ${FAIL} missing"
+
+          if [ "${FAIL}" -eq 0 ]; then
+            echo "tools_ok=true"
+          else
+            echo "tools_ok=false"
+            echo "missing=${MISSING}"
+          fi
+        outputs:
+          tools_ok: '{{ result.output | regexFind "tools_ok=(\\w+)" }}'
+          summary: '{{ result.output | regexFind "Tools: (.+)" }}'
+
+  # Check environment variables
+  env_vars:
+    desc: "Verify required environment variables are set"
+    steps:
+      - name: check_env
+        func: shell
+        do: |
+          REQUIRED="{{ vars.required_vars | default "" }}"
+          PASS=0
+          FAIL=0
+
+          for VAR in ${REQUIRED}; do
+            VALUE=$(eval echo "\$${VAR}" 2>/dev/null)
+            if [ -n "${VALUE}" ]; then
+              # Mask sensitive values
+              MASKED=$(echo "${VALUE}" | sed 's/./*/g' | head -c 8)
+              echo "[OK] ${VAR}=${MASKED}..."
+              PASS=$((PASS + 1))
+            else
+              echo "[MISSING] ${VAR} is not set"
+              FAIL=$((FAIL + 1))
+            fi
+          done
+
+          echo ""
+          echo "Env vars: ${PASS} set, ${FAIL} missing"
+
+          if [ "${FAIL}" -eq 0 ]; then
+            echo "env_ok=true"
+          else
+            echo "env_ok=false"
+          fi
+        outputs:
+          env_ok: '{{ result.output | regexFind "env_ok=(\\w+)" }}'
+          summary: '{{ result.output | regexFind "Env vars: (.+)" }}'
+
+  # Full environment verification
+  verify:
+    desc: "Run all environment checks"
+    steps:
+      - name: check_tools
+        task: tools
+
+      - name: check_env
+        task: env_vars
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Environment Verification ==="
+          echo "Tools: {{ steps.check_tools.summary }}"
+          echo "Env: {{ steps.check_env.summary }}"
+          echo ""
+
+          if [ "{{ steps.check_tools.tools_ok }}" = "true" ] && [ "{{ steps.check_env.env_ok }}" = "true" ]; then
+            echo "Overall: READY"
+            echo "ready=true"
+          else
+            echo "Overall: NOT READY"
+            echo "ready=false"
+          fi
+        outputs:
+          ready: '{{ result.output | regexFind "ready=(\\w+)" }}'

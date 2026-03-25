@@ -1,0 +1,217 @@
+name: infra-drift-detection
+description: >
+  Detect infrastructure drift by simulating a Terraform plan, parsing the
+  results, assessing severity, and alerting if changes are found. All
+  Terraform commands are simulated with echo for demonstration purposes.
+
+defaults:
+  environment: "production"
+  terraform_dir: "/infra/terraform/production"
+
+tasks:
+  detect:
+    description: "Run drift detection: plan, parse, assess, alert, report"
+    steps:
+      - name: terraform_plan
+        description: "Simulate terraform plan to detect infrastructure drift"
+        func: shell
+        do: |
+          echo "=== Terraform Plan: {{ vars.environment }} ==="
+          echo "Working directory: {{ vars.terraform_dir }}"
+          echo ""
+          echo "Initializing Terraform..."
+          echo "  - Provider: aws v5.40.0"
+          echo "  - Backend: s3 ({{ vars.environment }}-tfstate)"
+          echo ""
+          echo "Running: terraform plan -detailed-exitcode -no-color"
+          echo ""
+          echo "Terraform will perform the following actions:"
+          echo ""
+          echo "  # aws_security_group.api_sg will be updated in-place"
+          echo "  ~ resource \"aws_security_group\" \"api_sg\" {"
+          echo "      ~ ingress {"
+          echo "          - cidr_blocks = [\"10.0.0.0/16\"]"
+          echo "          + cidr_blocks = [\"10.0.0.0/16\", \"172.16.0.0/12\"]"
+          echo "        }"
+          echo "    }"
+          echo ""
+          echo "  # aws_instance.worker[2] will be destroyed"
+          echo "  - resource \"aws_instance\" \"worker\" {"
+          echo "      - ami           = \"ami-0abcdef1234567890\""
+          echo "      - instance_type = \"t3.medium\""
+          echo "    }"
+          echo ""
+          echo "  # aws_s3_bucket.logs_archive will be created"
+          echo "  + resource \"aws_s3_bucket\" \"logs_archive\" {"
+          echo "      + bucket = \"{{ vars.environment }}-logs-archive-2026\""
+          echo "      + acl    = \"private\""
+          echo "    }"
+          echo ""
+          echo "  # aws_iam_role_policy.deploy_policy will be updated in-place"
+          echo "  ~ resource \"aws_iam_role_policy\" \"deploy_policy\" {"
+          echo "      ~ policy = jsonencode({"
+          echo "          - Effect   = \"Allow\""
+          echo "          + Effect   = \"Deny\""
+          echo "        })"
+          echo "    }"
+          echo ""
+          echo "Plan: 1 to add, 2 to change, 1 to destroy."
+          echo ""
+          echo "PLAN_ADD=1"
+          echo "PLAN_CHANGE=2"
+          echo "PLAN_DESTROY=1"
+        outputs:
+          additions: '{{ result.output | regexFind "PLAN_ADD=([0-9]+)" }}'
+          changes: '{{ result.output | regexFind "PLAN_CHANGE=([0-9]+)" }}'
+          deletions: '{{ result.output | regexFind "PLAN_DESTROY=([0-9]+)" }}'
+
+      - name: verify_parse
+        description: "Assert that the plan output was parsed correctly"
+        func: assert
+        args:
+          condition: '{{ and (ne steps.terraform_plan.additions "") (ne steps.terraform_plan.changes "") (ne steps.terraform_plan.deletions "") }}'
+          message: "Terraform plan output must be parsed into additions, changes, and deletions"
+
+      - name: parse_drift
+        description: "Calculate total drift and categorize changes"
+        func: shell
+        do: |
+          ADD={{ steps.terraform_plan.additions }}
+          CHG={{ steps.terraform_plan.changes }}
+          DEL={{ steps.terraform_plan.deletions }}
+          TOTAL=$((ADD + CHG + DEL))
+
+          echo "=== Drift Analysis ==="
+          echo ""
+          echo "Resources with drift:"
+          echo "  Additions:  ${ADD}"
+          echo "  Changes:    ${CHG}"
+          echo "  Deletions:  ${DEL}"
+          echo "  Total:      ${TOTAL}"
+          echo ""
+
+          if [ "${DEL}" -gt 0 ]; then
+            echo "WARNING: Destructive changes detected (${DEL} resource(s) to be destroyed)"
+          fi
+          if [ "${CHG}" -gt 0 ]; then
+            echo "NOTE: In-place changes detected (${CHG} resource(s) modified outside Terraform)"
+          fi
+
+          echo ""
+          echo "TOTAL_DRIFT=${TOTAL}"
+          echo "HAS_DELETIONS=${DEL}"
+        outputs:
+          total_drift: '{{ result.output | regexFind "TOTAL_DRIFT=([0-9]+)" }}'
+          has_deletions: '{{ result.output | regexFind "HAS_DELETIONS=([0-9]+)" }}'
+
+      - name: assess_severity
+        description: "Determine drift severity based on change count and type"
+        func: shell
+        do: |
+          TOTAL={{ steps.parse_drift.total_drift }}
+          DELETIONS={{ steps.parse_drift.has_deletions }}
+
+          echo "=== Severity Assessment ==="
+          echo ""
+
+          if [ "${TOTAL}" -eq 0 ]; then
+            SEVERITY="ok"
+            echo "No drift detected. Infrastructure matches desired state."
+          elif [ "${DELETIONS}" -gt 0 ]; then
+            SEVERITY="critical"
+            echo "CRITICAL: Destructive drift detected."
+            echo "  Resources may be deleted that were provisioned outside Terraform."
+            echo "  Immediate review required."
+          elif [ "${TOTAL}" -lt 3 ]; then
+            SEVERITY="warning"
+            echo "WARNING: Minor drift detected (${TOTAL} change(s))."
+            echo "  Review recommended within 24 hours."
+          else
+            SEVERITY="critical"
+            echo "CRITICAL: Significant drift detected (${TOTAL} change(s))."
+            echo "  Immediate review required."
+          fi
+
+          echo ""
+          echo "DRIFT_SEVERITY=${SEVERITY}"
+        outputs:
+          drift_severity: '{{ result.output | regexFind "DRIFT_SEVERITY=([a-z]+)" }}'
+
+      - name: send_alert
+        description: "Send notification if drift is detected"
+        func: shell
+        do: |
+          SEVERITY="{{ steps.assess_severity.drift_severity }}"
+
+          echo "=== Drift Notification ==="
+          echo ""
+
+          if [ "${SEVERITY}" = "ok" ]; then
+            echo "No drift detected. Skipping notification."
+            echo "ALERT_SENT=false"
+          else
+            echo "Sending alert to #infra-alerts..."
+            echo ""
+            echo "Channel: #infra-alerts"
+            echo "Priority: ${SEVERITY}"
+            echo "Payload:"
+            echo "  {"
+            echo "    \"environment\": \"{{ vars.environment }}\","
+            echo "    \"severity\": \"${SEVERITY}\","
+            echo "    \"total_drift\": {{ steps.parse_drift.total_drift }},"
+            echo "    \"additions\": {{ steps.terraform_plan.additions }},"
+            echo "    \"changes\": {{ steps.terraform_plan.changes }},"
+            echo "    \"deletions\": {{ steps.terraform_plan.deletions }},"
+            echo "    \"terraform_dir\": \"{{ vars.terraform_dir }}\","
+            echo "    \"action_required\": \"Run terraform plan in {{ vars.terraform_dir }} and review\""
+            echo "  }"
+            echo ""
+            echo "Alert delivered successfully."
+            echo "ALERT_SENT=true"
+          fi
+        outputs:
+          alert_sent: '{{ result.output | regexFind "ALERT_SENT=([a-z]+)" }}'
+
+      - name: drift_report
+        description: "Print the final drift detection report"
+        func: shell
+        do: |
+          echo "============================================"
+          echo "   INFRASTRUCTURE DRIFT REPORT"
+          echo "============================================"
+          echo ""
+          echo "Environment:    {{ vars.environment }}"
+          echo "Terraform Dir:  {{ vars.terraform_dir }}"
+          echo "Scan Time:      $(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo '2026-03-11T06:00:00Z')"
+          echo ""
+          echo "--- DRIFT SUMMARY ---"
+          echo "  Additions:    {{ steps.terraform_plan.additions }}"
+          echo "  Changes:      {{ steps.terraform_plan.changes }}"
+          echo "  Deletions:    {{ steps.terraform_plan.deletions }}"
+          echo "  Total Drift:  {{ steps.parse_drift.total_drift }}"
+          echo ""
+          echo "--- ASSESSMENT ---"
+          echo "  Severity:     {{ steps.assess_severity.drift_severity | upper }}"
+          echo "  Alert Sent:   {{ steps.send_alert.alert_sent }}"
+          echo ""
+          echo "--- RECOMMENDED ACTIONS ---"
+          if [ "{{ steps.assess_severity.drift_severity }}" = "critical" ]; then
+            echo "  1. IMMEDIATELY review terraform plan output"
+            echo "  2. Identify who/what made out-of-band changes"
+            echo "  3. Decide: apply Terraform state or update config"
+            echo "  4. Run 'terraform apply' or update .tf files"
+          elif [ "{{ steps.assess_severity.drift_severity }}" = "warning" ]; then
+            echo "  1. Review drift within 24 hours"
+            echo "  2. Update Terraform config to match desired state"
+            echo "  3. Run 'terraform apply' to reconcile"
+          else
+            echo "  None - infrastructure is in sync"
+          fi
+          echo ""
+          echo "============================================"
+
+  main:
+    description: "Entry point - run infrastructure drift detection"
+    steps:
+      - name: run_detect
+        task: detect

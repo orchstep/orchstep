@@ -1,0 +1,98 @@
+name: multi-repo-version-bump
+description: >
+  Coordinate a library version bump across multiple downstream repositories.
+  Simulates cloning each repo, updating the dependency version, committing,
+  pushing, and opening a pull request.
+
+defaults:
+  library_name: "shared-utils"
+  new_version: "2.4.0"
+  repos: "frontend-app backend-api data-pipeline admin-dashboard"
+
+tasks:
+  bump:
+    description: "Bump library version across all listed repositories"
+    steps:
+      - name: list_repos
+        description: "Display the repositories that will be updated"
+        func: shell
+        do: |
+          echo "=== Version Bump Plan ==="
+          echo "Library:     {{ vars.library_name }}"
+          echo "New Version: {{ vars.new_version }}"
+          echo ""
+          echo "Repositories to update:"
+          COUNT=0
+          for repo in {{ vars.repos }}; do
+            COUNT=$((COUNT + 1))
+            echo "  ${COUNT}. ${repo}"
+          done
+          echo ""
+          echo "Total: ${COUNT} repositories"
+          echo "REPO_COUNT=${COUNT}"
+        outputs:
+          repo_count: '{{ result.output | regexFind "REPO_COUNT=([0-9]+)" }}'
+
+      - name: bump_versions
+        description: "Simulate clone, version update, commit, push, and PR for each repo"
+        func: shell
+        do: |
+          echo "=== Starting Version Bump Process ==="
+          echo ""
+          PR_LIST=""
+          INDEX=0
+          for repo in {{ vars.repos }}; do
+            INDEX=$((INDEX + 1))
+            echo "--- [${INDEX}] Processing: ${repo} ---"
+
+            echo "  [clone]  git clone git@github.com:acme/${repo}.git /tmp/${repo}"
+            echo "  [branch] git checkout -b bump/{{ vars.library_name }}-{{ vars.new_version }}"
+
+            echo "  [update] Updating {{ vars.library_name }} from 2.3.1 to {{ vars.new_version }} in package.json"
+            echo "           sed -i 's/\"{{ vars.library_name }}\": \".*\"/\"{{ vars.library_name }}\": \"^{{ vars.new_version }}\"/' package.json"
+
+            echo "  [test]   npm test -- --ci (all tests passed)"
+
+            echo "  [commit] git commit -am 'chore(deps): bump {{ vars.library_name }} to {{ vars.new_version }}'"
+            echo "  [push]   git push origin bump/{{ vars.library_name }}-{{ vars.new_version }}"
+
+            PR_NUM=$((1000 + INDEX))
+            echo "  [pr]     Created PR #${PR_NUM}: 'Bump {{ vars.library_name }} to {{ vars.new_version }}'"
+            echo "           URL: https://github.com/acme/${repo}/pull/${PR_NUM}"
+            echo ""
+
+            PR_LIST="${PR_LIST}${repo}:#${PR_NUM} "
+          done
+          echo "PR_SUMMARY=${PR_LIST}"
+        outputs:
+          pr_summary: '{{ result.output | regexFind "PR_SUMMARY=(.+)" }}'
+
+      - name: print_summary
+        description: "Print a summary of all created pull requests"
+        func: shell
+        do: |
+          echo "========================================="
+          echo "  Version Bump Complete"
+          echo "========================================="
+          echo ""
+          echo "Library: {{ vars.library_name }} -> {{ vars.new_version }}"
+          echo "Repos updated: {{ steps.list_repos.repo_count }}"
+          echo ""
+          echo "Pull Requests Created:"
+          for entry in {{ steps.bump_versions.pr_summary }}; do
+            REPO=$(echo "${entry}" | cut -d: -f1)
+            PR=$(echo "${entry}" | cut -d: -f2)
+            echo "  - ${REPO}: ${PR} (https://github.com/acme/${REPO}/pull/${PR#\#})"
+          done
+          echo ""
+          echo "Next steps:"
+          echo "  1. Review each PR for repo-specific issues"
+          echo "  2. Ensure CI passes on all PRs"
+          echo "  3. Merge PRs in dependency order"
+          echo "========================================="
+
+  main:
+    description: "Entry point - run the version bump workflow"
+    steps:
+      - name: run_bump
+        task: bump

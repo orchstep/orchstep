@@ -1,0 +1,201 @@
+name: secret-rotation
+desc: Rotates TLS certificates for a Kubernetes service with verification and rollback safety
+
+defaults:
+  service_name: "order-service"
+  namespace: "production"
+  cert_path: "/etc/tls/order-service"
+  environment: "production"
+  cert_validity_days: "365"
+  organization: "Acme Corp"
+
+tasks:
+  # -------------------------------------------------------
+  # Certificate rotation with verification
+  # -------------------------------------------------------
+  rotate:
+    desc: "Rotate TLS certificate: check expiry, generate, deploy, verify, cleanup"
+    steps:
+      # Step 1: Check current certificate expiry
+      - name: check_expiry
+        desc: "Inspect the current certificate and determine days until expiry"
+        func: shell
+        do: |
+          echo "Checking certificate at {{ vars.cert_path }}/tls.crt ..."
+          echo ""
+          echo "Subject: CN={{ vars.service_name }}.{{ vars.namespace }}.svc.cluster.local"
+          echo "Issuer: CN=Acme Internal CA"
+          echo "Serial: 4A:3B:2C:1D:00:FF"
+          echo "Not Before: Mar 15 00:00:00 2025 GMT"
+          echo "Not After:  Mar 14 23:59:59 2026 GMT"
+          echo ""
+          echo "Days until expiry: 4"
+          echo "Status: EXPIRING_SOON"
+        outputs:
+          days_remaining: "4"
+          current_serial: "4A:3B:2C:1D:00:FF"
+          status: "EXPIRING_SOON"
+
+      - name: verify_rotation_needed
+        desc: "Assert certificate is expiring soon and needs rotation"
+        func: assert
+        args:
+          condition: '{{ eq steps.check_expiry.status "EXPIRING_SOON" }}'
+          desc: "Certificate must be expiring soon to justify rotation"
+
+      # Step 2: Generate new certificate
+      - name: generate_cert
+        desc: "Generate a new TLS certificate and private key"
+        func: shell
+        do: |
+          echo "Generating new certificate for {{ vars.service_name }}..."
+          echo ""
+          echo "openssl req -new -x509 -nodes \\"
+          echo "  -days {{ vars.cert_validity_days }} \\"
+          echo "  -subj '/CN={{ vars.service_name }}.{{ vars.namespace }}.svc.cluster.local/O={{ vars.organization }}' \\"
+          echo "  -keyout {{ vars.cert_path }}/tls.key.new \\"
+          echo "  -out {{ vars.cert_path }}/tls.crt.new"
+          echo ""
+          echo "New certificate generated:"
+          echo "  Serial: 7E:8F:9A:0B:11:22"
+          echo "  Valid for: {{ vars.cert_validity_days }} days"
+          echo "  Subject: CN={{ vars.service_name }}.{{ vars.namespace }}.svc.cluster.local"
+          echo "  Fingerprint: SHA256:aB3cD4eF5gH6iJ7kL8mN9oP0qR1sT2uV3wX4yZ"
+        outputs:
+          new_serial: "7E:8F:9A:0B:11:22"
+          new_fingerprint: "SHA256:aB3cD4eF5gH6iJ7kL8mN9oP0qR1sT2uV3wX4yZ"
+          cert_file: "{{ vars.cert_path }}/tls.crt.new"
+          key_file: "{{ vars.cert_path }}/tls.key.new"
+
+      # Step 3: Deploy the new certificate to Kubernetes
+      - name: deploy_cert
+        desc: "Update the Kubernetes TLS secret with the new certificate"
+        func: shell
+        do: |
+          echo "Deploying new certificate to Kubernetes..."
+          echo ""
+          echo "kubectl create secret tls {{ vars.service_name }}-tls \\"
+          echo "  --cert={{ steps.generate_cert.cert_file }} \\"
+          echo "  --key={{ steps.generate_cert.key_file }} \\"
+          echo "  --namespace={{ vars.namespace }} \\"
+          echo "  --dry-run=client -o yaml | kubectl apply -f -"
+          echo ""
+          echo "secret/{{ vars.service_name }}-tls configured"
+          echo ""
+          echo "Restarting pods to pick up new certificate..."
+          echo "kubectl rollout restart deployment/{{ vars.service_name }} -n {{ vars.namespace }}"
+          echo "deployment.apps/{{ vars.service_name }} restarted"
+          echo ""
+          echo "Waiting for rollout to complete..."
+          echo "kubectl rollout status deployment/{{ vars.service_name }} -n {{ vars.namespace }} --timeout=120s"
+          echo "deployment '{{ vars.service_name }}' successfully rolled out"
+        outputs:
+          deploy_status: "success"
+          rollout_status: "complete"
+
+      - name: verify_deploy
+        desc: "Assert deployment succeeded"
+        func: assert
+        args:
+          condition: '{{ eq steps.deploy_cert.deploy_status "success" }}'
+          desc: "Certificate deployment to Kubernetes must succeed"
+
+      # Step 4: Verify the new certificate is being served
+      - name: verify_serving
+        desc: "Connect to the service and confirm it serves the new certificate"
+        func: shell
+        retry:
+          max_attempts: 3
+          interval: 2s
+          backoff_rate: 2.0
+        do: |
+          echo "Verifying certificate served by {{ vars.service_name }}..."
+          echo ""
+          echo "openssl s_client -connect {{ vars.service_name }}.{{ vars.namespace }}.svc:443 -servername {{ vars.service_name }}.{{ vars.namespace }}.svc.cluster.local </dev/null 2>/dev/null"
+          echo ""
+          echo "Server certificate:"
+          echo "  Serial: {{ steps.generate_cert.new_serial }}"
+          echo "  Fingerprint: {{ steps.generate_cert.new_fingerprint }}"
+          echo "  Subject: CN={{ vars.service_name }}.{{ vars.namespace }}.svc.cluster.local"
+          echo ""
+          echo "Certificate verification: OK"
+          echo "TLS handshake: SUCCESS"
+        outputs:
+          served_serial: "{{ steps.generate_cert.new_serial }}"
+          tls_status: "SUCCESS"
+
+      - name: verify_correct_cert
+        desc: "Assert the new certificate serial matches what we generated"
+        func: assert
+        args:
+          condition: '{{ eq steps.verify_serving.served_serial steps.generate_cert.new_serial }}'
+          desc: "Served certificate serial must match the newly generated certificate"
+
+      # Step 5: Cleanup old certificate files
+      - name: cleanup
+        desc: "Remove old certificate backup files"
+        func: shell
+        do: |
+          echo "Cleaning up old certificate files..."
+          echo ""
+          echo "Backing up old cert: {{ vars.cert_path }}/tls.crt -> {{ vars.cert_path }}/tls.crt.bak"
+          echo "Moving new cert into place: {{ vars.cert_path }}/tls.crt.new -> {{ vars.cert_path }}/tls.crt"
+          echo "Moving new key into place: {{ vars.cert_path }}/tls.key.new -> {{ vars.cert_path }}/tls.key"
+          echo ""
+          echo "Old certificate (serial {{ steps.check_expiry.current_serial }}) archived"
+          echo "New certificate (serial {{ steps.generate_cert.new_serial }}) is now active"
+        outputs:
+          cleanup_status: "complete"
+
+      # Step 6: Print rotation summary
+      - name: print_summary
+        desc: "Display certificate rotation summary"
+        func: shell
+        do: |
+          echo ""
+          echo "============================================"
+          echo "  CERTIFICATE ROTATION REPORT"
+          echo "============================================"
+          echo ""
+          echo "Service     : {{ vars.service_name }}"
+          echo "Namespace   : {{ vars.namespace }}"
+          echo "Environment : {{ vars.environment }}"
+          echo ""
+          echo "Old Certificate:"
+          echo "  Serial       : {{ steps.check_expiry.current_serial }}"
+          echo "  Days Left    : {{ steps.check_expiry.days_remaining }}"
+          echo "  Status       : {{ steps.check_expiry.status }}"
+          echo ""
+          echo "New Certificate:"
+          echo "  Serial       : {{ steps.generate_cert.new_serial }}"
+          echo "  Fingerprint  : {{ steps.generate_cert.new_fingerprint }}"
+          echo "  Valid For    : {{ vars.cert_validity_days }} days"
+          echo ""
+          echo "Deployment:"
+          echo "  K8s Secret   : {{ steps.deploy_cert.deploy_status }}"
+          echo "  Pod Rollout  : {{ steps.deploy_cert.rollout_status }}"
+          echo "  TLS Verify   : {{ steps.verify_serving.tls_status }}"
+          echo "  Cleanup      : {{ steps.cleanup.cleanup_status }}"
+          echo ""
+          echo "============================================"
+          echo "  CERTIFICATE ROTATION COMPLETE"
+          echo "============================================"
+
+  # -------------------------------------------------------
+  # Entry point
+  # -------------------------------------------------------
+  main:
+    desc: "Rotate TLS certificates for the target service"
+    steps:
+      - name: announce
+        desc: "Announce certificate rotation"
+        func: shell
+        do: |
+          echo "Starting TLS certificate rotation"
+          echo "  Service   : {{ vars.service_name }}"
+          echo "  Namespace : {{ vars.namespace }}"
+          echo "  Cert Path : {{ vars.cert_path }}"
+
+      - name: run_rotation
+        desc: "Execute the certificate rotation task"
+        task: rotate
