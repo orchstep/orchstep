@@ -1,0 +1,73 @@
+metadata:
+  name: demo-slack-notify
+  version: "1.0.0"
+  description: "Send notifications to Slack channels (demo mock)"
+  author: "orchstep"
+  tags: ["notification", "slack", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: ["https://hooks.slack.com/*"]
+  git: false
+
+config:
+  schema:
+    properties:
+      channel:
+        type: string
+        required: false
+        default: "#general"
+        desc: "Slack channel to post to"
+      webhook_url:
+        type: string
+        required: false
+        default: "https://hooks.slack.com/demo"
+        desc: "Slack webhook URL (not used in demo mode)"
+
+exports:
+  send:
+    desc: "Send a simple message"
+    params:
+      - name: message
+        type: string
+        required: true
+        desc: "Message text to send"
+      - name: level
+        type: string
+        required: false
+        default: "info"
+        desc: "Message level: info, success, failure, warning"
+    returns:
+      type: object
+      properties:
+        delivered:
+          type: string
+          desc: "Whether message was delivered"
+        channel:
+          type: string
+          desc: "Channel message was sent to"
+
+  deploy_notify:
+    desc: "Send a deployment notification"
+    params:
+      - name: app_name
+        type: string
+        required: true
+      - name: version
+        type: string
+        required: true
+      - name: environment
+        type: string
+        required: true
+      - name: status
+        type: string
+        required: false
+        default: "started"
+    returns:
+      type: object
+      properties:
+        notified:
+          type: string
+        summary:
+          type: string

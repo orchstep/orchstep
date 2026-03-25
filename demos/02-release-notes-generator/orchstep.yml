@@ -1,0 +1,179 @@
+name: release-notes-generator
+desc: Generates structured release notes from git commit history and creates a tagged release
+
+defaults:
+  project_name: "acme-api"
+  version: "2.5.0"
+  previous_version: "2.4.0"
+  repository: "github.com/acme-corp/acme-api"
+  release_branch: "main"
+
+tasks:
+  # -------------------------------------------------------
+  # Generate release notes from commit log
+  # -------------------------------------------------------
+  generate:
+    desc: "Collect commits, categorize them, and produce release notes"
+    steps:
+      # Step 1: Simulate git log between two tags
+      - name: fetch_commits
+        desc: "Get commits between previous and current version"
+        func: shell
+        do: |
+          echo "Fetching commits between v{{ vars.previous_version }}..v{{ vars.version }}"
+          echo ""
+          echo "abc1234 feat: add batch payment processing endpoint"
+          echo "def5678 feat: implement webhook retry with exponential backoff"
+          echo "aaa1111 fix: correct currency rounding for JPY transactions"
+          echo "bbb2222 fix: prevent duplicate idempotency keys under load"
+          echo "ccc3333 fix: handle null merchant_id in legacy import"
+          echo "ddd4444 docs: update API authentication guide"
+          echo "eee5555 docs: add webhook payload examples"
+          echo "fff6666 chore: upgrade Go to 1.23"
+          echo "ggg7777 feat: add rate limiting per API key"
+          echo "hhh8888 fix: resolve connection pool exhaustion on high traffic"
+        outputs:
+          raw_log: "{{ result.output }}"
+          commit_count: "10"
+
+      # Step 2: Categorize commits by type
+      - name: categorize
+        desc: "Split commits into features, fixes, docs, and other"
+        func: shell
+        do: |
+          echo "=== FEATURES ==="
+          echo "- Add batch payment processing endpoint (abc1234)"
+          echo "- Implement webhook retry with exponential backoff (def5678)"
+          echo "- Add rate limiting per API key (ggg7777)"
+          echo ""
+          echo "=== BUG FIXES ==="
+          echo "- Correct currency rounding for JPY transactions (aaa1111)"
+          echo "- Prevent duplicate idempotency keys under load (bbb2222)"
+          echo "- Handle null merchant_id in legacy import (ccc3333)"
+          echo "- Resolve connection pool exhaustion on high traffic (hhh8888)"
+          echo ""
+          echo "=== DOCUMENTATION ==="
+          echo "- Update API authentication guide (ddd4444)"
+          echo "- Add webhook payload examples (eee5555)"
+          echo ""
+          echo "=== OTHER ==="
+          echo "- Upgrade Go to 1.23 (fff6666)"
+        outputs:
+          feature_count: "3"
+          fix_count: "4"
+          docs_count: "2"
+          other_count: "1"
+
+      # Step 3: Verify we have meaningful content
+      - name: verify_content
+        desc: "Assert we found commits to include"
+        func: assert
+        args:
+          condition: '{{ ne steps.fetch_commits.commit_count "0" }}'
+          desc: "Release must contain at least one commit"
+
+      # Step 4: Format the changelog
+      - name: format_changelog
+        desc: "Produce a markdown-formatted changelog"
+        func: shell
+        do: |
+          echo "# {{ vars.project_name }} v{{ vars.version }}"
+          echo ""
+          echo "Released: 2026-03-11"
+          echo ""
+          echo "## Highlights"
+          echo ""
+          echo "This release adds batch payment processing, webhook retry logic,"
+          echo "and per-key rate limiting. Four bug fixes improve reliability under"
+          echo "high-traffic conditions."
+          echo ""
+          echo "## New Features ({{ steps.categorize.feature_count }})"
+          echo ""
+          echo "- **Batch payment processing** -- Process up to 500 payments in a single API call"
+          echo "- **Webhook retry** -- Failed deliveries retry with exponential backoff (max 5 attempts)"
+          echo "- **Rate limiting** -- Per-API-key rate limits with configurable thresholds"
+          echo ""
+          echo "## Bug Fixes ({{ steps.categorize.fix_count }})"
+          echo ""
+          echo "- Fixed JPY currency rounding that caused 1-yen discrepancies"
+          echo "- Eliminated duplicate idempotency key errors under concurrent requests"
+          echo "- Handled null merchant_id in legacy CSV import flow"
+          echo "- Resolved database connection pool exhaustion at >10k req/s"
+          echo ""
+          echo "## Documentation ({{ steps.categorize.docs_count }})"
+          echo ""
+          echo "- Rewrote API authentication guide with OAuth2 examples"
+          echo "- Added webhook payload reference with sample JSON"
+          echo ""
+          echo "## Other ({{ steps.categorize.other_count }})"
+          echo ""
+          echo "- Upgraded Go runtime from 1.22 to 1.23"
+          echo ""
+          echo "**Full diff**: https://{{ vars.repository }}/compare/v{{ vars.previous_version }}...v{{ vars.version }}"
+        outputs:
+          changelog: "{{ result.output }}"
+
+      # Step 5: Simulate creating a git tag
+      - name: create_tag
+        desc: "Create and push the release tag"
+        func: shell
+        do: |
+          echo "Creating tag v{{ vars.version }} on branch {{ vars.release_branch }}..."
+          echo "git tag -a v{{ vars.version }} -m 'Release {{ vars.version }}'"
+          echo "git push origin v{{ vars.version }}"
+          echo ""
+          echo "Tag v{{ vars.version }} created successfully"
+        outputs:
+          tag_name: "v{{ vars.version }}"
+          tag_status: "created"
+
+      - name: verify_tag
+        desc: "Assert tag was created"
+        func: assert
+        args:
+          condition: '{{ eq steps.create_tag.tag_status "created" }}'
+          desc: "Git tag must be created before publishing release notes"
+
+      # Step 6: Print final release notes
+      - name: print_release
+        desc: "Display the final release summary"
+        func: shell
+        do: |
+          echo ""
+          echo "============================================"
+          echo "  RELEASE SUMMARY"
+          echo "============================================"
+          echo ""
+          echo "Project    : {{ vars.project_name }}"
+          echo "Version    : {{ vars.version }}"
+          echo "Previous   : {{ vars.previous_version }}"
+          echo "Tag        : {{ steps.create_tag.tag_name }}"
+          echo "Branch     : {{ vars.release_branch }}"
+          echo ""
+          echo "Changes:"
+          echo "  Features      : {{ steps.categorize.feature_count }}"
+          echo "  Bug Fixes     : {{ steps.categorize.fix_count }}"
+          echo "  Documentation : {{ steps.categorize.docs_count }}"
+          echo "  Other         : {{ steps.categorize.other_count }}"
+          echo "  Total Commits : {{ steps.fetch_commits.commit_count }}"
+          echo ""
+          echo "============================================"
+          echo "  RELEASE v{{ vars.version }} PUBLISHED"
+          echo "============================================"
+
+  # -------------------------------------------------------
+  # Entry point
+  # -------------------------------------------------------
+  main:
+    desc: "Generate release notes and tag the release"
+    steps:
+      - name: start
+        desc: "Announce release process"
+        func: shell
+        do: |
+          echo "Starting release process for {{ vars.project_name }}"
+          echo "  {{ vars.previous_version }} -> {{ vars.version }}"
+
+      - name: run_generate
+        desc: "Run the release notes generation task"
+        task: generate

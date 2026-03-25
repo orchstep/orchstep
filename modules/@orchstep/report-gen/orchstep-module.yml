@@ -1,0 +1,57 @@
+metadata:
+  name: demo-report-gen
+  version: "1.0.0"
+  description: "Generate reports in multiple formats (demo)"
+  author: "orchstep"
+  tags: ["report", "output", "demo"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties: {}
+
+exports:
+  summary:
+    desc: "Generate a summary report"
+    params:
+      - name: title
+        type: string
+        required: false
+        default: "Report"
+      - name: data
+        type: string
+        required: true
+      - name: format
+        type: string
+        required: false
+        default: "text"
+    returns:
+      type: object
+      properties:
+        report:
+          type: string
+        format:
+          type: string
+
+  checklist:
+    desc: "Generate a pass/fail checklist report"
+    params:
+      - name: title
+        type: string
+        required: false
+        default: "Checklist"
+      - name: items
+        type: string
+        required: true
+        desc: "Space-separated name:status pairs (e.g. 'api:pass db:fail')"
+    returns:
+      type: object
+      properties:
+        report:
+          type: string
+        result:
+          type: string
+        score:
+          type: string

@@ -1,0 +1,123 @@
+name: "Flaky Test Triage Pipeline"
+desc: "Automatically triages CI test failures by identifying known flaky tests, categorizing failures, and deciding whether to re-run or escalate"
+
+defaults:
+  project_name: "acme-api"
+  ci_run_id: "run-48291"
+
+tasks:
+  triage:
+    desc: "Analyze test failures and determine appropriate action"
+    steps:
+      - name: fetch_test_results
+        desc: "Fetch test results from CI system"
+        func: shell
+        do: |
+          echo "Fetching results for {{ vars.project_name }} / {{ vars.ci_run_id }}..."
+          echo '{"run_id":"{{ vars.ci_run_id }}","total":342,"passed":335,"failed":7,"failures":['
+          echo '  {"test":"TestUserAuth_TokenRefresh","suite":"auth","duration":"2.3s","error":"context deadline exceeded"},'
+          echo '  {"test":"TestPaymentProcess_Stripe","suite":"payments","duration":"5.1s","error":"connection refused"},'
+          echo '  {"test":"TestSearchIndex_Rebuild","suite":"search","duration":"12.4s","error":"timeout waiting for index"},'
+          echo '  {"test":"TestNotificationEmail_Send","suite":"notifications","duration":"1.8s","error":"SMTP connection reset"},'
+          echo '  {"test":"TestUserProfile_AvatarUpload","suite":"users","duration":"3.2s","error":"assertion failed: expected 200 got 500"},'
+          echo '  {"test":"TestOrderHistory_Pagination","suite":"orders","duration":"0.9s","error":"assertion failed: expected 10 items got 0"},'
+          echo '  {"test":"TestCacheInvalidation_TTL","suite":"cache","duration":"8.7s","error":"key still present after TTL"}'
+          echo ']}'
+          echo "total_tests=342 passed=335 failed=7"
+        outputs:
+          total: '{{ result.output | regexFind "total_tests=([0-9]+)" }}'
+          failed_count: '{{ result.output | regexFind "failed=([0-9]+)" }}'
+
+      - name: identify_known_flaky
+        desc: "Match failures against known flaky test patterns"
+        func: shell
+        do: |
+          echo "=== Known Flaky Test Pattern Matching ==="
+          echo ""
+          echo "Pattern database loaded: 12 known flaky patterns"
+          echo ""
+          echo "Matching failures against known patterns..."
+          echo "  [FLAKY] TestUserAuth_TokenRefresh - matches pattern: auth token tests fail under load (JIRA-1234)"
+          echo "  [FLAKY] TestPaymentProcess_Stripe - matches pattern: Stripe sandbox rate limits (JIRA-1456)"
+          echo "  [FLAKY] TestSearchIndex_Rebuild - matches pattern: search index timing sensitive (JIRA-1089)"
+          echo "  [FLAKY] TestNotificationEmail_Send - matches pattern: SMTP mock instability (JIRA-1567)"
+          echo "  [FLAKY] TestCacheInvalidation_TTL - matches pattern: Redis TTL race condition (JIRA-1678)"
+          echo "  [GENUINE] TestUserProfile_AvatarUpload - no matching flaky pattern"
+          echo "  [GENUINE] TestOrderHistory_Pagination - no matching flaky pattern"
+          echo ""
+          echo "flaky_count=5 genuine_count=2"
+        outputs:
+          flaky_count: '{{ result.output | regexFind "flaky_count=([0-9]+)" }}'
+          genuine_count: '{{ result.output | regexFind "genuine_count=([0-9]+)" }}'
+
+      - name: categorize_failures
+        desc: "Categorize and summarize failure types"
+        func: shell
+        do: |
+          echo "=== Failure Categorization ==="
+          echo ""
+          echo "Flaky ({{ steps.identify_known_flaky.flaky_count }} tests):"
+          echo "  - Timeout/Connection: TestUserAuth_TokenRefresh, TestPaymentProcess_Stripe, TestNotificationEmail_Send"
+          echo "  - Race Condition: TestSearchIndex_Rebuild, TestCacheInvalidation_TTL"
+          echo ""
+          echo "Genuine ({{ steps.identify_known_flaky.genuine_count }} tests):"
+          echo "  - HTTP 500 Error: TestUserProfile_AvatarUpload (users suite)"
+          echo "  - Data Integrity: TestOrderHistory_Pagination (orders suite)"
+          echo ""
+          echo "Flaky rate: 71% of failures are known flaky tests"
+          echo "flaky_rate=71"
+        outputs:
+          flaky_rate: '{{ result.output | regexFind "flaky_rate=([0-9]+)" }}'
+
+      - name: decide_action
+        desc: "Determine whether to re-run or alert based on failure analysis"
+        func: shell
+        do: |
+          echo "=== Triage Decision ==="
+          echo ""
+          echo "Genuine failures detected: {{ steps.identify_known_flaky.genuine_count }}"
+          echo ""
+          echo "Decision: ALERT + SELECTIVE_RERUN"
+          echo "  - Re-running {{ steps.identify_known_flaky.flaky_count }} known flaky tests"
+          echo "  - Alerting #team-backend about {{ steps.identify_known_flaky.genuine_count }} genuine failures"
+          echo "  - Blocking merge until genuine failures are resolved"
+          echo ""
+          echo "Alert sent to #{{ vars.project_name }}-ci Slack channel"
+          echo "Re-run triggered for flaky subset: {{ vars.ci_run_id }}-rerun"
+          echo "action=alert_and_rerun"
+        outputs:
+          action: '{{ result.output | regexFind "action=([a-z_]+)" }}'
+
+      - name: generate_report
+        desc: "Generate a triage summary report"
+        func: shell
+        do: |
+          echo "========================================"
+          echo "  FLAKY TEST TRIAGE REPORT"
+          echo "========================================"
+          echo ""
+          echo "Project:    {{ vars.project_name }}"
+          echo "CI Run:     {{ vars.ci_run_id }}"
+          echo "Total:      {{ steps.fetch_test_results.total }} tests"
+          echo "Passed:     {{ steps.fetch_test_results.total }} - {{ steps.fetch_test_results.failed_count }} = passed"
+          echo "Failed:     {{ steps.fetch_test_results.failed_count }}"
+          echo "  Flaky:    {{ steps.identify_known_flaky.flaky_count }}"
+          echo "  Genuine:  {{ steps.identify_known_flaky.genuine_count }}"
+          echo "Flaky Rate: {{ steps.categorize_failures.flaky_rate }}%"
+          echo ""
+          echo "Action Taken: {{ steps.decide_action.action }}"
+          echo ""
+          echo "Genuine Failures Requiring Attention:"
+          echo "  1. TestUserProfile_AvatarUpload (users) - HTTP 500"
+          echo "     -> Likely regression in avatar upload endpoint"
+          echo "  2. TestOrderHistory_Pagination (orders) - Empty result set"
+          echo "     -> Possible database migration issue"
+          echo ""
+          echo "Report saved to: s3://acme-ci-reports/{{ vars.project_name }}/{{ vars.ci_run_id }}/triage.json"
+
+  main:
+    desc: "Entry point - run flaky test triage"
+    steps:
+      - name: run_triage
+        desc: "Execute the triage pipeline"
+        task: triage

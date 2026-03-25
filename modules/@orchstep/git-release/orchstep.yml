@@ -1,0 +1,82 @@
+name: demo-git-release
+desc: "Git tagging and release notes generation (demo)"
+
+tasks:
+  # Generate changelog from git log
+  changelog:
+    desc: "Generate changelog between two refs"
+    steps:
+      - name: generate
+        func: shell
+        do: |
+          FROM="{{ vars.from_ref | default "HEAD~10" }}"
+          TO="{{ vars.to_ref | default "HEAD" }}"
+          REPO="{{ vars.repo_path | default "." }}"
+
+          echo "# Changelog"
+          echo ""
+          echo "## Changes from ${FROM} to ${TO}"
+          echo ""
+
+          # DEMO: Simulate git log output
+          # In production: git log --pretty=format:"- %s (%h)" ${FROM}..${TO}
+          echo "- feat: add user authentication module (abc1234)"
+          echo "- fix: resolve timeout issue in health checks (def5678)"
+          echo "- docs: update API reference for v2 endpoints (ghi9012)"
+          echo "- refactor: simplify database connection pooling (jkl3456)"
+          echo "- test: add integration tests for payment flow (mno7890)"
+          echo ""
+          echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        outputs:
+          changelog: "{{ result.output }}"
+          generated_at: "{{ result.output | regexFind \"Generated: (.+)\" }}"
+
+  # Create a version tag
+  tag:
+    desc: "Create a version tag"
+    steps:
+      - name: create_tag
+        func: shell
+        do: |
+          VERSION="{{ vars.version }}"
+          MESSAGE="{{ vars.message | default "Release ${VERSION}" }}"
+
+          # DEMO: Simulate tag creation
+          # In production: git tag -a "v${VERSION}" -m "${MESSAGE}"
+          echo "Created tag: v${VERSION}"
+          echo "Message: ${MESSAGE}"
+          echo "SHA: $(echo "${VERSION}" | md5sum | head -c 8)"
+          echo "tag_created=true"
+        outputs:
+          tag: "v{{ vars.version }}"
+          created: "true"
+
+  # Full release workflow: changelog + tag
+  release:
+    desc: "Create a full release with changelog and tag"
+    steps:
+      - name: gen_notes
+        task: changelog
+
+      - name: create_tag
+        task: tag
+
+      - name: publish
+        func: shell
+        do: |
+          echo "=== Release Summary ==="
+          echo "Version: v{{ vars.version }}"
+          echo "Tag: {{ steps.create_tag.tag }}"
+          echo ""
+          echo "{{ steps.gen_notes.changelog }}"
+          echo ""
+          echo "[DEMO] In production, this would:"
+          echo "  - Push tag to remote"
+          echo "  - Create GitHub release via API"
+          echo "  - Upload artifacts"
+          echo ""
+          echo "release_published=true"
+        outputs:
+          published: "true"
+          version: "{{ vars.version }}"
+          tag: "{{ steps.create_tag.tag }}"

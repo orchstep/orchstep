@@ -1,0 +1,68 @@
+name: demo-slack-notify
+desc: "Send notifications to Slack channels (demo: uses echo simulation)"
+
+defaults:
+  _emoji_success: "white_check_mark"
+  _emoji_failure: "x"
+  _emoji_warning: "warning"
+  _emoji_info: "information_source"
+
+tasks:
+  # Send a simple message to a channel
+  send:
+    desc: "Send a message to a Slack channel"
+    steps:
+      - name: format_message
+        func: shell
+        do: |
+          LEVEL="{{ vars.level | default "info" }}"
+          case "$LEVEL" in
+            success) EMOJI=":{{ vars._emoji_success }}:" ;;
+            failure|error) EMOJI=":{{ vars._emoji_failure }}:" ;;
+            warning) EMOJI=":{{ vars._emoji_warning }}:" ;;
+            *) EMOJI=":{{ vars._emoji_info }}:" ;;
+          esac
+          echo "${EMOJI} {{ config.channel | default "#general" }} | {{ vars.message }}"
+        outputs:
+          formatted: "{{ result.output }}"
+
+      - name: deliver
+        func: shell
+        do: |
+          # DEMO: In production, replace with real webhook POST:
+          # curl -X POST -H 'Content-Type: application/json' \
+          #   -d '{"channel":"{{ config.channel }}","text":"{{ steps.format_message.formatted }}"}' \
+          #   "{{ config.webhook_url }}"
+          echo "[SLACK] {{ steps.format_message.formatted }}"
+          echo "Channel: {{ config.channel | default "#general" }}"
+          echo "Delivered: true"
+        outputs:
+          delivered: "true"
+          channel: '{{ config.channel | default "#general" }}'
+
+  # Send a deployment notification with structured fields
+  deploy_notify:
+    desc: "Send a deployment notification with app/version/environment details"
+    steps:
+      - name: build_payload
+        func: shell
+        do: |
+          APP="{{ vars.app_name | default "unknown" }}"
+          VERSION="{{ vars.version | default "unknown" }}"
+          ENV="{{ vars.environment | default "unknown" }}"
+          STATUS="{{ vars.status | default "started" }}"
+
+          case "$STATUS" in
+            success|completed) EMOJI=":{{ vars._emoji_success }}:" COLOR="good" ;;
+            failure|failed)    EMOJI=":{{ vars._emoji_failure }}:" COLOR="danger" ;;
+            started|deploying) EMOJI=":rocket:" COLOR="#439FE0" ;;
+            *)                 EMOJI=":{{ vars._emoji_info }}:" COLOR="warning" ;;
+          esac
+
+          echo "${EMOJI} *Deployment ${STATUS}*"
+          echo "App: ${APP} | Version: ${VERSION} | Env: ${ENV}"
+          echo "---"
+          echo "[SLACK] Deployment notification sent to {{ config.channel | default "#deployments" }}"
+        outputs:
+          notified: "true"
+          summary: "{{ vars.app_name }}:{{ vars.version }} → {{ vars.environment }} ({{ vars.status }})"

@@ -1,0 +1,127 @@
+name: post-deploy-smoke-test
+desc: Validates deployed services by running HTTP health checks against a list of endpoints
+
+defaults:
+  app_name: "payments-service"
+  environment: "staging"
+  deploy_version: "3.4.1"
+  health_endpoint: "/healthz"
+  api_endpoint: "/api/v1/status"
+  metrics_endpoint: "/metrics"
+
+tasks:
+  # -------------------------------------------------------
+  # Smoke test: hit each endpoint, collect results, verify
+  # -------------------------------------------------------
+  smoke_test:
+    desc: "Run smoke tests against deployed service endpoints"
+    steps:
+      - name: check_health
+        desc: "Check the health endpoint (expects 200)"
+        func: shell
+        do: |
+          echo "Checking {{ vars.app_name }} {{ vars.health_endpoint }} in {{ vars.environment }}..."
+          echo "HTTP/1.1 200 OK"
+          echo "Content-Type: application/json"
+          echo '{"status":"healthy","version":"{{ vars.deploy_version }}","uptime":"3612s"}'
+        outputs:
+          status_code: "200"
+          body: '{"status":"healthy","version":"{{ vars.deploy_version }}"}'
+
+      - name: check_api
+        desc: "Check the API status endpoint (expects 200)"
+        func: shell
+        do: |
+          echo "Checking {{ vars.app_name }} {{ vars.api_endpoint }} in {{ vars.environment }}..."
+          echo "HTTP/1.1 200 OK"
+          echo "Content-Type: application/json"
+          echo '{"service":"{{ vars.app_name }}","environment":"{{ vars.environment }}","database":"connected","cache":"connected","queue":"connected"}'
+        outputs:
+          status_code: "200"
+          db_status: "connected"
+          cache_status: "connected"
+
+      - name: check_metrics
+        desc: "Check the metrics endpoint (expects 200)"
+        func: shell
+        do: |
+          echo "Checking {{ vars.app_name }} {{ vars.metrics_endpoint }} in {{ vars.environment }}..."
+          echo "HTTP/1.1 200 OK"
+          echo "Content-Type: text/plain"
+          echo "http_requests_total 48291"
+          echo "http_request_duration_seconds_p99 0.085"
+          echo "active_connections 142"
+        outputs:
+          status_code: "200"
+          request_count: "48291"
+          p99_latency: "0.085"
+
+      # ---- Assertions ----
+      - name: verify_health
+        desc: "Assert health endpoint returned 200"
+        func: assert
+        args:
+          condition: '{{ eq steps.check_health.status_code "200" }}'
+          desc: "Health endpoint must return 200"
+
+      - name: verify_api
+        desc: "Assert API endpoint returned 200 and database is connected"
+        func: assert
+        args:
+          condition: '{{ and (eq steps.check_api.status_code "200") (eq steps.check_api.db_status "connected") }}'
+          desc: "API endpoint must return 200 with database connected"
+
+      - name: verify_metrics
+        desc: "Assert metrics endpoint returned 200"
+        func: assert
+        args:
+          condition: '{{ eq steps.check_metrics.status_code "200" }}'
+          desc: "Metrics endpoint must return 200"
+
+      # ---- Summary ----
+      - name: print_summary
+        desc: "Print smoke test summary report"
+        func: shell
+        do: |
+          echo ""
+          echo "============================================"
+          echo "  SMOKE TEST REPORT"
+          echo "============================================"
+          echo ""
+          echo "Application : {{ vars.app_name }}"
+          echo "Environment : {{ vars.environment }}"
+          echo "Version     : {{ vars.deploy_version }}"
+          echo ""
+          echo "Endpoint Results:"
+          echo "  {{ vars.health_endpoint }}  -> {{ steps.check_health.status_code }} OK"
+          echo "  {{ vars.api_endpoint }}     -> {{ steps.check_api.status_code }} OK"
+          echo "  {{ vars.metrics_endpoint }}       -> {{ steps.check_metrics.status_code }} OK"
+          echo ""
+          echo "Service Dependencies:"
+          echo "  Database : {{ steps.check_api.db_status }}"
+          echo "  Cache    : {{ steps.check_api.cache_status }}"
+          echo ""
+          echo "Performance:"
+          echo "  Total Requests : {{ steps.check_metrics.request_count }}"
+          echo "  P99 Latency    : {{ steps.check_metrics.p99_latency }}s"
+          echo ""
+          echo "============================================"
+          echo "  ALL SMOKE TESTS PASSED"
+          echo "============================================"
+
+  # -------------------------------------------------------
+  # Entry point
+  # -------------------------------------------------------
+  main:
+    desc: "Run post-deploy smoke tests"
+    steps:
+      - name: announce
+        desc: "Announce smoke test start"
+        func: shell
+        do: |
+          echo "Starting post-deploy smoke tests for {{ vars.app_name }} v{{ vars.deploy_version }}"
+          echo "Target environment: {{ vars.environment }}"
+
+      - name: run_smoke_tests
+        desc: "Execute the smoke test suite"
+        task: smoke_test

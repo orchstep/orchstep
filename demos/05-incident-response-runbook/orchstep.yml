@@ -1,0 +1,198 @@
+name: incident-response-runbook
+description: >
+  Automated incident response runbook that gathers diagnostics, identifies
+  probable cause, notifies the on-call team, and generates an incident report.
+  All commands are simulated for demonstration purposes.
+
+defaults:
+  service_name: "payment-service"
+  severity: "p1"
+  incident_id: "INC-20260311-042"
+
+tasks:
+  triage:
+    description: "Perform full incident triage: gather data, diagnose, notify, report"
+    steps:
+      - name: gather_system_info
+        description: "Collect disk, memory, and CPU metrics from the affected host"
+        func: shell
+        do: |
+          echo "=== System Resource Snapshot ==="
+          echo "Host: prod-payment-01.internal"
+          echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo '2026-03-11T04:30:00Z')"
+          echo ""
+          echo "DISK USAGE:"
+          echo "  /          92% used (46G / 50G)"
+          echo "  /var/log   88% used (4.4G / 5G)"
+          echo ""
+          echo "MEMORY:"
+          echo "  Total: 16384 MB"
+          echo "  Used:  15200 MB (92.8%)"
+          echo "  Free:  1184 MB"
+          echo "  Swap:  2048 MB used"
+          echo ""
+          echo "CPU:"
+          echo "  Load Average: 12.4, 10.8, 8.2"
+          echo "  CPU Cores: 4"
+          echo "  Top Process: java ({{ vars.service_name }}) - 340% CPU"
+          echo ""
+          echo "MEMORY_PERCENT=92"
+          echo "DISK_PERCENT=92"
+          echo "CPU_LOAD=12.4"
+        outputs:
+          memory_percent: '{{ result.output | regexFind "MEMORY_PERCENT=([0-9]+)" }}'
+          disk_percent: '{{ result.output | regexFind "DISK_PERCENT=([0-9]+)" }}'
+          cpu_load: '{{ result.output | regexFind "CPU_LOAD=([0-9.]+)" }}'
+
+      - name: check_service_health
+        description: "Query the service health endpoint and dependent services"
+        func: shell
+        do: |
+          echo "=== Service Health Check ==="
+          echo "Service: {{ vars.service_name }}"
+          echo ""
+          echo "Health Endpoint: https://{{ vars.service_name }}.internal/health"
+          echo "  Status: 503 Service Unavailable"
+          echo "  Response Time: 12340ms (timeout threshold: 5000ms)"
+          echo ""
+          echo "Dependency Health:"
+          echo "  postgres-primary    UP    (latency: 45ms)"
+          echo "  redis-cache         UP    (latency: 2ms)"
+          echo "  rabbitmq            DOWN  (connection refused)"
+          echo "  auth-service        UP    (latency: 120ms)"
+          echo ""
+          echo "SERVICE_STATUS=unhealthy"
+          echo "FAILED_DEPENDENCY=rabbitmq"
+        outputs:
+          service_status: '{{ result.output | regexFind "SERVICE_STATUS=([a-z]+)" }}'
+          failed_dependency: '{{ result.output | regexFind "FAILED_DEPENDENCY=([a-z-]+)" }}'
+
+      - name: collect_recent_logs
+        description: "Pull recent error logs from the service"
+        func: shell
+        do: |
+          echo "=== Recent Error Logs (last 15 minutes) ==="
+          echo "Source: /var/log/{{ vars.service_name }}/application.log"
+          echo ""
+          echo "[04:18:22] ERROR ConnectionPool - Failed to connect to rabbitmq:5672 (attempt 1/3)"
+          echo "[04:18:25] ERROR ConnectionPool - Failed to connect to rabbitmq:5672 (attempt 2/3)"
+          echo "[04:18:28] ERROR ConnectionPool - Failed to connect to rabbitmq:5672 (attempt 3/3)"
+          echo "[04:18:28] FATAL MessageBroker - RabbitMQ connection exhausted, entering circuit breaker"
+          echo "[04:18:30] ERROR PaymentProcessor - Cannot enqueue payment event: broker unavailable"
+          echo "[04:19:01] ERROR HealthCheck - Dependency check failed: rabbitmq"
+          echo "[04:20:00] WARN  ThreadPool - 148/150 threads blocked waiting for broker"
+          echo "[04:22:15] ERROR OutOfMemoryError - Java heap space"
+          echo ""
+          echo "ERROR_COUNT=8"
+          echo "DOMINANT_ERROR=rabbitmq_connection_failure"
+        outputs:
+          error_count: '{{ result.output | regexFind "ERROR_COUNT=([0-9]+)" }}'
+          dominant_error: '{{ result.output | regexFind "DOMINANT_ERROR=([a-z_]+)" }}'
+
+      - name: check_recent_deployments
+        description: "Check for recent deployments that might correlate with the incident"
+        func: shell
+        do: |
+          echo "=== Recent Deployments (last 24 hours) ==="
+          echo ""
+          echo "DEPLOYMENT LOG:"
+          echo "  2026-03-11 02:15  rabbitmq        3.12.1 -> 3.13.0   deployed by: platform-bot"
+          echo "  2026-03-10 18:30  {{ vars.service_name }}  4.7.2 -> 4.7.3    deployed by: ci/cd"
+          echo "  2026-03-10 14:00  auth-service     2.1.0 -> 2.1.1    deployed by: ci/cd"
+          echo ""
+          echo "RECENT_DEPLOY=rabbitmq:3.13.0"
+          echo "DEPLOY_TIME=2026-03-11T02:15:00Z"
+        outputs:
+          recent_deploy: '{{ result.output | regexFind "RECENT_DEPLOY=([a-z0-9:.]+)" }}'
+          deploy_time: '{{ result.output | regexFind "DEPLOY_TIME=([0-9T:Z-]+)" }}'
+
+      - name: determine_cause
+        description: "Correlate gathered data to determine the most likely root cause"
+        func: shell
+        do: |
+          echo "=== Root Cause Analysis ==="
+          echo ""
+          echo "Evidence collected:"
+          echo "  - Service status:     {{ steps.check_service_health.service_status }}"
+          echo "  - Failed dependency:  {{ steps.check_service_health.failed_dependency }}"
+          echo "  - Dominant error:     {{ steps.collect_recent_logs.dominant_error }}"
+          echo "  - Recent deployment:  {{ steps.check_recent_deployments.recent_deploy }}"
+          echo "  - Memory usage:       {{ steps.gather_system_info.memory_percent }}%"
+          echo "  - CPU load:           {{ steps.gather_system_info.cpu_load }}"
+          echo ""
+          echo "Correlation:"
+          echo "  1. RabbitMQ was upgraded to 3.13.0 at 02:15 UTC"
+          echo "  2. {{ vars.service_name }} began failing RabbitMQ connections at 04:18 UTC"
+          echo "  3. Thread pool exhaustion caused memory pressure (92%)"
+          echo "  4. OOM errors followed due to blocked threads accumulating"
+          echo ""
+          echo "LIKELY_CAUSE=rabbitmq_upgrade_incompatibility"
+          echo "RECOMMENDED_ACTION=rollback_rabbitmq_to_3.12.1"
+        outputs:
+          likely_cause: '{{ result.output | regexFind "LIKELY_CAUSE=([a-z_]+)" }}'
+          recommended_action: '{{ result.output | regexFind "RECOMMENDED_ACTION=([a-z_0-9.]+)" }}'
+
+      - name: send_notification
+        description: "Send incident notification to the on-call channel"
+        func: shell
+        do: |
+          echo "=== Sending Slack Notification ==="
+          echo ""
+          echo "Channel: #incidents-{{ vars.severity }}"
+          echo "Payload:"
+          echo "  {"
+          echo "    \"incident_id\": \"{{ vars.incident_id }}\","
+          echo "    \"severity\": \"{{ vars.severity }}\","
+          echo "    \"service\": \"{{ vars.service_name }}\","
+          echo "    \"status\": \"{{ steps.check_service_health.service_status }}\","
+          echo "    \"likely_cause\": \"{{ steps.determine_cause.likely_cause }}\","
+          echo "    \"action\": \"{{ steps.determine_cause.recommended_action }}\","
+          echo "    \"responder\": \"@oncall-payments\""
+          echo "  }"
+          echo ""
+          echo "Notification sent successfully."
+          echo "NOTIFIED=true"
+        outputs:
+          notified: '{{ result.output | regexFind "NOTIFIED=([a-z]+)" }}'
+
+      - name: generate_report
+        description: "Compile a full incident report from all gathered data"
+        func: shell
+        do: |
+          echo "============================================"
+          echo "       INCIDENT REPORT"
+          echo "============================================"
+          echo ""
+          echo "Incident ID:    {{ vars.incident_id }}"
+          echo "Severity:       {{ vars.severity | upper }}"
+          echo "Service:        {{ vars.service_name }}"
+          echo "Generated:      $(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo '2026-03-11T04:35:00Z')"
+          echo ""
+          echo "--- SYSTEM METRICS ---"
+          echo "  Memory:  {{ steps.gather_system_info.memory_percent }}% used"
+          echo "  Disk:    {{ steps.gather_system_info.disk_percent }}% used"
+          echo "  CPU:     {{ steps.gather_system_info.cpu_load }} load avg"
+          echo ""
+          echo "--- SERVICE STATUS ---"
+          echo "  Health:             {{ steps.check_service_health.service_status }}"
+          echo "  Failed Dependency:  {{ steps.check_service_health.failed_dependency }}"
+          echo "  Error Count:        {{ steps.collect_recent_logs.error_count }}"
+          echo ""
+          echo "--- ROOT CAUSE ---"
+          echo "  Likely Cause:       {{ steps.determine_cause.likely_cause }}"
+          echo "  Correlated Deploy:  {{ steps.check_recent_deployments.recent_deploy }}"
+          echo "  Deploy Time:        {{ steps.check_recent_deployments.deploy_time }}"
+          echo ""
+          echo "--- RECOMMENDED ACTION ---"
+          echo "  {{ steps.determine_cause.recommended_action }}"
+          echo ""
+          echo "--- NOTIFICATION ---"
+          echo "  Team notified: {{ steps.send_notification.notified }}"
+          echo ""
+          echo "============================================"
+
+  main:
+    description: "Entry point - execute the incident triage runbook"
+    steps:
+      - name: run_triage
+        task: triage

@@ -1,0 +1,198 @@
+name: "Compliance Evidence Collection"
+desc: "Collects audit evidence across access control, encryption, backups, network security, and change management for SOC2/HIPAA compliance"
+
+defaults:
+  audit_type: "soc2"
+  collection_date: "2026-03-11"
+
+tasks:
+  collect:
+    desc: "Gather compliance evidence across all control domains"
+    steps:
+      - name: collect_access_control
+        desc: "Collect access control evidence - user accounts, roles, and permissions"
+        func: shell
+        do: |
+          echo "=== Access Control Evidence ({{ vars.audit_type | upper }}) ==="
+          echo "Collection date: {{ vars.collection_date }}"
+          echo ""
+          echo "IAM Users: 47 active, 3 inactive (disabled within policy window)"
+          echo "Service Accounts: 12 active, all with rotation < 90 days"
+          echo "MFA Status: 47/47 users (100%) have MFA enabled"
+          echo ""
+          echo "Role Summary:"
+          echo "  admin:       3 users  (CTO, VP Eng, Security Lead)"
+          echo "  developer:   28 users (engineering team)"
+          echo "  read-only:   12 users (support, analytics)"
+          echo "  ci-service:  4 accounts (GitHub Actions, ArgoCD, Terraform, Monitoring)"
+          echo ""
+          echo "Recent Access Reviews:"
+          echo "  Last quarterly review: 2026-01-15 (within 90-day window)"
+          echo "  Terminated users removed within 24h: 2 in last quarter"
+          echo "  Orphaned accounts found: 0"
+          echo ""
+          echo "Evidence exported: access-control-{{ vars.collection_date }}.json"
+          echo "controls_checked=6 controls_passed=6"
+        outputs:
+          controls_passed: '{{ result.output | regexFind "controls_passed=([0-9]+)" }}'
+          total_controls: '{{ result.output | regexFind "controls_checked=([0-9]+)" }}'
+
+      - name: collect_encryption
+        desc: "Collect encryption status for data at rest and in transit"
+        func: shell
+        do: |
+          echo "=== Encryption Evidence ({{ vars.audit_type | upper }}) ==="
+          echo ""
+          echo "Data at Rest:"
+          echo "  RDS (PostgreSQL): AES-256, AWS KMS key rotation enabled"
+          echo "  S3 Buckets: 23/23 encrypted (SSE-KMS), 0 public access"
+          echo "  EBS Volumes: 18/18 encrypted (AES-256)"
+          echo "  DynamoDB: 4/4 tables encrypted (AWS owned CMK)"
+          echo ""
+          echo "Data in Transit:"
+          echo "  ALB/NLB: TLS 1.2+ enforced, no TLS 1.0/1.1"
+          echo "  API Gateway: TLS 1.2 minimum, HSTS enabled"
+          echo "  Internal services: mTLS via service mesh (Istio)"
+          echo "  Database connections: SSL required, certificates valid until 2027-06"
+          echo ""
+          echo "Certificate Inventory:"
+          echo "  Total certificates: 14"
+          echo "  Expiring within 30 days: 0"
+          echo "  Expiring within 90 days: 1 (internal CA, renewal scheduled)"
+          echo ""
+          echo "Evidence exported: encryption-{{ vars.collection_date }}.json"
+          echo "controls_checked=5 controls_passed=5"
+        outputs:
+          controls_passed: '{{ result.output | regexFind "controls_passed=([0-9]+)" }}'
+          total_controls: '{{ result.output | regexFind "controls_checked=([0-9]+)" }}'
+
+      - name: collect_backup_verification
+        desc: "Collect backup status and recovery test evidence"
+        func: shell
+        do: |
+          echo "=== Backup Verification Evidence ({{ vars.audit_type | upper }}) ==="
+          echo ""
+          echo "Database Backups:"
+          echo "  RDS automated snapshots: daily, 35-day retention"
+          echo "  Last snapshot: 2026-03-11T03:00:00Z (SUCCESS)"
+          echo "  Cross-region replication: us-east-1 -> us-west-2 (active)"
+          echo ""
+          echo "Object Storage Backups:"
+          echo "  S3 versioning: enabled on all 23 buckets"
+          echo "  S3 cross-region: 8/8 critical buckets replicated"
+          echo "  Lifecycle policy: 90-day transition to Glacier"
+          echo ""
+          echo "Recovery Testing:"
+          echo "  Last RDS restore test: 2026-02-28 (SUCCESS, RPO: 4h, RTO: 45min)"
+          echo "  Last S3 restore test:  2026-02-28 (SUCCESS, 100% objects verified)"
+          echo "  Last full DR test:     2026-01-20 (SUCCESS, failover in 2h 15min)"
+          echo "  Next scheduled DR test: 2026-04-15"
+          echo ""
+          echo "Evidence exported: backups-{{ vars.collection_date }}.json"
+          echo "controls_checked=4 controls_passed=4"
+        outputs:
+          controls_passed: '{{ result.output | regexFind "controls_passed=([0-9]+)" }}'
+          total_controls: '{{ result.output | regexFind "controls_checked=([0-9]+)" }}'
+
+      - name: collect_network_security
+        desc: "Collect network security posture evidence"
+        func: shell
+        do: |
+          echo "=== Network Security Evidence ({{ vars.audit_type | upper }}) ==="
+          echo ""
+          echo "VPC Configuration:"
+          echo "  VPCs: 3 (production, staging, management)"
+          echo "  Public subnets: 6 (ALB/NAT only, no direct EC2 exposure)"
+          echo "  Private subnets: 12 (all workloads)"
+          echo "  VPC Flow Logs: enabled on all VPCs, 90-day retention"
+          echo ""
+          echo "Security Groups:"
+          echo "  Total: 34 security groups"
+          echo "  Open to 0.0.0.0/0: 2 (ALB port 443 only - expected)"
+          echo "  Unused security groups: 0"
+          echo "  Last review: 2026-03-01"
+          echo ""
+          echo "WAF Status:"
+          echo "  AWS WAF: active on all ALBs"
+          echo "  Rules: OWASP Top 10, rate limiting (1000 req/min/IP)"
+          echo "  Blocked requests (last 30 days): 12,847"
+          echo ""
+          echo "Vulnerability Scanning:"
+          echo "  Last scan: 2026-03-10"
+          echo "  Critical: 0, High: 0, Medium: 2 (remediation in progress)"
+          echo ""
+          echo "Evidence exported: network-security-{{ vars.collection_date }}.json"
+          echo "controls_checked=5 controls_passed=5"
+        outputs:
+          controls_passed: '{{ result.output | regexFind "controls_passed=([0-9]+)" }}'
+          total_controls: '{{ result.output | regexFind "controls_checked=([0-9]+)" }}'
+
+      - name: collect_change_management
+        desc: "Collect change management and deployment audit trail"
+        func: shell
+        do: |
+          echo "=== Change Management Evidence ({{ vars.audit_type | upper }}) ==="
+          echo ""
+          echo "Deployment History (last 30 days):"
+          echo "  Total deployments: 23"
+          echo "  Production: 8 (all via CI/CD pipeline)"
+          echo "  Staging: 15"
+          echo "  Manual/hotfix deployments: 0"
+          echo ""
+          echo "Approval Records:"
+          echo "  PRs merged to main: 42"
+          echo "  PRs with required reviews: 42/42 (100%)"
+          echo "  Average review time: 4.2 hours"
+          echo "  PRs with CI passing: 42/42 (100%)"
+          echo ""
+          echo "Rollback Events:"
+          echo "  Rollbacks in period: 1"
+          echo "  Date: 2026-02-19, Duration: 12 minutes"
+          echo "  Root cause: Memory leak in user-service v2.14.0"
+          echo "  Post-mortem: completed 2026-02-21 (JIRA-2341)"
+          echo ""
+          echo "Evidence exported: change-management-{{ vars.collection_date }}.json"
+          echo "controls_checked=4 controls_passed=4"
+        outputs:
+          controls_passed: '{{ result.output | regexFind "controls_passed=([0-9]+)" }}'
+          total_controls: '{{ result.output | regexFind "controls_checked=([0-9]+)" }}'
+
+      - name: generate_evidence_package
+        desc: "Generate final evidence package summary"
+        func: shell
+        do: |
+          echo "=============================================="
+          echo "  COMPLIANCE EVIDENCE PACKAGE"
+          echo "=============================================="
+          echo ""
+          echo "Audit Type:      {{ vars.audit_type | upper }}"
+          echo "Collection Date: {{ vars.collection_date }}"
+          echo "Generated By:    OrchStep Compliance Pipeline v1.0"
+          echo ""
+          echo "Control Domain Summary:"
+          echo "  1. Access Control:     {{ steps.collect_access_control.controls_passed }}/{{ steps.collect_access_control.total_controls }} passed"
+          echo "  2. Encryption:         {{ steps.collect_encryption.controls_passed }}/{{ steps.collect_encryption.total_controls }} passed"
+          echo "  3. Backup & Recovery:  {{ steps.collect_backup_verification.controls_passed }}/{{ steps.collect_backup_verification.total_controls }} passed"
+          echo "  4. Network Security:   {{ steps.collect_network_security.controls_passed }}/{{ steps.collect_network_security.total_controls }} passed"
+          echo "  5. Change Management:  {{ steps.collect_change_management.controls_passed }}/{{ steps.collect_change_management.total_controls }} passed"
+          echo ""
+          echo "Overall: 24/24 controls passed"
+          echo "Status: READY FOR AUDITOR REVIEW"
+          echo ""
+          echo "Evidence Artifacts:"
+          echo "  - access-control-{{ vars.collection_date }}.json"
+          echo "  - encryption-{{ vars.collection_date }}.json"
+          echo "  - backups-{{ vars.collection_date }}.json"
+          echo "  - network-security-{{ vars.collection_date }}.json"
+          echo "  - change-management-{{ vars.collection_date }}.json"
+          echo ""
+          echo "Package uploaded to: s3://compliance-evidence/{{ vars.audit_type }}/{{ vars.collection_date }}/evidence-package.zip"
+          echo ""
+          echo "Next scheduled collection: 2026-04-11"
+
+  main:
+    desc: "Entry point - run compliance evidence collection"
+    steps:
+      - name: run_collection
+        desc: "Execute the evidence collection pipeline"
+        task: collect

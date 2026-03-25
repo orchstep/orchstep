@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "modules": [
+    {
+      "name": "@orchstep/slack-notify",
+      "version": "1.0.0",
+      "description": "Send Slack notifications from workflows",
+      "tier": "official",
+      "source": "modules/@orchstep/slack-notify",
+      "tags": ["slack", "notification", "messaging"]
+    },
+    {
+      "name": "@orchstep/health-check",
+      "version": "1.0.0",
+      "description": "Verify HTTP endpoint health",
+      "tier": "official",
+      "source": "modules/@orchstep/health-check",
+      "tags": ["health", "monitoring", "http"]
+    },
+    {
+      "name": "@orchstep/git-release",
+      "version": "1.0.0",
+      "description": "Git tagging and release note generation",
+      "tier": "official",
+      "source": "modules/@orchstep/git-release",
+      "tags": ["git", "release", "changelog"]
+    },
+    {
+      "name": "@orchstep/report-gen",
+      "version": "1.0.0",
+      "description": "Generate text and markdown reports",
+      "tier": "official",
+      "source": "modules/@orchstep/report-gen",
+      "tags": ["report", "markdown", "summary"]
+    },
+    {
+      "name": "@orchstep/env-check",
+      "version": "1.0.0",
+      "description": "Validate development environment prerequisites",
+      "tier": "official",
+      "source": "modules/@orchstep/env-check",
+      "tags": ["environment", "validation", "onboarding"]
+    }
+  ]
+}

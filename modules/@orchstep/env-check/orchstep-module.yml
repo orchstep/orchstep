@@ -1,0 +1,59 @@
+metadata:
+  name: demo-env-check
+  version: "1.0.0"
+  description: "Verify development environment prerequisites (demo)"
+  author: "orchstep"
+  tags: ["environment", "onboarding", "validation", "demo"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties: {}
+
+exports:
+  tools:
+    desc: "Check if required CLI tools are installed"
+    params:
+      - name: tools
+        type: string
+        required: true
+        desc: "Space-separated list of tool names"
+    returns:
+      type: object
+      properties:
+        tools_ok:
+          type: string
+        summary:
+          type: string
+
+  env_vars:
+    desc: "Check required environment variables"
+    params:
+      - name: required_vars
+        type: string
+        required: true
+        desc: "Space-separated list of env var names"
+    returns:
+      type: object
+      properties:
+        env_ok:
+          type: string
+        summary:
+          type: string
+
+  verify:
+    desc: "Full environment verification"
+    params:
+      - name: tools
+        type: string
+        required: true
+      - name: required_vars
+        type: string
+        required: false
+    returns:
+      type: object
+      properties:
+        ready:
+          type: string
