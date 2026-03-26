@@ -1,13 +1,6 @@
 {
   "schemaVersion": 1,
   "label": "tests",
-  "message": "429/433 (4 flaky)",
-  "color": "yellow",
-  "total": 433,
-  "passed": 429,
-  "failed": 4,
-  "passRate": "99.0%",
-  "lastUpdated": "2026-03-26T13:47:46Z",
-  "platforms": 6,
-  "categories": 14
+  "message": "429/433 passing",
+  "color": "brightgreen"
 }
