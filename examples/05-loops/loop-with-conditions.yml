@@ -1,0 +1,78 @@
+# Example: Loop with Conditions
+# Combine loops with "if:" to filter which iterations execute.
+# OrchStep evaluates the condition differently depending on context:
+#
+#   - if WITHOUT loop.* references -> evaluated ONCE before the loop
+#     (acts as a gate: run the entire loop or skip it)
+#   - if WITH loop.* references -> evaluated PER ITERATION
+#     (acts as a filter: skip individual items)
+#
+# Try: orchstep run
+# Try: orchstep run --var enable_deployment=false
+
+name: loop-with-conditions-demo
+desc: "Filter loop iterations using if conditions"
+
+defaults:
+  servers:
+    - name: "web-01"
+      type: "web"
+      enabled: true
+      port: 8080
+    - name: "web-02"
+      type: "web"
+      enabled: false
+      port: 8081
+    - name: "db-01"
+      type: "database"
+      enabled: true
+      port: 5432
+    - name: "cache-01"
+      type: "cache"
+      enabled: true
+      port: 6379
+  enable_deployment: true
+
+tasks:
+  main:
+    desc: "Deploy infrastructure with conditional filtering"
+    steps:
+      # Gate pattern: if without loop.* -> evaluated once
+      # If enable_deployment is false, the entire loop is skipped
+      - name: deploy_all
+        loop: '{{ vars.servers }}'
+        if: '{{ vars.enable_deployment }}'
+        func: shell
+        do: echo "Deploying {{ loop.item.name }} ({{ loop.item.type }})"
+
+      # Filter pattern: if with loop.item -> evaluated per iteration
+      # Only processes servers where enabled=true
+      - name: deploy_enabled_only
+        loop: '{{ vars.servers }}'
+        if: '{{ loop.item.enabled }}'
+        func: shell
+        do: echo "Deploying enabled server: {{ loop.item.name }} on port {{ loop.item.port }}"
+
+      # Complex filter: multiple conditions
+      # Only web servers that are enabled
+      - name: deploy_web_servers
+        loop: '{{ vars.servers }}'
+        if: '{{ and (eq loop.item.type "web") loop.item.enabled }}'
+        func: shell
+        do: echo "Web server: {{ loop.item.name }} on port {{ loop.item.port }}"
+
+      # Filter by type
+      - name: setup_databases
+        loop: '{{ vars.servers }}'
+        if: '{{ eq loop.item.type "database" }}'
+        func: shell
+        do: echo "Setting up database: {{ loop.item.name }} on port {{ loop.item.port }}"
+
+      # Show iteration metadata with filtering
+      - name: enabled_server_report
+        loop: '{{ vars.servers }}'
+        if: '{{ loop.item.enabled }}'
+        func: shell
+        do: |
+          echo "Server {{ loop.index1 }}/{{ loop.length }}: {{ loop.item.name }}"
+          echo "  Type: {{ loop.item.type }}, Port: {{ loop.item.port }}"

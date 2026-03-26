@@ -1,0 +1,73 @@
+# Example: Auto-Parse JSON Output
+# When a shell command outputs JSON (or YAML), OrchStep automatically
+# detects and parses it. The parsed data is available as "result.data_object".
+#
+# Key concepts:
+#   - result.output    -- raw stdout string (always available)
+#   - result.data_object -- auto-parsed JSON/YAML (when detected)
+#   - Nested field access: result.data_object.metadata.name
+#   - Array access: (index result.data_object.items 0)
+#   - Plain text output: result.data_object is empty, use result.output
+#
+# Try: orchstep run
+
+name: auto-parse-json-demo
+desc: "Automatically parse JSON and YAML from command output"
+
+tasks:
+  main:
+    desc: "Demonstrate auto-parsing of structured output"
+    steps:
+      # JSON output is auto-detected and parsed
+      - name: get_api_response
+        desc: "Simulate an API call that returns JSON"
+        func: shell
+        do: |
+          echo '{"message": "Hello World", "code": 200, "data": {"user": "alice", "role": "admin"}}'
+        outputs:
+          message: "{{ result.data_object.message }}"
+          code: "{{ result.data_object.code }}"
+          user: "{{ result.data_object.data.user }}"
+          role: "{{ result.data_object.data.role }}"
+          raw: "{{ result.output }}"
+
+      # Complex nested JSON with arrays
+      - name: get_pod_info
+        desc: "Simulate kubectl output with nested JSON"
+        func: shell
+        do: |
+          echo '{"apiVersion":"v1","kind":"Pod","metadata":{"name":"my-pod","namespace":"default","labels":{"app":"web"}},"spec":{"containers":[{"name":"nginx","image":"nginx:1.21"}]}}'
+        outputs:
+          pod_name: "{{ result.data_object.metadata.name }}"
+          namespace: "{{ result.data_object.metadata.namespace }}"
+          app_label: "{{ result.data_object.metadata.labels.app }}"
+          container_image: "{{ (index result.data_object.spec.containers 0).image }}"
+
+      # YAML output is also auto-detected
+      - name: get_service_config
+        desc: "Simulate a command that returns YAML"
+        func: shell
+        do: |
+          printf 'name: my-service\nversion: 1.2.3\nconfig:\n  enabled: true\n  replicas: 3\n'
+        outputs:
+          service_name: "{{ result.data_object.name }}"
+          version: "{{ result.data_object.version }}"
+          replicas: "{{ result.data_object.config.replicas }}"
+
+      # Plain text still works normally
+      - name: plain_text_output
+        desc: "Non-structured output uses result.output as usual"
+        func: shell
+        do: echo "This is plain text, not JSON or YAML"
+        outputs:
+          text: "{{ result.output }}"
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Auto-Parse Results ==="
+          echo "API user:     {{ steps.get_api_response.user }} ({{ steps.get_api_response.role }})"
+          echo "Pod:          {{ steps.get_pod_info.pod_name }} in {{ steps.get_pod_info.namespace }}"
+          echo "Container:    {{ steps.get_pod_info.container_image }}"
+          echo "Service:      {{ steps.get_service_config.service_name }} v{{ steps.get_service_config.version }}"
+          echo "Plain text:   {{ steps.plain_text_output.text }}"

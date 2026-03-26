@@ -1,0 +1,88 @@
+# Example: Structured Data with map_in / map_out
+# For complex data transformations, OrchStep provides JavaScript-powered
+# "map_in" and "map_out" blocks that run before and after a step.
+#
+# Key concepts:
+#   - map_in:  JavaScript that sets spec.* variables BEFORE the step runs
+#              (available as {{ vars.* }} inside "do:")
+#   - map_out: JavaScript that reads result.output AFTER the step runs
+#              and sets spec.* variables (available in "outputs:")
+#   - Transient scope: map_in/map_out vars only live during that step
+#   - "utils" helpers: parseJSON, toJSON, toYAML, upper, unique, sum, etc.
+#
+# Try: orchstep run
+
+name: structured-data-demo
+desc: "Transform data with map_in and map_out (JavaScript)"
+
+tasks:
+  main:
+    desc: "Data transformation pipeline"
+    steps:
+      # map_in: inject computed variables before shell execution
+      - name: build_greeting
+        desc: "Use map_in to prepare variables"
+        func: shell
+        map_in: |
+          spec.greeting = "Hello";
+          spec.name = "OrchStep User";
+        do: echo '{{ vars.greeting }}, {{ vars.name }}!'
+        outputs:
+          message: "{{ result.output }}"
+
+      # map_out: parse and transform command output
+      - name: parse_status
+        desc: "Use map_out to parse structured output"
+        func: shell
+        do: echo 'status=success,count=42'
+        map_out: |
+          const output = result.output.trim();
+          const parts = output.split(',');
+          spec.status = parts[0].split('=')[1];
+          spec.count = parseInt(parts[1].split('=')[1]);
+        outputs:
+          status: "{{ vars.status }}"
+          count: "{{ vars.count }}"
+
+      # Both map_in and map_out on the same step
+      - name: transform_user_id
+        desc: "Use both map_in and map_out together"
+        func: shell
+        map_in: |
+          spec.prefix = "USR";
+          spec.id = "00042";
+        do: echo '{{ vars.prefix }}-{{ vars.id }}'
+        map_out: |
+          spec.user_id = result.output.trim();
+          spec.is_valid = result.output.includes("USR-");
+        outputs:
+          user_id: "{{ vars.user_id }}"
+          valid: "{{ vars.is_valid }}"
+
+      # Parse JSON output with the utils helper
+      - name: parse_json_output
+        desc: "Use utils.parseJSON in map_out"
+        func: shell
+        do: |
+          echo '{"status":"ok","items":[1,2,3,4,5]}'
+        map_out: |
+          const data = utils.parseJSON(result.output);
+          spec.api_status = data.status;
+          spec.item_count = data.items.length.toString();
+          spec.item_total = utils.sum(data.items).toString();
+        outputs:
+          api_status: "{{ vars.api_status }}"
+          item_count: "{{ vars.item_count }}"
+          item_total: "{{ vars.item_total }}"
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Structured Data Results ==="
+          echo "Greeting:   {{ steps.build_greeting.message }}"
+          echo "Status:     {{ steps.parse_status.status }}"
+          echo "Count:      {{ steps.parse_status.count }}"
+          echo "User ID:    {{ steps.transform_user_id.user_id }}"
+          echo "Valid:      {{ steps.transform_user_id.valid }}"
+          echo "API Status: {{ steps.parse_json_output.api_status }}"
+          echo "Items:      {{ steps.parse_json_output.item_count }} (total: {{ steps.parse_json_output.item_total }})"

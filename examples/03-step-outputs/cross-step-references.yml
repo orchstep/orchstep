@@ -1,0 +1,67 @@
+# Example: Cross-Step References and Nested Outputs
+# Shows how outputs flow between steps, including inside conditional blocks.
+#
+# Key concepts:
+#   - Steps inside if/then blocks can produce outputs
+#   - Parent step's "outputs:" can reference inner step outputs
+#   - Inner step outputs are scoped to the conditional block
+#   - To expose inner outputs, map them in the parent step's "outputs:"
+#
+# Try: orchstep run
+# Try: orchstep run --var environment="production"
+
+name: cross-step-references-demo
+desc: "Outputs from conditional branches and nested steps"
+
+defaults:
+  environment: "nonproduction"
+
+tasks:
+  main:
+    desc: "Deploy with conditional region selection"
+    steps:
+      # Outputs from inside a conditional block are exposed
+      # through the parent step's "outputs:" section
+      - name: deploy_config
+        if: '{{ eq vars.environment "nonproduction" }}'
+        then:
+          - name: select_region
+            func: shell
+            do: echo "Selected region: us-west-2 (nonproduction)"
+            outputs:
+              region: "us-west-2"
+          - name: configure_cluster
+            func: shell
+            do: echo "Configuring cluster in {{ steps.select_region.region }}"
+            outputs:
+              cluster: "nonprod-{{ steps.select_region.region }}"
+        else:
+          - name: select_region
+            func: shell
+            do: echo "Selected region: us-east-1 (production)"
+            outputs:
+              region: "us-east-1"
+          - name: configure_cluster
+            func: shell
+            do: echo "Configuring cluster in {{ steps.select_region.region }}"
+            outputs:
+              cluster: "prod-{{ steps.select_region.region }}"
+        # Parent outputs expose the inner step values
+        outputs:
+          target_region: "{{ steps.configure_cluster.cluster }}"
+
+      # Reference the conditional step's output
+      - name: deploy_application
+        func: shell
+        do: |
+          echo "Deploying to cluster: {{ steps.deploy_config.target_region }}"
+          echo "Environment: {{ vars.environment }}"
+        outputs:
+          deployment_target: "{{ steps.deploy_config.target_region }}"
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Deployment Complete ==="
+          echo "Environment: {{ vars.environment }}"
+          echo "Target:      {{ steps.deploy_application.deployment_target }}"

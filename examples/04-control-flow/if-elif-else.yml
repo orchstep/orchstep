@@ -1,0 +1,130 @@
+# Example: If / Elif / Else Chains
+# For multi-branch decisions, use "elif:" to test additional conditions
+# in sequence. The first matching branch wins.
+#
+# Key concepts:
+#   - "if:" tests the first condition
+#   - "elif:" is a list of additional conditions, tested in order
+#   - "else:" runs if nothing above matched
+#   - Supports both Go template and JavaScript expressions
+#   - Outputs from the matched branch are available via the parent step
+#
+# Try: orchstep run
+# Try: orchstep run --var score=95
+
+name: if-elif-else-demo
+desc: "Multi-branch conditional execution"
+
+defaults:
+  score: 85
+
+tasks:
+  main:
+    desc: "Grade a score using if/elif/else"
+    steps:
+      # Multi-branch grading with Go template expressions
+      - name: assign_grade
+        if: '{{ gt vars.score 90 }}'
+        task: grade_a
+        elif:
+          - if: '{{ gt vars.score 80 }}'
+            task: grade_b
+          - if: '{{ gt vars.score 70 }}'
+            task: grade_c
+          - if: '{{ gt vars.score 60 }}'
+            task: grade_d
+        else:
+          task: grade_f
+        outputs:
+          final_grade: '{{ steps.result.grade }}'
+
+      # JavaScript expressions in elif chains
+      - name: classify_score
+        if: 'vars.score === 100'
+        task: perfect
+        elif:
+          - if: 'vars.score >= 90'
+            task: excellent
+          - if: 'vars.score >= 75'
+            task: good
+          - if: 'vars.score >= 60'
+            task: passing
+        else:
+          task: needs_improvement
+
+      - name: report
+        func: shell
+        do: |
+          echo "=== Score Report ==="
+          echo "Score: {{ vars.score }}"
+          echo "Grade: {{ steps.assign_grade.final_grade }}"
+
+  grade_a:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Grade A -- Excellent work!"
+        outputs:
+          grade: "A"
+
+  grade_b:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Grade B -- Good job!"
+        outputs:
+          grade: "B"
+
+  grade_c:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Grade C -- Satisfactory"
+        outputs:
+          grade: "C"
+
+  grade_d:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Grade D -- Needs improvement"
+        outputs:
+          grade: "D"
+
+  grade_f:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Grade F -- Did not pass"
+        outputs:
+          grade: "F"
+
+  perfect:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Perfect score!"
+
+  excellent:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Excellent!"
+
+  good:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Good"
+
+  passing:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Passing"
+
+  needs_improvement:
+    steps:
+      - name: result
+        func: shell
+        do: echo "Needs improvement"

@@ -1,0 +1,118 @@
+# Example: Switch / Case
+# For matching a single value against multiple options, use switch/case.
+# This is cleaner than long if/elif chains when comparing one variable.
+#
+# Key concepts:
+#   - "switch: value:" the expression to match against
+#   - "cases:" a list of when/then pairs
+#   - "when:" can be a single value or a list of values
+#   - "default:" runs if no case matches
+#   - Each case's "then:" contains a list of steps to execute
+#
+# Try: orchstep run
+# Try: orchstep run --var environment="production"
+# Try: orchstep run --var user_role="viewer"
+
+name: switch-case-demo
+desc: "Pattern matching with switch/case"
+
+defaults:
+  environment: "staging"
+  user_role: "admin"
+
+tasks:
+  main:
+    desc: "Configure based on environment and role"
+    steps:
+      # Match environment to set configuration
+      - name: env_config
+        switch:
+          value: '{{ vars.environment }}'
+          cases:
+            - when: production
+              then:
+                - name: prod_settings
+                  func: shell
+                  do: |
+                    echo "Environment: Production"
+                    echo "LOG_LEVEL=error"
+                    echo "REPLICAS=5"
+                  outputs:
+                    log_level: "error"
+                    replicas: "5"
+
+            - when: staging
+              then:
+                - name: staging_settings
+                  func: shell
+                  do: |
+                    echo "Environment: Staging"
+                    echo "LOG_LEVEL=warn"
+                    echo "REPLICAS=2"
+                  outputs:
+                    log_level: "warn"
+                    replicas: "2"
+
+            # "when" can match multiple values
+            - when: [development, dev]
+              then:
+                - name: dev_settings
+                  func: shell
+                  do: |
+                    echo "Environment: Development"
+                    echo "LOG_LEVEL=debug"
+                    echo "REPLICAS=1"
+                  outputs:
+                    log_level: "debug"
+                    replicas: "1"
+
+          default:
+            - name: unknown_env
+              func: shell
+              do: echo "Unknown environment -- using defaults"
+              outputs:
+                log_level: "info"
+                replicas: "1"
+
+      # Match user role to determine permissions
+      - name: permissions
+        switch:
+          value: '{{ vars.user_role }}'
+          cases:
+            - when: admin
+              then:
+                - name: admin_perms
+                  func: shell
+                  do: echo "Permissions: full access (create, read, update, delete)"
+                  outputs:
+                    access_level: "full"
+
+            - when: [editor, moderator]
+              then:
+                - name: editor_perms
+                  func: shell
+                  do: echo "Permissions: edit access (create, read, update)"
+                  outputs:
+                    access_level: "edit"
+
+            - when: viewer
+              then:
+                - name: viewer_perms
+                  func: shell
+                  do: echo "Permissions: read-only"
+                  outputs:
+                    access_level: "read"
+
+          default:
+            - name: guest_perms
+              func: shell
+              do: echo "Permissions: no access"
+              outputs:
+                access_level: "none"
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Configuration Summary ==="
+          echo "Environment: {{ vars.environment }}"
+          echo "User Role:   {{ vars.user_role }}"

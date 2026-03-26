@@ -1,0 +1,28 @@
+# Example: Shell with Timeout
+# Shows how to pass additional parameters to shell commands.
+# The "args:" block lets you set options like timeout alongside "do:".
+#
+# Try: orchstep run
+
+name: shell-with-timeout
+desc: "Shell commands with additional parameters"
+
+tasks:
+  main:
+    desc: "Run commands with timeout and other options"
+    steps:
+      - name: quick_command
+        desc: "A fast command with a generous timeout"
+        func: shell
+        do: echo 'This completes well within 30 seconds'
+        args:
+          timeout: 30
+
+      - name: health_check
+        desc: "Simulate a health check with a short timeout"
+        func: shell
+        do: |
+          echo "Checking service health..."
+          echo "Status: healthy"
+        args:
+          timeout: 10

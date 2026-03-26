@@ -1,0 +1,98 @@
+# Example: Basic If/Else
+# OrchStep supports conditional step execution using if/else.
+# Conditions can use Go template expressions or JavaScript expressions.
+#
+# Key concepts:
+#   - "if:" evaluates a condition (Go template or JavaScript)
+#   - When true: runs the step's task/func/then
+#   - When false: runs the "else:" branch (task or inline steps)
+#   - If false with no else: the step is silently skipped
+#
+# Try: orchstep run
+# Try: orchstep run --var environment="staging"
+# Try: orchstep run --var deploy_enabled=false
+
+name: if-else-basic-demo
+desc: "Conditional execution with if/else"
+
+defaults:
+  deploy_enabled: true
+  environment: "production"
+  threshold: 42
+
+tasks:
+  main:
+    desc: "Show different if/else patterns"
+    steps:
+      # Pattern 1: if true -> run task
+      - name: check_deploy_flag
+        if: '{{ vars.deploy_enabled }}'
+        task: do_deploy
+
+      # Pattern 2: if/else with task references
+      - name: select_environment
+        if: '{{ eq vars.environment "staging" }}'
+        task: deploy_staging
+        else: deploy_production
+
+      # Pattern 3: if with Go template comparison
+      - name: check_threshold
+        if: '{{ gt vars.threshold 50 }}'
+        task: threshold_high
+        else: threshold_low
+
+      # Pattern 4: if with JavaScript expression
+      - name: check_range
+        if: 'vars.threshold >= 40 && vars.threshold < 50'
+        task: in_range
+
+      # Pattern 5: if false with no else (step is skipped)
+      - name: dev_only_debug
+        if: '{{ eq vars.environment "development" }}'
+        task: debug_info
+
+      - name: finish
+        func: shell
+        do: echo "Workflow completed"
+
+  do_deploy:
+    steps:
+      - name: run
+        func: shell
+        do: echo "Deployment is enabled -- proceeding"
+
+  deploy_staging:
+    steps:
+      - name: run
+        func: shell
+        do: echo "Deploying to STAGING environment"
+
+  deploy_production:
+    steps:
+      - name: run
+        func: shell
+        do: echo "Deploying to PRODUCTION environment"
+
+  threshold_high:
+    steps:
+      - name: run
+        func: shell
+        do: echo "Threshold is high (> 50)"
+
+  threshold_low:
+    steps:
+      - name: run
+        func: shell
+        do: echo "Threshold is low (<= 50)"
+
+  in_range:
+    steps:
+      - name: run
+        func: shell
+        do: echo "Value is in range [40, 50)"
+
+  debug_info:
+    steps:
+      - name: run
+        func: shell
+        do: echo "Debug info (only in development)"
