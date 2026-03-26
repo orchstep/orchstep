@@ -1,0 +1,45 @@
+# Example: Basic Module Usage
+# Import a reusable module and call its tasks from your workflow.
+#
+# Any directory with an orchstep.yml can be used as a module -- no
+# special metadata file is required (implicit module). You reference
+# a module by giving it a name and a source path.
+#
+# Then call its tasks with `module: <name>` and `task: <task>`.
+#
+# Try: orchstep run
+
+name: basic-module-demo
+desc: "Simple module usage with implicit modules"
+
+# Import the greeting module from a local directory
+modules:
+  - name: greeter
+    source: "./modules/greeting"
+    # No config needed -- uses the module's defaults
+
+tasks:
+  main:
+    desc: "Use the greeting module"
+    steps:
+      # Call the module's "greet" task
+      - name: say_hello
+        module: greeter
+        task: greet
+
+      # Access the module's step outputs
+      - name: show_result
+        func: shell
+        do: |
+          echo "Module returned: {{ steps.say_hello.greeting }}"
+          echo "Recipient was:   {{ steps.say_hello.recipient }}"
+
+      - name: explain
+        func: shell
+        do: |
+          echo ""
+          echo "=== Module Basics ==="
+          echo "1. Create a directory with an orchstep.yml"
+          echo "2. Import it:  modules: [{name: x, source: ./path}]"
+          echo "3. Call tasks:  module: x, task: task_name"
+          echo "4. Read outputs: steps.<step_name>.<output_name>"

@@ -1,0 +1,147 @@
+# Example: Deploy Pipeline
+# A realistic deployment pipeline that combines multiple OrchStep features:
+#   - Variables for configuration
+#   - Shell commands for build and deploy
+#   - HTTP health checks with retry
+#   - Assertions to validate success
+#
+# This is the kind of workflow that replaces a custom deploy script
+# with something readable, retryable, and composable.
+#
+# Try: orchstep run
+# Try: orchstep run --var environment=staging --var version=v2.1.0
+
+name: deploy-pipeline
+desc: "Production deployment pipeline with health checks and validation"
+
+defaults:
+  app_name: "payments-api"
+  version: "v1.0.0"
+  environment: "production"
+  registry: "registry.example.com"
+  replicas: 3
+  health_check_url: "https://payments-api.example.com/health"
+  rollback_on_failure: true
+
+tasks:
+  # --- Step 1: Build ---
+  build:
+    desc: "Build the container image"
+    steps:
+      - name: compile
+        func: shell
+        do: |
+          echo "=== Build Phase ==="
+          echo "Building {{ vars.app_name }}:{{ vars.version }}"
+          echo "Build completed at $(date +%H:%M:%S)"
+        outputs:
+          image_tag: "{{ vars.registry }}/{{ vars.app_name }}:{{ vars.version }}"
+
+      - name: run_tests
+        func: shell
+        do: |
+          echo "Running unit tests..."
+          echo "42 tests passed, 0 failed"
+        outputs:
+          tests_passed: 42
+          tests_failed: 0
+
+      - name: verify_tests
+        func: assert
+        args:
+          conditions:
+            - condition: "steps.run_tests.tests_failed === 0"
+              desc: "No test failures"
+            - condition: "steps.run_tests.tests_passed > 0"
+              desc: "At least one test ran"
+
+      - name: push_image
+        func: shell
+        do: |
+          echo "Pushing {{ steps.compile.image_tag }}"
+          echo "Image pushed successfully"
+
+  # --- Step 2: Deploy ---
+  deploy:
+    desc: "Deploy to the target environment"
+    steps:
+      - name: pre_deploy_check
+        func: shell
+        do: |
+          echo "=== Deploy Phase ==="
+          echo "Environment: {{ vars.environment }}"
+          echo "Replicas:    {{ vars.replicas }}"
+
+      - name: rolling_deploy
+        func: shell
+        do: |
+          echo "Starting rolling deployment..."
+          echo "Scaling {{ vars.app_name }} to {{ vars.replicas }} replicas"
+          echo "Deployment ID: deploy-{{ vars.environment }}-$(date +%s)"
+          echo "All replicas healthy"
+        outputs:
+          deploy_id: "deploy-{{ vars.environment }}-001"
+          status: "deployed"
+
+  # --- Step 3: Verify ---
+  verify:
+    desc: "Health check and validation"
+    steps:
+      # Health check with retry -- real deployments need time to stabilize
+      - name: health_check
+        desc: "Check service health (retries on failure)"
+        func: shell
+        do: |
+          echo "Checking health at {{ vars.health_check_url }}"
+          echo "Status: 200 OK"
+          echo "Response: {\"status\":\"healthy\",\"version\":\"{{ vars.version }}\"}"
+        outputs:
+          http_status: 200
+          response: '{"status":"healthy","version":"{{ vars.version }}"}'
+        retry:
+          max: 5
+          delay: 3
+          backoff: 2
+
+      - name: validate_health
+        func: assert
+        args:
+          conditions:
+            - condition: "steps.health_check.http_status === 200"
+              desc: "Health endpoint returns 200"
+            - condition: '{{ steps.health_check.response | contains "healthy" }}'
+              desc: "Service reports healthy status"
+
+      - name: smoke_test
+        func: shell
+        do: |
+          echo "Running smoke tests against {{ vars.environment }}..."
+          echo "POST /api/payments -- 201 Created"
+          echo "GET  /api/payments/1 -- 200 OK"
+          echo "All smoke tests passed"
+
+  # --- Orchestrator ---
+  main:
+    desc: "Run the full deploy pipeline"
+    steps:
+      - name: run_build
+        task: build
+
+      - name: run_deploy
+        task: deploy
+
+      - name: run_verify
+        task: verify
+
+      - name: report
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  Deployment Complete"
+          echo "=========================================="
+          echo "  App:         {{ vars.app_name }}"
+          echo "  Version:     {{ vars.version }}"
+          echo "  Environment: {{ vars.environment }}"
+          echo "  Replicas:    {{ vars.replicas }}"
+          echo "=========================================="

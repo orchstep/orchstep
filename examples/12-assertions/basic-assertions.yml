@@ -1,0 +1,149 @@
+# Example: Basic Assertions
+# Use the `assert` function to validate conditions in your workflows.
+# OrchStep supports two syntax styles for conditions:
+#
+#   1. Go template syntax:  {{ eq vars.status "ok" }}
+#   2. JavaScript syntax:   vars.status === "ok"
+#
+# Detection is automatic: if the expression starts with {{ it uses
+# Go templates; otherwise it uses JavaScript (goja VM).
+#
+# Try: orchstep run
+# Try: orchstep run js_assertions
+
+name: basic-assertions
+desc: "Simple condition checking with the assert function"
+
+defaults:
+  environment: "prod"
+  count: 10
+  status: "ok"
+  message: "deployment successful"
+
+tasks:
+  # --- Go Template assertions ---
+  go_template_assertions:
+    desc: "Assertions using Go template syntax"
+    steps:
+      - name: equality
+        desc: "Check exact equality"
+        func: assert
+        args:
+          condition: '{{ eq vars.environment "prod" }}'
+          desc: "Environment must be production"
+
+      - name: numeric
+        desc: "Numeric comparison"
+        func: assert
+        args:
+          condition: "{{ gt vars.count 5 }}"
+          desc: "Count must be greater than 5"
+
+      - name: string_contains
+        desc: "Check if a string contains a substring"
+        func: assert
+        args:
+          condition: '{{ contains vars.message "successful" }}'
+          desc: "Message must contain 'successful'"
+
+      - name: logical_and
+        desc: "Combine conditions with AND"
+        func: assert
+        args:
+          condition: '{{ and (eq vars.status "ok") (gt vars.count 5) }}'
+          desc: "Status must be ok AND count > 5"
+
+      - name: logical_or
+        desc: "Combine conditions with OR"
+        func: assert
+        args:
+          condition: '{{ or (eq vars.environment "prod") (eq vars.environment "staging") }}'
+          desc: "Environment must be prod or staging"
+
+      - name: negation
+        desc: "Negate a condition"
+        func: assert
+        args:
+          condition: '{{ not (eq vars.environment "dev") }}'
+          desc: "Environment must not be dev"
+
+  # --- JavaScript assertions ---
+  js_assertions:
+    desc: "Assertions using JavaScript syntax"
+    steps:
+      - name: equality
+        desc: "Check exact equality"
+        func: assert
+        args:
+          condition: 'vars.environment === "prod"'
+          desc: "Environment must be production"
+
+      - name: numeric
+        desc: "Numeric comparison"
+        func: assert
+        args:
+          condition: "vars.count > 5"
+          desc: "Count must be greater than 5"
+
+      - name: string_contains
+        desc: "Check if a string contains a substring"
+        func: assert
+        args:
+          condition: 'vars.message.includes("successful")'
+          desc: "Message must contain 'successful'"
+
+      - name: logical_and
+        desc: "Combine conditions with &&"
+        func: assert
+        args:
+          condition: 'vars.status === "ok" && vars.count > 5'
+          desc: "Status must be ok AND count > 5"
+
+      - name: negation
+        desc: "Negate a condition"
+        func: assert
+        args:
+          condition: 'vars.environment !== "dev"'
+          desc: "Environment must not be dev"
+
+  # --- Validate step outputs ---
+  validate_outputs:
+    desc: "Assert against step outputs"
+    steps:
+      - name: run_check
+        func: shell
+        do: echo "Status: healthy | Latency: 42ms"
+        outputs:
+          result: "{{ result.output }}"
+
+      - name: check_healthy
+        desc: "Verify the health check output"
+        func: assert
+        args:
+          condition: '{{ steps.run_check.result | contains "healthy" }}'
+          desc: "Service must report healthy status"
+
+  main:
+    desc: "Run all assertion demos"
+    steps:
+      - name: run_go_templates
+        task: go_template_assertions
+
+      - name: run_javascript
+        task: js_assertions
+
+      - name: run_output_check
+        task: validate_outputs
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Assertion Syntax Comparison ==="
+          echo ""
+          echo "Go Template:          JavaScript:"
+          echo "  eq .a .b              a === b"
+          echo "  gt .n 5               n > 5"
+          echo "  contains .s text      s.includes('text')"
+          echo "  and (c1) (c2)         c1 && c2"
+          echo "  or (c1) (c2)          c1 || c2"
+          echo "  not (c)               !c"

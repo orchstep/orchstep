@@ -1,0 +1,107 @@
+# Example: Environment Groups
+# Manage multi-environment configuration (dev, staging, production)
+# with shared group defaults and per-environment overrides.
+#
+# Structure:
+#   env_groups  -- shared settings for groups of environments
+#   environments -- per-environment settings that inherit from a group
+#   defaults    -- base fallback values
+#
+# Precedence: Step > Task > Environment > Group > Defaults
+#
+# Try: orchstep run --env dev
+# Try: orchstep run --env staging
+# Try: orchstep run --env production
+# Try: orchstep run show_precedence --env qa
+
+name: env-groups-demo
+desc: "Environment groups for multi-environment configuration"
+
+# Base defaults -- used when no environment is selected
+defaults:
+  app_name: "payments-api"
+  base_domain: "example.com"
+  log_level: "info"
+  replicas: 1
+  db_host: ""
+  api_host: ""
+  monitoring_enabled: false
+
+# Shared settings for groups of environments
+env_groups:
+  nonprod:
+    vars:
+      replicas: 2
+      log_level: "debug"
+      api_host: "api-nonprod"
+
+  prod:
+    vars:
+      replicas: 10
+      log_level: "error"
+      api_host: "api"
+      monitoring_enabled: true
+
+# Individual environments inherit from their group
+environments:
+  dev:
+    group: nonprod
+    vars:
+      db_host: "dev-db"
+
+  qa:
+    group: nonprod
+    vars:
+      db_host: "qa-db"
+      replicas: 3          # Override the nonprod group default
+
+  staging:
+    group: nonprod
+    vars:
+      db_host: "staging-db"
+      replicas: 5
+
+  production:
+    group: prod
+    vars:
+      db_host: "prod-db"
+
+tasks:
+  main:
+    desc: "Display resolved configuration for the selected environment"
+    steps:
+      - name: show_config
+        func: shell
+        do: |
+          echo "=== Resolved Configuration ==="
+          echo "app_name           = {{ vars.app_name }}"
+          echo "db_host            = {{ vars.db_host }}.{{ vars.base_domain }}"
+          echo "api_url            = https://{{ vars.api_host }}.{{ vars.base_domain }}"
+          echo "replicas           = {{ vars.replicas }}"
+          echo "log_level          = {{ vars.log_level }}"
+          echo "monitoring_enabled = {{ vars.monitoring_enabled }}"
+
+  # Show that task/step vars still override environment vars
+  show_precedence:
+    desc: "Task vars override environment-level vars"
+    vars:
+      replicas: 100      # Task-level override
+    steps:
+      - name: task_level
+        func: shell
+        do: |
+          echo "Task-level replicas = {{ vars.replicas }}"
+
+      - name: step_level
+        vars:
+          replicas: 200  # Step-level override (highest in-file priority)
+        func: shell
+        do: |
+          echo "Step-level replicas = {{ vars.replicas }}"
+
+      - name: explain
+        func: shell
+        do: |
+          echo ""
+          echo "=== Variable Precedence ==="
+          echo "  Step vars (200) > Task vars (100) > Environment > Group > Defaults"

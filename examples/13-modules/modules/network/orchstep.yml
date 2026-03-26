@@ -1,0 +1,32 @@
+# Module: network (base layer -- no dependencies)
+name: network-infra
+desc: "Network infrastructure provisioning"
+
+defaults:
+  region: "us-east-1"
+  cidr_block: "10.0.0.0/16"
+
+tasks:
+  provision:
+    desc: "Provision VPC, subnets, and routing"
+    steps:
+      - name: create_vpc
+        func: shell
+        do: |
+          echo "Creating VPC in {{ vars.region }}"
+          echo "CIDR: {{ vars.cidr_block }}"
+        outputs:
+          vpc_id: "vpc-{{ vars.region }}-001"
+          cidr: "{{ vars.cidr_block }}"
+
+      - name: create_subnets
+        func: shell
+        do: echo "Creating subnets in {{ steps.create_vpc.vpc_id }}"
+        outputs:
+          subnet_ids: "subnet-001,subnet-002,subnet-003"
+
+      - name: summary
+        func: shell
+        do: echo "Network ready - VPC {{ steps.create_vpc.vpc_id }}"
+        outputs:
+          status: "network_ready"
