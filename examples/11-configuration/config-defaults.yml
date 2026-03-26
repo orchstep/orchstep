@@ -1,0 +1,55 @@
+# Example: Configuration Defaults
+# OrchStep functions have built-in defaults (e.g. the shell function
+# defaults to the "gosh" interpreter). You can override those defaults
+# using a config file (orchstep-config.yml) so every invocation of a
+# function uses your preferred settings without repeating them.
+#
+# In this example we assume an orchstep-config.yml file in the same
+# directory sets:
+#   func:
+#     shell:
+#       type: "shell"     # Use system shell instead of gosh
+#       timeout: 120      # 2-minute timeout for all shell steps
+#
+# Steps no longer need to specify `type: shell` -- it is the default.
+#
+# Try: orchstep run
+
+name: config-defaults-demo
+desc: "Setting default function configuration via config file"
+
+# With a config file that sets shell defaults, these steps inherit
+# those defaults automatically.
+tasks:
+  main:
+    desc: "Run commands using config-file defaults"
+    steps:
+      - name: hello
+        desc: "Uses the shell type from config -- no need to specify it"
+        func: shell
+        do: echo 'Hello with config defaults!'
+
+      - name: system_info
+        desc: "Another shell step -- also inherits the config defaults"
+        func: shell
+        do: |
+          echo "Shell type: inherited from orchstep-config.yml"
+          echo "Timeout:    inherited from orchstep-config.yml"
+          echo "User:       $USER"
+          echo "Working in: $(pwd)"
+
+      - name: explain
+        func: shell
+        do: |
+          echo ""
+          echo "=== Config Defaults ==="
+          echo "Place an orchstep-config.yml alongside your orchstep.yml:"
+          echo ""
+          echo "  func:"
+          echo "    shell:"
+          echo "      type: shell       # Override default interpreter"
+          echo "      timeout: 120      # Default timeout in seconds"
+          echo "    http:"
+          echo "      timeout: 30       # HTTP request timeout"
+          echo ""
+          echo "All functions will use these defaults automatically."

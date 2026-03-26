@@ -1,0 +1,83 @@
+# Example: Module Variable Scoping
+# Modules are scope-isolated: they cannot see the consumer's variables
+# and the consumer cannot see the module's internal variables.
+#
+# Data flows into a module through `config:` and `with:`.
+# Data flows out through step outputs.
+#
+# If both the consumer and a module define the same variable name,
+# each sees its own value -- no collision.
+#
+# Try: orchstep run
+
+name: module-variable-scoping
+desc: "How variables resolve in modules -- scope isolation"
+
+defaults:
+  app_name: "consumer-app"
+  region: "us-east-1"
+
+modules:
+  - name: greeter
+    source: "./modules/greeting"
+    config:
+      # These values are visible inside the module
+      message: "Hello from config"
+      recipient: "Production Team"
+
+tasks:
+  main:
+    desc: "Demonstrate scope isolation between consumer and module"
+    steps:
+      # Consumer sees its own variables
+      - name: consumer_vars
+        desc: "Consumer's own variables"
+        func: shell
+        do: |
+          echo "=== Consumer Scope ==="
+          echo "app_name = {{ vars.app_name }}"
+          echo "region   = {{ vars.region }}"
+
+      # Module sees config values, not consumer variables
+      - name: module_call
+        desc: "Module sees config values, not consumer vars"
+        module: greeter
+        task: greet
+
+      # Consumer can read module outputs but not module internals
+      - name: read_outputs
+        desc: "Consumer reads module outputs"
+        func: shell
+        do: |
+          echo "=== Module Outputs ==="
+          echo "greeting  = {{ steps.module_call.greeting }}"
+          echo "recipient = {{ steps.module_call.recipient }}"
+
+      # Override for a specific call
+      - name: module_with_override
+        desc: "Use 'with:' to override for this call"
+        module: greeter
+        task: greet
+        with:
+          message: "Overridden greeting"
+          recipient: "Staging Team"
+
+      - name: show_override
+        func: shell
+        do: |
+          echo "=== With Override ==="
+          echo "greeting = {{ steps.module_with_override.greeting }}"
+
+      - name: summary
+        func: shell
+        do: |
+          echo ""
+          echo "=== Variable Scoping Rules ==="
+          echo "  1. Module cannot see consumer variables"
+          echo "  2. Consumer cannot see module internal variables"
+          echo "  3. Data in:  config: and with:"
+          echo "  4. Data out: step outputs"
+          echo "  5. Same variable name in consumer and module = no collision"
+          echo ""
+          echo "  Precedence inside module:"
+          echo "    with > config > task vars > module defaults"

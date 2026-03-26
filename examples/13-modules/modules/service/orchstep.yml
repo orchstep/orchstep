@@ -1,0 +1,42 @@
+# Module: service
+# A configurable service deployment module.
+# Config values override these defaults when imported.
+
+name: service-deployer
+desc: "Configurable service deployment"
+
+defaults:
+  service:
+    name: "default-service"
+    port: 8080
+    replicas: 1
+  features:
+    cache: false
+    logging: "info"
+
+tasks:
+  deploy:
+    desc: "Deploy the service with current configuration"
+    steps:
+      - name: run_deploy
+        func: shell
+        do: |
+          echo "=== Deploying Service ==="
+          echo "Name:     {{ vars.service.name }}"
+          echo "Port:     {{ vars.service.port }}"
+          echo "Replicas: {{ vars.service.replicas }}"
+          echo "Cache:    {{ vars.features.cache }}"
+          echo "Logging:  {{ vars.features.logging }}"
+        outputs:
+          service_name: "{{ vars.service.name }}"
+          service_port: "{{ vars.service.port }}"
+          replicas: "{{ vars.service.replicas }}"
+
+  status:
+    desc: "Check service status"
+    steps:
+      - name: check
+        func: shell
+        do: echo "{{ vars.service.name }} is running on port {{ vars.service.port }}"
+        outputs:
+          running: "true"

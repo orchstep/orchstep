@@ -1,0 +1,89 @@
+# Example: Loading from .env and .envrc Files
+# OrchStep can load environment variables from external files.
+# Supports standard .env format and bash-style .envrc (with export).
+#
+# Features:
+#   - Load one or multiple files in sequence (later files override earlier)
+#   - Supports .env key=value format
+#   - Supports .envrc with `export KEY=VALUE` format
+#   - Loaded vars persist for the rest of the task
+#
+# You can also use hierarchical file-based configuration with env_config
+# pointing to a directory of environment YAML files.
+#
+# Try: orchstep run
+# Try: orchstep run show_hierarchical --env dev
+
+name: env-file-loading
+desc: "Loading environment variables from .env and .envrc files"
+
+tasks:
+  # --- Load from .env files ---
+  load_env_files:
+    desc: "Load env vars from external files"
+    steps:
+      # Load one or more .env / .envrc files
+      # Files are loaded in order; later files override earlier ones
+      - name: load_from_files
+        desc: "Load vars from .envrc then override with prod.env"
+        func: env_var
+        do: load_env_file
+        args:
+          file:
+            - ./config/.envrc       # Base config (export KEY=VALUE)
+            - ./config/prod.env     # Prod overrides (KEY=VALUE)
+
+      - name: show_loaded_vars
+        desc: "Vars from both files are now available"
+        func: shell
+        do: |
+          echo "HOST = $HOST"
+          echo "PORT = $PORT"
+          echo "DEBUG = $DEBUG"
+
+  # --- Hierarchical file-based environments ---
+  # Point env_config.env_dir to a directory of YAML files.
+  # OrchStep loads: defaults.yml -> group.yml -> environment.yml
+  show_hierarchical:
+    desc: "Hierarchical environments loaded from a directory"
+    steps:
+      - name: show_resolved
+        func: shell
+        do: |
+          echo "=== Hierarchical Environment Config ==="
+          echo "app_name  = {{ vars.app_name }}"
+          echo "db_host   = {{ vars.db_host }}"
+          echo "replicas  = {{ vars.replicas }}"
+          echo "log_level = {{ vars.log_level }}"
+
+  main:
+    desc: "Demonstrate env file loading"
+    steps:
+      - name: explain
+        func: shell
+        do: |
+          echo "=== .env / .envrc File Loading ==="
+          echo ""
+          echo "Supported file formats:"
+          echo ""
+          echo "  .env format:"
+          echo "    HOST=prod.example.com"
+          echo "    PORT=6432"
+          echo "    DATABASE_URL=postgres://host:port/app"
+          echo ""
+          echo "  .envrc format (bash-style):"
+          echo "    export HOST=dev.example.com"
+          echo "    export PORT=5432"
+          echo "    export FEATURE_FLAGS='{\"beta\":true}'"
+          echo ""
+          echo "Load files with:"
+          echo "  func: env_var"
+          echo "  do: load_env_file"
+          echo "  args:"
+          echo "    file:"
+          echo "      - ./base.envrc"
+          echo "      - ./overrides.env"
+          echo ""
+          echo "Or use hierarchical YAML directories with:"
+          echo "  env_config:"
+          echo "    env_dir: environments"

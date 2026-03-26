@@ -1,0 +1,174 @@
+# Example: Unified Assertion Patterns
+# Comprehensive assertion patterns covering variables, step outputs,
+# objects, arrays, and helper functions.
+#
+# OrchStep provides JavaScript helper functions for common checks:
+#   exists("path")       -- true if the path resolves to a value
+#   len(value)           -- length of array or string
+#   contains(haystack, needle) -- check array/string containment
+#   matches(regex, str)  -- regex match
+#   get("path")          -- safely access nested values (returns null if missing)
+#
+# Try: orchstep run
+
+name: unified-patterns
+desc: "Unified assertion patterns for validation"
+
+defaults:
+  app_name: "order-service"
+  version: "3.1.0"
+  max_retries: 5
+  tags:
+    - name: "api"
+      priority: 1
+    - name: "backend"
+      priority: 2
+    - name: "critical"
+      priority: 3
+  config:
+    database:
+      host: "db.example.com"
+      port: 5432
+      pool_size: 25
+    cache:
+      enabled: true
+      ttl: 300
+
+tasks:
+  main:
+    desc: "Demonstrate unified assertion patterns"
+    steps:
+      # Setup: create step outputs to validate against
+      - name: health_check
+        func: shell
+        do: |
+          echo "Service: order-service"
+          echo "Status: healthy"
+          echo "Uptime: 72h"
+          echo "Active connections: 142"
+        outputs:
+          report: "{{ result.output }}"
+          active_users: 142
+          status: "healthy"
+          services: ["order-service", "payment-service", "notification-service"]
+
+      # --- Pattern 1: Variable validation ---
+      - name: validate_vars
+        desc: "Validate definition variables"
+        func: assert
+        args:
+          conditions:
+            - condition: '{{ eq vars.app_name "order-service" }}'
+              desc: "App name is set correctly"
+
+            - condition: "{{ gt vars.max_retries 3 }}"
+              desc: "Max retries is sufficient"
+
+            - condition: '{{ vars.version | upper | eq "3.1.0" }}'
+              desc: "Version string is correct (with sprig pipe)"
+
+      # --- Pattern 2: Step output validation ---
+      - name: validate_outputs
+        desc: "Validate step outputs from previous steps"
+        func: assert
+        args:
+          conditions:
+            - condition: 'steps.health_check.status === "healthy"'
+              desc: "Service reports healthy"
+
+            - condition: "steps.health_check.active_users > 100"
+              desc: "More than 100 active users"
+
+            - condition: '{{ steps.health_check.report | contains "Uptime" }}'
+              desc: "Report includes uptime information"
+
+      # --- Pattern 3: Nested object validation ---
+      - name: validate_nested
+        desc: "Validate nested object properties"
+        func: assert
+        args:
+          conditions:
+            - condition: '{{ eq vars.config.database.host "db.example.com" }}'
+              desc: "Database host is configured"
+
+            - condition: "vars.config.database.pool_size >= 20"
+              desc: "Pool size is adequate"
+
+            - condition: "vars.config.cache.enabled === true"
+              desc: "Cache is enabled"
+
+            - condition: "vars.config.cache.ttl === 300"
+              desc: "Cache TTL is 5 minutes"
+
+      # --- Pattern 4: Array validation ---
+      - name: validate_arrays
+        desc: "Validate array contents and properties"
+        func: assert
+        args:
+          conditions:
+            - condition: "{{ eq (len vars.tags) 3 }}"
+              desc: "Exactly 3 tags defined"
+
+            - condition: 'vars.tags[0].name === "api"'
+              desc: "First tag is 'api'"
+
+            - condition: "vars.tags[2].priority === 3"
+              desc: "Critical tag has priority 3"
+
+            - condition: 'steps.health_check.services.length === 3'
+              desc: "Three services reported"
+
+      # --- Pattern 5: JavaScript helper functions ---
+      - name: validate_with_helpers
+        desc: "Use built-in helper functions"
+        func: assert
+        args:
+          conditions:
+            # exists() -- check if a value is defined
+            - condition: 'exists("steps.health_check.status")'
+              desc: "Health check status exists"
+
+            # len() -- get length of arrays or strings
+            - condition: "len(steps.health_check.services) === 3"
+              desc: "Three services returned"
+
+            # contains() -- check array or string containment
+            - condition: 'contains(steps.health_check.services, "order-service")'
+              desc: "Order service is in the list"
+
+            # matches() -- regex matching
+            - condition: 'matches("^order", vars.app_name)'
+              desc: "App name starts with 'order'"
+
+            # get() -- safe nested access (returns null for missing paths)
+            - condition: 'get("vars.config.database.host") === "db.example.com"'
+              desc: "Safely access nested config"
+
+      # --- Pattern 6: Complex expressions ---
+      - name: validate_complex
+        desc: "Complex multi-condition expressions"
+        func: assert
+        args:
+          conditions:
+            # Go template: combine multiple checks
+            - condition: '{{ and (eq vars.config.cache.enabled true) (gt vars.config.database.pool_size 10) }}'
+              desc: "Cache enabled and pool size adequate"
+
+            # JavaScript: rich expression with multiple checks
+            - condition: |
+                vars.config.cache.enabled &&
+                vars.config.database.pool_size > 10 &&
+                vars.app_name.includes("service") &&
+                len(vars.tags) >= 3
+              desc: "All infrastructure requirements met"
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Assertion Helper Functions ==="
+          echo ""
+          echo "  exists('path')            -- value is defined"
+          echo "  len(value)                -- array/string length"
+          echo "  contains(haystack, needle) -- array/string search"
+          echo "  matches(regex, str)        -- regex matching"
+          echo "  get('path')               -- safe nested access"

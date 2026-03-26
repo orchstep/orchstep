@@ -1,0 +1,63 @@
+# Example: Module Overrides with `with:`
+# After setting config at import time, you can further override
+# values for a specific call using `with:`. This is useful when
+# different steps need different settings from the same module.
+#
+# Precedence: with > config > module defaults
+#
+# Try: orchstep run
+
+name: module-overrides-demo
+desc: "Override module defaults with 'with:' for specific calls"
+
+modules:
+  - name: db
+    source: "./modules/database"
+    config:
+      connection:
+        host: "prod-db.example.com"
+        port: 5432
+        pool_size: 50
+      operation:
+        timeout: 60
+        retry: 5
+
+tasks:
+  main:
+    desc: "Show how 'with:' overrides config per call"
+    steps:
+      # Call 1: Use the import-time config as-is
+      - name: normal_query
+        desc: "Normal query uses config values"
+        module: db
+        task: query
+        # pool_size=50, timeout=60 (from config)
+
+      # Call 2: Override specific values for this call only
+      - name: lightweight_query
+        desc: "Quick query with reduced pool and timeout"
+        module: db
+        task: query
+        with:
+          connection:
+            pool_size: 5         # Override for this call only
+          operation:
+            timeout: 10          # Fast timeout for quick queries
+
+      # Call 3: Back to normal -- 'with' does not persist
+      - name: another_normal_query
+        desc: "Back to config defaults (with does not persist)"
+        module: db
+        task: query
+
+      - name: compare
+        func: shell
+        do: |
+          echo "=== Override Comparison ==="
+          echo ""
+          echo "Normal query:     pool={{ steps.normal_query.pool }}, timeout={{ steps.normal_query.timeout }}"
+          echo "Lightweight:      pool={{ steps.lightweight_query.pool }}, timeout={{ steps.lightweight_query.timeout }}"
+          echo "Back to normal:   pool={{ steps.another_normal_query.pool }}, timeout={{ steps.another_normal_query.timeout }}"
+          echo ""
+          echo "Precedence: with > config > module defaults"
+          echo "'with:' only affects the step it is on."

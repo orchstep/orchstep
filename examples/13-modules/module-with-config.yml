@@ -1,0 +1,48 @@
+# Example: Module Configuration
+# When importing a module, pass `config:` to override the module's
+# default variable values. Config is applied at import time and
+# affects all calls to that module.
+#
+# Try: orchstep run
+
+name: module-with-config-demo
+desc: "Module configuration overrides defaults"
+
+# Import the service module with custom configuration
+modules:
+  - name: api
+    source: "./modules/service"
+    config:
+      service:
+        name: "payments-api"
+        port: 9000
+        replicas: 5
+      features:
+        cache: true
+        logging: "debug"
+
+tasks:
+  main:
+    desc: "Deploy and check the configured service"
+    steps:
+      # The module sees our config values, not its defaults
+      - name: deploy_api
+        module: api
+        task: deploy
+
+      - name: check_api
+        module: api
+        task: status
+
+      - name: show_result
+        func: shell
+        do: |
+          echo "Deployed: {{ steps.deploy_api.service_name }}"
+          echo "Port:     {{ steps.deploy_api.service_port }}"
+          echo "Replicas: {{ steps.deploy_api.replicas }}"
+          echo ""
+          echo "=== Module Config ==="
+          echo "Module defaults:  name=default-service, port=8080, replicas=1"
+          echo "Our config:       name=payments-api, port=9000, replicas=5"
+          echo ""
+          echo "Config overrides defaults at import time."

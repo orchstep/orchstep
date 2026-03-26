@@ -1,0 +1,33 @@
+metadata:
+  name: "app-stack"
+  version: "1.0.0"
+  description: "Application stack with database and network dependencies"
+
+config:
+  schema:
+    region:
+      type: string
+      default: "us-east-1"
+    app_name:
+      type: string
+      required: true
+    app_version:
+      type: string
+      default: "1.0.0"
+
+exports:
+  deploy:
+    desc: "Deploy full application stack"
+    params: []
+    returns:
+      type: object
+      properties:
+        deployment_id:
+          type: string
+          required: true
+        app_url:
+          type: string
+          required: true
+        status:
+          type: string
+          required: true

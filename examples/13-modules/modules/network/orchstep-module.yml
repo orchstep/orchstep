@@ -1,0 +1,32 @@
+metadata:
+  name: "network-infra"
+  version: "1.0.0"
+  description: "Network infrastructure provisioning"
+
+config:
+  schema:
+    region:
+      type: string
+      default: "us-east-1"
+      desc: "Cloud region"
+    cidr_block:
+      type: string
+      default: "10.0.0.0/16"
+      desc: "VPC CIDR block"
+
+exports:
+  provision:
+    desc: "Provision network infrastructure"
+    params: []
+    returns:
+      type: object
+      properties:
+        vpc_id:
+          type: string
+          required: true
+        subnet_ids:
+          type: string
+          required: true
+        status:
+          type: string
+          required: true

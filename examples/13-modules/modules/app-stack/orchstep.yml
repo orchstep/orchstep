@@ -1,0 +1,50 @@
+# Module: app-stack (imports database, which imports network)
+# This creates a 3-level nesting chain:
+#   Consumer -> app-stack -> database -> network
+name: app-stack
+desc: "Application deployment with database and network"
+
+# Import the database module (which itself imports the network module)
+modules:
+  - name: database
+    source: ../database
+    config:
+      connection:
+        host: "db-{{ vars.region }}.internal"
+        port: 5432
+        pool_size: 20
+      operation:
+        timeout: 30
+        retry: 3
+
+defaults:
+  region: "us-east-1"
+  app_name: "myapp"
+  app_version: "1.0.0"
+
+tasks:
+  deploy:
+    desc: "Deploy full application stack"
+    steps:
+      - name: setup_database
+        desc: "Provision database (which provisions network)"
+        module: database
+        task: query
+
+      - name: build_app
+        func: shell
+        do: |
+          echo "Building {{ vars.app_name }}:{{ vars.app_version }}"
+          echo "Database: {{ steps.setup_database.host }}"
+        outputs:
+          image: "{{ vars.app_name }}:{{ vars.app_version }}"
+
+      - name: deploy_app
+        func: shell
+        do: |
+          echo "Deploying {{ steps.build_app.image }}"
+          echo "Region: {{ vars.region }}"
+        outputs:
+          deployment_id: "deploy-{{ vars.app_name }}-001"
+          app_url: "https://{{ vars.app_name }}.{{ vars.region }}.example.com"
+          status: "deployed"

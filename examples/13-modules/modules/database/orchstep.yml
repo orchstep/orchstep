@@ -1,0 +1,43 @@
+# Module: database
+# Database operations module with configurable connection settings.
+
+name: database-ops
+desc: "Database query and management operations"
+
+defaults:
+  connection:
+    host: "localhost"
+    port: 5432
+    pool_size: 10
+  operation:
+    timeout: 30
+    retry: 3
+
+tasks:
+  query:
+    desc: "Execute a database query"
+    steps:
+      - name: run_query
+        func: shell
+        do: |
+          echo "Connecting to {{ vars.connection.host }}:{{ vars.connection.port }}"
+          echo "Pool size: {{ vars.connection.pool_size }}"
+          echo "Timeout:   {{ vars.operation.timeout }}s"
+          echo "Retries:   {{ vars.operation.retry }}"
+          echo "Query executed successfully"
+        outputs:
+          host: "{{ vars.connection.host }}"
+          pool: "{{ vars.connection.pool_size }}"
+          timeout: "{{ vars.operation.timeout }}"
+          status: "success"
+
+  migrate:
+    desc: "Run database migrations"
+    steps:
+      - name: run_migration
+        func: shell
+        do: |
+          echo "Running migration on {{ vars.connection.host }}"
+          echo "Applied 3 migrations"
+        outputs:
+          migrations_applied: 3

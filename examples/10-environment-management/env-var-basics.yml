@@ -1,0 +1,136 @@
+# Example: Environment Variable Basics
+# How to set, save, load, and use environment variables in OrchStep.
+#
+# OrchStep provides the `env_var` function to manage environment
+# variables programmatically. You can also set env vars directly
+# on tasks and steps using the `env:` key.
+#
+# Access any env var in templates with {{ env.VAR_NAME }}.
+#
+# Try: orchstep run
+# Try: orchstep run use_env_var_function
+
+name: env-var-basics
+desc: "Setting, loading, and using environment variables"
+
+# Security policy: control which env vars are visible in logs
+config:
+  env_security:
+    safe_vars:
+      - APP_NAME
+      - APP_PORT
+      - LOG_LEVEL
+    safe_patterns:
+      - "APP_*"
+    sensitive_patterns:
+      - "SECRET_*"
+      - "*_TOKEN"
+
+tasks:
+  # --- Set env vars directly on a task ---
+  show_task_env:
+    desc: "Env vars set at the task level"
+    env:
+      APP_NAME: "my-service"
+      APP_PORT: "8080"
+      LOG_LEVEL: "info"
+    steps:
+      - name: print_env
+        desc: "Read env vars with {{ env.VAR_NAME }}"
+        func: shell
+        do: |
+          echo "APP_NAME  = {{ env.APP_NAME }}"
+          echo "APP_PORT  = {{ env.APP_PORT }}"
+          echo "LOG_LEVEL = {{ env.LOG_LEVEL }}"
+
+  # --- Use the env_var function for programmatic management ---
+  use_env_var_function:
+    desc: "Set, save, clear, and restore env vars with env_var function"
+    env:
+      APP_NAME: "api-gateway"
+      APP_PORT: "3000"
+    steps:
+      # Save current environment to a named snapshot
+      - name: save_snapshot
+        desc: "Save env vars to a named set for later restoration"
+        func: env_var
+        do: save
+        args:
+          name: "before_deploy"
+
+      # Programmatically set new env vars
+      - name: set_deploy_vars
+        desc: "Set additional env vars via the env_var function"
+        func: env_var
+        do: set
+        args:
+          vars:
+            DEPLOY_TARGET: "production"
+            DEPLOY_REGION: "us-west-2"
+
+      - name: show_deploy_vars
+        desc: "Verify new env vars are available"
+        func: shell
+        do: |
+          echo "DEPLOY_TARGET = {{ env.DEPLOY_TARGET }}"
+          echo "DEPLOY_REGION = {{ env.DEPLOY_REGION }}"
+          echo "APP_NAME      = {{ env.APP_NAME }}"
+
+      # Clear all env vars
+      - name: clear_env
+        desc: "Clear all environment variables"
+        func: env_var
+        do: clear
+
+      # Restore from snapshot
+      - name: restore_env
+        desc: "Load env vars back from the saved snapshot"
+        func: env_var
+        do: load
+        args:
+          name: "before_deploy"
+
+      - name: verify_restored
+        desc: "Confirm the original vars are back"
+        func: shell
+        do: |
+          echo "After restore:"
+          echo "APP_NAME = {{ env.APP_NAME }}"
+          echo "APP_PORT = {{ env.APP_PORT }}"
+
+  # --- Security: sensitive vars are masked ---
+  show_masking:
+    desc: "Sensitive env vars are masked based on security policy"
+    env:
+      APP_NAME: "public-service"
+      SECRET_KEY: "super-secret-value"
+      AUTH_TOKEN: "tok_abc123"
+    steps:
+      - name: show_vars
+        desc: "Safe vars show values; sensitive vars are masked with ***"
+        func: shell
+        do: |
+          echo "APP_NAME   = {{ env.APP_NAME }}"
+          echo "SECRET_KEY = {{ env.SECRET_KEY }}"
+          echo "AUTH_TOKEN  = {{ env.AUTH_TOKEN }}"
+
+  main:
+    desc: "Run all environment variable demos"
+    steps:
+      - name: demo_task_env
+        task: show_task_env
+
+      - name: demo_env_var_function
+        task: use_env_var_function
+
+      - name: demo_masking
+        task: show_masking
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Environment Variable Features ==="
+          echo "  - env:       Set vars on tasks or steps"
+          echo "  - env_var:   Programmatic set / save / load / clear"
+          echo "  - Security:  Mask sensitive vars in output"
+          echo "  - Templates: Access with {{ env.VAR_NAME }}"

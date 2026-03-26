@@ -1,0 +1,61 @@
+# Example: Task File Discovery
+# OrchStep automatically discovers task files in a `tasks/` directory.
+# Each file defines one task and is named after the task.
+#
+# Directory layout:
+#   orchstep.yml              <-- this file (main orchestrator)
+#   tasks/
+#     build.yml               <-- defines the "build" task
+#     test.yml                <-- defines the "test" task
+#     deploy/
+#       staging.yml           <-- defines the "deploy-staging" task
+#       production.yml        <-- defines the "deploy-production" task
+#     infra/
+#       provision.yml         <-- defines the "infra-provision" task
+#       destroy.yml           <-- defines the "infra-destroy" task
+#
+# Naming convention:
+#   - Flat files:   tasks/build.yml      -> task name: "build"
+#   - Nested files: tasks/deploy/staging.yml -> task name: "deploy-staging"
+#
+# Try: orchstep run
+# Try: orchstep run build
+# Try: orchstep run deploy-staging
+# Try: orchstep list   (see all discovered tasks)
+
+name: task-discovery-demo
+desc: "Auto-discovering tasks from the tasks/ directory"
+
+# The main orchestrator calls auto-discovered tasks by name.
+# No need to define them here -- they are loaded from tasks/*.yml
+tasks:
+  main:
+    desc: "Run the full pipeline using discovered tasks"
+    steps:
+      - name: build_app
+        desc: "Call the auto-discovered build task"
+        task: build
+
+      - name: run_tests
+        desc: "Call the auto-discovered test task"
+        task: test
+
+      - name: deploy_to_staging
+        desc: "Call tasks/deploy/staging.yml as 'deploy-staging'"
+        task: deploy-staging
+
+      - name: deploy_to_production
+        desc: "Call tasks/deploy/production.yml as 'deploy-production'"
+        task: deploy-production
+
+      - name: done
+        func: shell
+        do: |
+          echo "=== Task Discovery ==="
+          echo "Tasks are auto-discovered from tasks/ directory:"
+          echo "  tasks/build.yml           -> 'build'"
+          echo "  tasks/test.yml            -> 'test'"
+          echo "  tasks/deploy/staging.yml  -> 'deploy-staging'"
+          echo "  tasks/deploy/production.yml -> 'deploy-production'"
+          echo ""
+          echo "Use 'orchstep list' to see all available tasks."

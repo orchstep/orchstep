@@ -1,0 +1,56 @@
+# Example: Inline Configuration
+# Instead of a separate orchstep-config.yml file, you can embed
+# function defaults directly in your orchstep.yml using the `config:` key.
+#
+# This is useful for self-contained workflows that need specific
+# function behavior without external files.
+#
+# Try: orchstep run
+
+name: inline-config-demo
+desc: "Inline configuration in orchstep.yml -- no external config file needed"
+
+# Inline config: set function defaults right here
+config:
+  func:
+    shell:
+      type: "shell"      # Use system shell instead of gosh
+      timeout: 60        # 60-second timeout for all shell commands
+
+    http:
+      timeout: 30        # 30-second timeout for HTTP requests
+      method: "GET"      # Default HTTP method
+
+tasks:
+  main:
+    desc: "Steps inherit inline config defaults"
+    steps:
+      - name: hello
+        desc: "Uses shell type from inline config automatically"
+        func: shell
+        do: echo 'Hello with inline config!'
+
+      - name: show_config
+        desc: "All shell steps get type=shell and timeout=60"
+        func: shell
+        do: |
+          echo "=== Inline Configuration ==="
+          echo ""
+          echo "This workflow uses inline config to set:"
+          echo "  shell.type    = shell  (instead of default gosh)"
+          echo "  shell.timeout = 60s"
+          echo "  http.timeout  = 30s"
+          echo "  http.method   = GET"
+          echo ""
+          echo "Every shell step inherits these without repeating them."
+
+  # You can still override per-step when needed
+  custom_step:
+    desc: "Per-step args override inline config"
+    steps:
+      - name: with_longer_timeout
+        desc: "Override the timeout for a long-running command"
+        func: shell
+        args:
+          timeout: 300     # 5 minutes for this specific step
+          cmd: echo 'This step has a 5-minute timeout'
