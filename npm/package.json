@@ -1,6 +1,6 @@
 {
   "name": "orchstep",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "OrchStep — YAML-first workflow orchestration engine",
   "homepage": "https://orchstep.dev",
   "repository": {
