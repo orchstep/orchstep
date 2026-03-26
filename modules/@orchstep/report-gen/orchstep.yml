@@ -25,7 +25,7 @@ tasks:
           echo "=========================================="
         outputs:
           report: "{{ result.output }}"
-          format: "{{ vars.format | default "text" }}"
+          format: '{{ vars.format | default "text" }}'
 
   # Generate a checklist report (pass/fail items)
   checklist:

@@ -40,7 +40,7 @@ tasks:
         outputs:
           healthy: '{{ result.output | regexFind "healthy=(\\w+)" }}'
           status_code: '{{ result.output | regexFind "Status: (\\d+)" }}'
-          url: "{{ vars.url | default "http://localhost:8080/health" }}"
+          url: '{{ vars.url | default "http://localhost:8080/health" }}'
 
   # Check multiple endpoints in sequence
   check_all:
