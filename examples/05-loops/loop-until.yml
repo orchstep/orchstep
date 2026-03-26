@@ -1,0 +1,95 @@
+# Example: Loop Until
+# The "until:" keyword breaks the loop when a condition becomes true.
+# This is useful for polling, retrying, or searching through items.
+#
+# Key concepts:
+#   - "until:" evaluates after each iteration
+#   - When the until condition is true, the loop stops
+#   - Supports Go template expressions: '{{ eq .loop.iteration 5 }}'
+#   - Supports JavaScript expressions: 'loop.iteration === 5'
+#   - Can reference step outputs for status-based breaking
+#   - "delay:" adds a pause between iterations (useful for polling)
+#
+# Try: orchstep run find_target
+# Try: orchstep run retry_until_ready
+# Try: orchstep run search_items
+
+name: loop-until-demo
+desc: "Break loops with until conditions"
+
+defaults:
+  target_number: 5
+  search_items:
+    - name: "item-a"
+      valid: false
+    - name: "item-b"
+      valid: false
+    - name: "item-c"
+      valid: true
+    - name: "item-d"
+      valid: false
+
+tasks:
+  # Count-based loop that stops at a target
+  find_target:
+    desc: "Loop until we reach the target number"
+    steps:
+      - name: count_to_target
+        loop:
+          count: 20
+          until: '{{ eq .loop.iteration .vars.target_number }}'
+        func: shell
+        do: |
+          echo "Checking: {{ loop.iteration }}"
+        outputs:
+          checked: "{{ loop.iteration }}"
+
+  # Retry pattern with delay
+  retry_until_ready:
+    desc: "Poll a service until it becomes ready"
+    steps:
+      - name: wait_for_ready
+        loop:
+          count: 10
+          until: '{{ eq .steps.wait_for_ready.status "ready" }}'
+          delay: "100ms"
+        func: shell
+        do: |
+          echo "Attempt {{ loop.iteration }}..."
+          if [ {{ loop.iteration }} -ge 3 ]; then
+            echo "STATUS: ready"
+          else
+            echo "STATUS: not_ready"
+          fi
+        outputs:
+          attempt: "{{ loop.iteration }}"
+          status: '{{ if ge loop.iteration 3 }}ready{{ else }}not_ready{{ end }}'
+
+  # Search through items until a match is found
+  search_items:
+    desc: "Search a list until a valid item is found"
+    steps:
+      - name: find_valid
+        loop:
+          items: "{{ vars.search_items }}"
+          as: item
+          until: '{{ eq .loop.item.valid true }}'
+        func: shell
+        do: |
+          echo "Checking: {{ loop.item.name }} (valid={{ loop.item.valid }})"
+        outputs:
+          item_name: "{{ loop.item.name }}"
+          is_valid: "{{ loop.item.valid }}"
+
+  # JavaScript-style until condition
+  js_until_example:
+    desc: "Loop until a JavaScript condition is met"
+    steps:
+      - name: count_up
+        loop:
+          count: 10
+          until: 'loop.iteration > 5'
+        func: shell
+        do: echo "Iteration {{ loop.iteration }}"
+        outputs:
+          iteration: "{{ loop.iteration }}"

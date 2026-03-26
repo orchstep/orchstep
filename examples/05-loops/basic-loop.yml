@@ -1,0 +1,73 @@
+# Example: Basic Loop Iteration
+# OrchStep supports looping over lists, counts, and ranges.
+# Each iteration has access to loop metadata like index and position.
+#
+# Key concepts:
+#   - "loop:" accepts a list variable, a count, or a range
+#   - {{ loop.item }}   -- current item value
+#   - {{ loop.index }}  -- zero-based index (0, 1, 2, ...)
+#   - {{ loop.index1 }} -- one-based index (1, 2, 3, ...)
+#   - {{ loop.first }}  -- true on the first iteration
+#   - {{ loop.last }}   -- true on the last iteration
+#   - {{ loop.length }} -- total number of items
+#   - "as:" renames loop.item to a custom name
+#   - Loop outputs are collected into an array
+#
+# Try: orchstep run
+
+name: basic-loop-demo
+desc: "Iterate over lists, counts, and ranges"
+
+defaults:
+  servers:
+    - "web-01.example.com"
+    - "web-02.example.com"
+    - "web-03.example.com"
+
+tasks:
+  main:
+    desc: "Demonstrate loop patterns"
+    steps:
+      # Pattern 1: Loop over a list variable
+      - name: check_servers
+        desc: "Health-check each server"
+        loop: "{{ vars.servers }}"
+        func: shell
+        do: |
+          echo "Checking server {{ loop.index1 }}/{{ loop.length }}: {{ loop.item }}"
+          echo "  First: {{ loop.first }}, Last: {{ loop.last }}"
+        outputs:
+          server: "{{ loop.item }}"
+          position: "{{ loop.index1 }}"
+
+      # Pattern 2: Loop a fixed number of times
+      - name: retry_attempts
+        desc: "Simulate 5 retry attempts"
+        loop: 5
+        func: shell
+        do: echo "Attempt {{ loop.item }} of {{ loop.length }}"
+        outputs:
+          attempt: "{{ loop.item }}"
+
+      # Pattern 3: Loop over a numeric range
+      - name: port_scan
+        desc: "Check ports 8080-8084"
+        loop:
+          range: [8080, 8084]
+          as: port
+        func: shell
+        do: echo "Scanning port {{ loop.port }}"
+        outputs:
+          port: "{{ loop.port }}"
+
+      # Pattern 4: Loop with a custom variable name
+      - name: deploy_servers
+        desc: "Deploy to each server using a named loop variable"
+        loop:
+          items: "{{ vars.servers }}"
+          as: hostname
+        func: shell
+        do: |
+          echo "Deploying to {{ loop.hostname }} ({{ loop.index1 }}/{{ loop.length }})"
+        outputs:
+          hostname: "{{ loop.hostname }}"

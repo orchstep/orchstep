@@ -1,0 +1,68 @@
+# Example: Variable Scoping
+# OrchStep resolves variables through a 3-level hierarchy:
+#   1. Step vars    -- highest priority (most specific)
+#   2. Task vars    -- mid priority
+#   3. Definition vars (defaults:) -- lowest priority
+#
+# A 4th level -- runtime vars via --var -- overrides everything.
+#
+# Each level can reference variables from lower levels.
+# Step vars are scoped to their step and do not leak to other steps.
+#
+# Try: orchstep run
+# Try: orchstep run --var environment="from-cli"
+
+name: variable-scoping-demo
+desc: "Demonstrates the variable scoping hierarchy"
+
+# Level 3: Definition variables (lowest priority)
+defaults:
+  environment: "staging"
+  app_name: "web-api"
+  runtime: "nodejs18.x"
+
+tasks:
+  main:
+    desc: "Deploy a Lambda function showing variable scoping"
+
+    # Level 2: Task variables (override definition vars)
+    vars:
+      environment: "production"
+      memory_size: "512"
+
+    steps:
+      # Level 1: Step variables (override task and definition vars)
+      - name: package_function
+        desc: "Package the Lambda function code"
+        vars:
+          zip_file: "{{ vars.app_name }}-{{ vars.environment }}.zip"
+        func: shell
+        do: |
+          echo "Creating package: {{ vars.zip_file }}"
+          echo "Environment: {{ vars.environment }}"
+          echo "Runtime: {{ vars.runtime }}"
+          echo "Memory: {{ vars.memory_size }}"
+        outputs:
+          package_path: "{{ vars.zip_file }}"
+
+      # This step does NOT see the zip_file var from the step above.
+      # Step vars are scoped -- they don't leak between steps.
+      - name: create_lambda
+        desc: "Create the Lambda function"
+        func: shell
+        do: |
+          echo "Creating function: {{ vars.app_name }}"
+          echo "Package: {{ steps.package_function.package_path }}"
+          echo "Runtime: {{ vars.runtime }}"
+          echo "Memory: {{ vars.memory_size }}MB"
+
+      # Step vars can also override task vars
+      - name: configure_trigger
+        desc: "Configure API Gateway trigger"
+        vars:
+          api_name: "{{ vars.app_name }}-api"
+          stage: "{{ vars.environment }}"
+        func: shell
+        do: |
+          echo "API Name: {{ vars.api_name }}"
+          echo "Stage: {{ vars.stage }}"

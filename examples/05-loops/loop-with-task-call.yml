@@ -1,0 +1,70 @@
+# Example: Loop with Task Call
+# Loops can call tasks using "task:" and pass per-iteration parameters
+# with "with:". This is ideal for deploying to multiple regions, running
+# the same operation across environments, etc.
+#
+# Key concepts:
+#   - "loop:" + "task:" calls the task once per iteration
+#   - "with:" passes loop data as task parameters
+#   - Loop variables (loop.item, loop.index, etc.) are available in "with:"
+#   - "as:" renames loop.item for clearer references
+#
+# Try: orchstep run
+
+name: loop-with-task-call-demo
+desc: "Call tasks in a loop with per-iteration parameters"
+
+defaults:
+  regions:
+    - name: "us-east-1"
+      replicas: 3
+      host: "east.example.com"
+    - name: "us-west-2"
+      replicas: 5
+      host: "west.example.com"
+    - name: "eu-west-1"
+      replicas: 7
+      host: "eu.example.com"
+
+tasks:
+  main:
+    desc: "Deploy to all regions"
+    steps:
+      # Loop through regions, calling deploy_region for each
+      - name: deploy_all_regions
+        desc: "Deploy to every region using a reusable task"
+        loop:
+          items: "{{ vars.regions }}"
+          as: region
+        task: deploy_region
+        with:
+          region_name: "{{ loop.region.name }}"
+          replica_count: "{{ loop.region.replicas }}"
+          host_name: "{{ loop.region.host }}"
+          progress: "{{ loop.index1 }}/{{ loop.length }}"
+
+  # Reusable task called once per region
+  deploy_region:
+    desc: "Deploy to a single region"
+    steps:
+      - name: show_config
+        func: shell
+        do: |
+          echo "=== Deploying Region [{{ vars.progress }}] ==="
+          echo "Region:   {{ vars.region_name }}"
+          echo "Host:     {{ vars.host_name }}"
+          echo "Replicas: {{ vars.replica_count }}"
+        outputs:
+          region: "{{ vars.region_name }}"
+          replicas: "{{ vars.replica_count }}"
+
+      - name: execute_deploy
+        func: shell
+        do: |
+          echo "kubectl apply -f deploy.yml \
+            --context={{ vars.region_name }} \
+            --replicas={{ vars.replica_count }}"
+          echo "Status: deployed"
+        outputs:
+          status: "deployed"
+          host: "{{ vars.host_name }}"
