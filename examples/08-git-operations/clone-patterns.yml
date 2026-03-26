@@ -1,0 +1,162 @@
+# Example: Git Clone Patterns
+# Shows how to clone repositories using the built-in git function
+# with various options: branches, tags, shallow clones, submodules.
+#
+# The git function uses:
+#   func: git
+#   args:
+#     operation: clone
+#     url: "https://github.com/org/repo.git"
+#     dest: "./local-path"
+#
+# Result outputs: result.dest, result.success, result.url
+#
+# Try: orchstep run shallow-clone
+# Try: orchstep run clone-with-retry
+
+name: git-clone-patterns-demo
+desc: "Clone repositories with branches, tags, and options"
+
+vars:
+  repo_url: "https://github.com/orchstep/example-repo.git"
+  clone_dir: "/tmp/orchstep-clone-demo"
+
+tasks:
+  # -- Shallow clone (fastest, most common) --
+  shallow-clone:
+    desc: "Clone only the latest commit for fast checkout"
+    steps:
+      - name: prepare
+        func: shell
+        do: |
+          rm -rf {{ vars.clone_dir }}/shallow
+          mkdir -p {{ vars.clone_dir }}
+
+      - name: clone_repo
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.clone_dir }}/shallow"
+          depth: 1                # Only the latest commit
+        outputs:
+          path: "{{ result.dest }}"
+          success: "{{ result.success }}"
+
+      - name: verify
+        func: shell
+        do: |
+          echo "Cloned to: {{ steps.clone_repo.path }}"
+          echo "Success: {{ steps.clone_repo.success }}"
+
+  # -- Clone a specific branch --
+  clone-branch:
+    desc: "Clone a specific branch"
+    steps:
+      - name: prepare
+        func: shell
+        do: rm -rf {{ vars.clone_dir }}/feature-branch
+
+      - name: clone_feature_branch
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.clone_dir }}/feature-branch"
+          branch: "develop"       # Clone a specific branch
+          depth: 1
+        outputs:
+          success: "{{ result.success }}"
+
+  # -- Clone at a specific tag --
+  clone-tag:
+    desc: "Clone at a release tag for reproducible builds"
+    vars:
+      release_tag: "v1.0.0"
+    steps:
+      - name: prepare
+        func: shell
+        do: rm -rf {{ vars.clone_dir }}/release
+
+      - name: clone_release
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.clone_dir }}/release"
+          branch: "{{ vars.release_tag }}"
+          depth: 1
+        outputs:
+          success: "{{ result.success }}"
+
+      - name: show_tag
+        func: shell
+        do: |
+          echo "Cloned release {{ vars.release_tag }}"
+
+  # -- Full clone with history --
+  full-clone:
+    desc: "Clone with complete history (for analysis or bisect)"
+    steps:
+      - name: prepare
+        func: shell
+        do: rm -rf {{ vars.clone_dir }}/full
+
+      - name: clone_full_history
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.clone_dir }}/full"
+          # Omit depth for full history
+        outputs:
+          success: "{{ result.success }}"
+
+  # -- Clone with submodules --
+  clone-with-submodules:
+    desc: "Clone and initialize submodules recursively"
+    steps:
+      - name: prepare
+        func: shell
+        do: rm -rf {{ vars.clone_dir }}/with-submodules
+
+      - name: clone_recursive
+        func: shell
+        do: |
+          git clone --depth 1 --single-branch --recursive \
+            {{ vars.repo_url }} \
+            {{ vars.clone_dir }}/with-submodules
+          echo "Cloned with submodules"
+
+  # -- Clone with retry for flaky networks --
+  clone-with-retry:
+    desc: "Retry clone on network failures"
+    steps:
+      - name: prepare
+        func: shell
+        do: rm -rf {{ vars.clone_dir }}/retry
+
+      - name: resilient_clone
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.clone_dir }}/retry"
+          depth: 1
+        retry:
+          max_attempts: 5
+          interval: 2s
+          backoff_rate: 1.5
+          when: "result.exit_code != 0"
+        outputs:
+          success: "{{ result.success }}"
+
+  # -- Cleanup --
+  cleanup:
+    desc: "Remove all cloned repositories"
+    steps:
+      - name: remove_all
+        func: shell
+        do: |
+          rm -rf {{ vars.clone_dir }}
+          echo "Cleanup complete"
