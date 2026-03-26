@@ -30,6 +30,7 @@ orchstep list           # List all available tasks
 | 12 | [Assertions](12-assertions/) | 3 | Conditions, multi-assert, helper functions |
 | 13 | [Modules](13-modules/) | 6 | Reusable components, config, overrides, nesting |
 | 14 | [Real-World Patterns](14-real-world-patterns/) | 4 | Deploy pipeline, promotion, incident response, releases |
+| 15 | [Parallel Execution](15-parallel-execution/) | 2 | Concurrent steps, fan-out/fan-in, parallel health checks |
 
 ---
 
@@ -178,6 +179,15 @@ Production-ready workflows combining multiple features.
 | [multi-env-promotion.yml](14-real-world-patterns/multi-env-promotion.yml) | Promote releases through dev/staging/prod with conditionals |
 | [incident-response.yml](14-real-world-patterns/incident-response.yml) | Automated diagnostics, severity evaluation, and remediation |
 | [release-automation.yml](14-real-world-patterns/release-automation.yml) | Version bump, changelog, multi-platform build, tag, and publish |
+
+## 15 - Parallel Execution
+
+Run steps concurrently to speed up workflows.
+
+| File | What it shows |
+|------|---------------|
+| [parallel-build.yml](15-parallel-execution/parallel-build.yml) | Build frontend and backend in parallel, merge outputs for deploy |
+| [parallel-health-checks.yml](15-parallel-execution/parallel-health-checks.yml) | Check multiple services simultaneously, assert all healthy |
 
 ---
 

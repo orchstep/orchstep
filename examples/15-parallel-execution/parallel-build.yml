@@ -1,0 +1,55 @@
+# Example: Parallel Step Execution
+# Demonstrates: Running multiple steps concurrently using the parallel: block
+#
+# Key concepts:
+#   - Steps inside parallel: run simultaneously
+#   - Each parallel step can produce outputs
+#   - Outputs merge back for subsequent sequential steps
+#   - If any parallel step fails, the block fails
+#
+# Try:
+#   orchstep run build-and-deploy
+#   orchstep run build-and-deploy --var version=3.0.0
+
+name: parallel-build-demo
+desc: "Build frontend and backend in parallel, then deploy"
+
+vars:
+  version: "2.0.0"
+  environment: staging
+
+tasks:
+  build-and-deploy:
+    desc: "Parallel build followed by sequential deploy"
+    steps:
+      - name: build-all
+        desc: "Build both services in parallel"
+        parallel:
+          - name: build-frontend
+            func: shell
+            do: |
+              echo "Building frontend v{{ vars.version }}..."
+              echo "Compiling TypeScript..."
+              echo "Bundling assets..."
+              echo "FRONTEND_ARTIFACT=frontend-{{ vars.version }}.js"
+            outputs:
+              artifact: '{{ result.output | regexFind "FRONTEND_ARTIFACT=(.+)" }}'
+
+          - name: build-backend
+            func: shell
+            do: |
+              echo "Building backend v{{ vars.version }}..."
+              echo "Compiling Go..."
+              echo "Running unit tests..."
+              echo "BACKEND_ARTIFACT=backend-{{ vars.version }}"
+            outputs:
+              artifact: '{{ result.output | regexFind "BACKEND_ARTIFACT=(.+)" }}'
+
+      - name: deploy
+        desc: "Deploy both artifacts"
+        func: shell
+        do: |
+          echo "Deploying to {{ vars.environment }}..."
+          echo "Frontend: {{ steps.build-frontend.artifact }}"
+          echo "Backend: {{ steps.build-backend.artifact }}"
+          echo "Deploy complete!"

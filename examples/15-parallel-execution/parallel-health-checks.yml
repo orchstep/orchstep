@@ -1,0 +1,64 @@
+# Example: Parallel Health Checks
+# Demonstrates: Running multiple health checks simultaneously
+#
+# Key concepts:
+#   - Check multiple services at once instead of sequentially
+#   - Collect results from all parallel steps
+#   - Use assertions to verify all services are healthy
+#
+# Try:
+#   orchstep run check-all
+
+name: parallel-health-checks
+desc: "Check multiple service endpoints in parallel"
+
+vars:
+  api_url: "https://api.example.com"
+  web_url: "https://www.example.com"
+  admin_url: "https://admin.example.com"
+
+tasks:
+  check-all:
+    desc: "Verify all services are healthy"
+    steps:
+      - name: health-checks
+        desc: "Run all health checks in parallel"
+        parallel:
+          - name: check-api
+            func: shell
+            do: |
+              echo "Checking API at {{ vars.api_url }}..."
+              echo "API_STATUS=healthy"
+            outputs:
+              status: '{{ result.output | regexFind "API_STATUS=(.+)" }}'
+
+          - name: check-web
+            func: shell
+            do: |
+              echo "Checking web at {{ vars.web_url }}..."
+              echo "WEB_STATUS=healthy"
+            outputs:
+              status: '{{ result.output | regexFind "WEB_STATUS=(.+)" }}'
+
+          - name: check-admin
+            func: shell
+            do: |
+              echo "Checking admin at {{ vars.admin_url }}..."
+              echo "ADMIN_STATUS=healthy"
+            outputs:
+              status: '{{ result.output | regexFind "ADMIN_STATUS=(.+)" }}'
+
+      - name: verify-all-healthy
+        func: assert
+        args:
+          condition: '{{ and (eq steps.check-api.status "healthy") (eq steps.check-web.status "healthy") (eq steps.check-admin.status "healthy") }}'
+          desc: "All services must be healthy"
+
+      - name: summary
+        func: shell
+        do: |
+          echo "Health Check Summary:"
+          echo "  API:   {{ steps.check-api.status }}"
+          echo "  Web:   {{ steps.check-web.status }}"
+          echo "  Admin: {{ steps.check-admin.status }}"
+          echo "All services operational!"
