@@ -31,6 +31,32 @@ orchstep run
 | `demos/` | Example workflows for real-world use cases |
 | `docs/` | User documentation |
 
+## Quality & Testing
+
+The OrchStep engine is rigorously tested with a comprehensive regression suite:
+
+| Metric | Value |
+|--------|-------|
+| Regression test specs | **431** |
+| Pass rate | **100%** (431/431) |
+| Feature categories tested | **14** (execution, variables, control flow, loops, error handling, HTTP, git, templates, environment, config, assertions, modules, data flow, advanced) |
+| Platforms verified | **6** (darwin/amd64, darwin/arm64, linux/amd64, linux/arm64, windows/amd64, windows/arm64) |
+| CI pipeline | Automated on every commit — build, lint, vet, unit tests, full regression suite |
+
+Every release is gated by the full regression suite. The test infrastructure includes mock HTTP servers, mock CLI simulators, and authenticated git operation tests to ensure real-world reliability.
+
+### What's Tested
+
+- **Workflow execution** — task pipelines, step sequencing, shell command execution
+- **Variable management** — 4-level scoping, precedence, dynamic resolution, type preservation
+- **Control flow** — if/elif/else, switch/case, loops (items/count/range/until), task delegation
+- **Error handling** — retry with exponential backoff + jitter, try/catch/finally, timeouts, on-error modes
+- **HTTP integration** — GET/POST/PUT/DELETE, authentication (bearer/basic/API key), JSON parsing, batch requests
+- **Git operations** — clone, checkout, push, fetch, branches, tags, submodules, authenticated operations
+- **Module system** — config schemas, exports, versioning, dependencies, nesting, remote git modules, lockfiles
+- **Templates** — Go templates, Sprig functions, JavaScript expressions, regex extraction
+- **Environment** — .env file loading, inheritance modes, groups, hierarchical configs
+
 ## The Engine
 
 The OrchStep engine is distributed as a compiled binary. Install it using any method above, then use the spec and modules in this repo to build workflows.
