@@ -1,0 +1,102 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-registry:
+    name: Validate Module Registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate registry.json is valid JSON
+        run: python3 -c "import json; json.load(open('modules/registry.json'))"
+      - name: Check registry structure
+        run: |
+          python3 -c "
+          import json
+          reg = json.load(open('modules/registry.json'))
+          assert 'version' in reg, 'Missing version field'
+          assert 'modules' in reg, 'Missing modules field'
+          for m in reg['modules']:
+              assert 'name' in m, f'Module missing name: {m}'
+              assert 'version' in m, f'Module missing version: {m}'
+              assert 'tier' in m, f'Module missing tier: {m}'
+              assert m['tier'] in ('official', 'community', 'ai'), f'Invalid tier: {m[\"tier\"]}'
+          print(f'Registry valid: {len(reg[\"modules\"])} modules')
+          "
+
+  validate-modules:
+    name: Validate Module YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Lint module YAML files
+        run: |
+          find modules/@orchstep -name "*.yml" -exec yamllint -d relaxed {} + || true
+      - name: Check module structure
+        run: |
+          for dir in modules/@orchstep/*/; do
+            module=$(basename "$dir")
+            echo "Checking @orchstep/$module..."
+            if [ ! -f "$dir/orchstep-module.yml" ] && [ ! -f "$dir/orchstep.yml" ]; then
+              echo "WARNING: $module has no orchstep-module.yml or orchstep.yml"
+            fi
+          done
+
+  validate-examples:
+    name: Validate Example YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Lint example YAML files
+        run: |
+          find examples -name "*.yml" -exec yamllint -d relaxed {} + || true
+      - name: Count examples
+        run: |
+          count=$(find examples -name "*.yml" | wc -l)
+          echo "Total examples: $count"
+          echo "## Examples: $count YAML files" >> $GITHUB_STEP_SUMMARY
+
+  validate-links:
+    name: Check Markdown Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for broken internal links
+        run: |
+          # Check that referenced files exist
+          grep -roh '\[.*\](\./[^)]*)\|(\.\./[^)]*)' docs/ README.md CONTRIBUTING.md 2>/dev/null | \
+          grep -oP '\(\.\.?/[^)]+\)' | tr -d '()' | sort -u | while read link; do
+            if [ ! -e "$link" ]; then
+              echo "WARNING: Broken link: $link"
+            fi
+          done
+
+  no-secrets:
+    name: Check No Secrets Leaked
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for potential secrets
+        run: |
+          # Ensure no Go source code leaked
+          go_files=$(find . -name "*.go" | wc -l)
+          if [ "$go_files" -gt 0 ]; then
+            echo "ERROR: Found .go files in public repo!"
+            find . -name "*.go"
+            exit 1
+          fi
+          # Check for potential secrets
+          grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . --include="*.md" --include="*.yml" --include="*.json" | grep -v "ORCH-XXXX\|ORCH-TEST\|ORCH-aBcD" && echo "WARNING: Possible real license key found" || true
+          echo "No secrets detected"

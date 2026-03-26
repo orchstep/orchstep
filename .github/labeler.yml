@@ -1,0 +1,10 @@
+module:
+  - modules/**/*
+example:
+  - examples/**/*
+docs:
+  - docs/**/*
+spec:
+  - spec/**/*
+skill:
+  - skills/**/*
