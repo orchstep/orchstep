@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+
+// This stub is replaced by the real binary during postinstall.
+// If you see this message, run: node install.js
+console.error("OrchStep binary not installed. Run: npm rebuild orchstep");
+process.exit(1);
