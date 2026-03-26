@@ -1,0 +1,118 @@
+# Example: Variable Precedence
+# Full demonstration of how OrchStep resolves variables when the same
+# name is defined at multiple levels. Higher levels always win:
+#
+#   Runtime (--var) > Step vars > Task vars > Definition vars
+#
+# This example uses multiple tasks to show each layer in isolation.
+#
+# Try: orchstep run
+# Try: orchstep run test_step_override
+# Try: orchstep run --var multi_level="from-runtime"
+
+name: variable-precedence-demo
+desc: "Shows how variables at different levels override each other"
+
+# Definition variables (lowest priority in-file)
+defaults:
+  environment: "global-default"
+  region: "us-east-1"
+  replicas: "1"
+  multi_level: "from-definition"
+  app_name: "my-app"
+
+tasks:
+  # Shows definition-level vars when no overrides exist
+  show_definition_vars:
+    desc: "Display definition-level defaults"
+    steps:
+      - name: show_globals
+        func: shell
+        do: |
+          echo "environment = {{ vars.environment }}"
+          echo "region      = {{ vars.region }}"
+          echo "replicas    = {{ vars.replicas }}"
+
+  # Task vars override definition vars
+  show_task_override:
+    desc: "Task vars override definition vars"
+    vars:
+      environment: "task-staging"
+      replicas: "3"
+      task_only: "only-visible-in-this-task"
+    steps:
+      - name: show_task_vars
+        func: shell
+        do: |
+          echo "environment = {{ vars.environment }}"
+          echo "replicas    = {{ vars.replicas }}"
+          echo "region      = {{ vars.region }}"
+          echo "task_only   = {{ vars.task_only }}"
+
+  # Step vars override task vars (and definition vars)
+  show_step_override:
+    desc: "Step vars override task vars"
+    vars:
+      environment: "task-qa"
+      replicas: "5"
+    steps:
+      - name: step_with_overrides
+        desc: "This step overrides environment and replicas"
+        vars:
+          environment: "step-production"
+          replicas: "10"
+        func: shell
+        do: |
+          echo "=== Inside step with overrides ==="
+          echo "environment = {{ vars.environment }}"
+          echo "replicas    = {{ vars.replicas }}"
+
+      - name: step_without_overrides
+        desc: "This step inherits from the task level"
+        func: shell
+        do: |
+          echo "=== Inside step without overrides ==="
+          echo "environment = {{ vars.environment }}"
+          echo "replicas    = {{ vars.replicas }}"
+
+  # Template expressions in variable values
+  show_template_vars:
+    desc: "Variables can use template expressions"
+    vars:
+      base_url: "https://api.example.com"
+      api_version: "v2"
+    steps:
+      - name: computed_variable
+        desc: "Build a URL from other variables"
+        vars:
+          full_url: "{{ vars.base_url }}/{{ vars.api_version }}/users"
+        func: shell
+        do: |
+          echo "Base URL:    {{ vars.base_url }}"
+          echo "API Version: {{ vars.api_version }}"
+          echo "Full URL:    {{ vars.full_url }}"
+
+  # Main orchestrator runs all demos
+  main:
+    desc: "Run all precedence demonstrations"
+    steps:
+      - name: demo_definition
+        task: show_definition_vars
+
+      - name: demo_task
+        task: show_task_override
+
+      - name: demo_step
+        task: show_step_override
+
+      - name: demo_template
+        task: show_template_vars
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Variable Precedence (highest to lowest) ==="
+          echo "  1. Runtime (--var key=value)"
+          echo "  2. Step vars"
+          echo "  3. Task vars"
+          echo "  4. Definition vars (defaults:)"

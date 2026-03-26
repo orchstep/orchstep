@@ -1,0 +1,71 @@
+# Example: Dynamic Variables with Step Outputs
+# Steps can produce outputs that subsequent steps consume.
+# This creates a data pipeline where each step builds on previous results.
+#
+# Key concepts:
+#   - "outputs:" captures values from a step
+#   - "{{ steps.<step_name>.<output_key> }}" references them later
+#   - Outputs can combine step results with variables
+#
+# Try: orchstep run
+
+name: dynamic-variables-demo
+desc: "Pass data between steps using outputs"
+
+defaults:
+  registry_host: "registry.example.com"
+  namespace: "production"
+  app_name: "web-api"
+
+tasks:
+  main:
+    desc: "Docker build and deploy pipeline showing dynamic variables"
+    steps:
+      - name: build_image
+        desc: "Build the Docker image and capture metadata"
+        func: shell
+        do: |
+          echo "Building Docker image..."
+          echo "Image: {{ vars.app_name }}:v2.1.0"
+          echo "Build complete."
+        outputs:
+          image_tag: "v2.1.0"
+          image_name: "{{ vars.app_name }}"
+          full_image: "{{ vars.app_name }}:v2.1.0"
+
+      - name: tag_for_registry
+        desc: "Tag the image for the remote registry"
+        func: shell
+        do: |
+          echo "Tagging {{ steps.build_image.full_image }}"
+          echo "  as {{ vars.registry_host }}/{{ steps.build_image.full_image }}"
+        outputs:
+          tagged_image: "{{ vars.registry_host }}/{{ steps.build_image.image_name }}:{{ steps.build_image.image_tag }}"
+
+      - name: push_image
+        desc: "Push the tagged image to the registry"
+        func: shell
+        do: echo "Pushing {{ steps.tag_for_registry.tagged_image }}"
+        outputs:
+          registry_uri: "{{ steps.tag_for_registry.tagged_image }}"
+          push_status: "completed"
+
+      - name: deploy
+        desc: "Deploy the pushed image to Kubernetes"
+        func: shell
+        do: |
+          echo "kubectl set image deployment/{{ vars.app_name }} \
+            {{ vars.app_name }}={{ steps.push_image.registry_uri }} \
+            -n {{ vars.namespace }}"
+        outputs:
+          deployed_image: "{{ steps.push_image.registry_uri }}"
+
+      - name: summary
+        desc: "Show the full pipeline result"
+        func: shell
+        do: |
+          echo "=== Deployment Summary ==="
+          echo "Image:    {{ steps.build_image.full_image }}"
+          echo "Registry: {{ steps.push_image.registry_uri }}"
+          echo "Status:   {{ steps.push_image.push_status }}"
+          echo "Deployed: {{ steps.deploy.deployed_image }}"

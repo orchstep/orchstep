@@ -1,0 +1,17 @@
+# Example: Hello World
+# The simplest OrchStep workflow -- one task, one step.
+# This is the starting point for learning OrchStep.
+#
+# Try: orchstep run
+
+name: hello-world
+desc: "Your first OrchStep workflow"
+
+tasks:
+  main:
+    desc: "Say hello"
+    steps:
+      - name: greet
+        desc: "Output a greeting using the shell function"
+        func: shell
+        do: echo 'Hello from OrchStep!'

@@ -1,0 +1,56 @@
+# Example: Task Calling and File Discovery
+# OrchStep automatically discovers task files from a tasks/ directory.
+# This lets you organize large workflows into separate files.
+#
+# Key concepts:
+#   - Tasks defined in tasks/<name>.yml are auto-discovered
+#   - Nested directories work: tasks/deploy/staging.yml -> task "deploy-staging"
+#   - The main orchstep.yml can call discovered tasks by name
+#   - Inline tasks and file-based tasks can be mixed freely
+#
+# Directory structure for this example:
+#   orchstep.yml          <-- this file
+#   tasks/
+#     build.yml           <-- auto-discovered as "build"
+#     test.yml            <-- auto-discovered as "test"
+#     deploy/
+#       staging.yml       <-- auto-discovered as "deploy-staging"
+#       production.yml    <-- auto-discovered as "deploy-production"
+#
+# Try: orchstep run
+
+name: task-calling-demo
+desc: "Orchestrate auto-discovered task files"
+
+tasks:
+  # Inline task: call out to file-based tasks in sequence
+  main:
+    desc: "CI/CD pipeline using auto-discovered tasks"
+    steps:
+      - name: run_build
+        desc: "Execute the build task (from tasks/build.yml)"
+        task: build
+
+      - name: run_tests
+        desc: "Execute the test task (from tasks/test.yml)"
+        task: test
+
+      - name: deploy_staging
+        desc: "Deploy to staging (from tasks/deploy/staging.yml)"
+        task: deploy-staging
+
+      - name: deploy_production
+        desc: "Deploy to production (from tasks/deploy/production.yml)"
+        task: deploy-production
+
+      - name: done
+        func: shell
+        do: echo "Pipeline complete -- all tasks executed."
+
+  # You can also define tasks inline alongside discovered ones
+  notify:
+    desc: "Send notification (inline task)"
+    steps:
+      - name: send
+        func: shell
+        do: echo "Sending deployment notification..."

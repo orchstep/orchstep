@@ -1,0 +1,48 @@
+# Example: Output Extraction
+# Shows how to extract values from shell command output using
+# template expressions and regex patterns.
+#
+# Key concepts:
+#   - "outputs:" maps named keys to template expressions
+#   - "{{ result.output }}" contains the raw stdout of the step
+#   - regexFind extracts matching substrings from output
+#   - Outputs become accessible as {{ steps.<name>.<key> }}
+#
+# Try: orchstep run
+
+name: output-extraction-demo
+desc: "Extract structured values from shell command output"
+
+tasks:
+  main:
+    desc: "Build and deploy pipeline with output extraction"
+    steps:
+      - name: build_docker_image
+        desc: "Build image and extract tag from output"
+        func: shell
+        do: |
+          echo "Building application..."
+          echo "Built image: web-api:v1.2.3"
+          echo "Build complete."
+        outputs:
+          # Extract the image tag using a regex pattern
+          image_tag: "{{ result.output | regexFind \"web-api:([^\\\\s]+)\" }}"
+
+      - name: deploy_to_cluster
+        desc: "Deploy using the extracted image tag"
+        func: shell
+        do: |
+          echo "Deploying {{ steps.build_docker_image.image_tag }} to production cluster"
+          echo "Deployment status: success"
+        outputs:
+          deployment_status: "success"
+          service_arn: "arn:aws:ecs:us-east-1:123456789:service/production/web-api"
+
+      - name: report
+        desc: "Show deployment results"
+        func: shell
+        do: |
+          echo "=== Deployment Report ==="
+          echo "Image:  {{ steps.build_docker_image.image_tag }}"
+          echo "Status: {{ steps.deploy_to_cluster.deployment_status }}"
+          echo "ARN:    {{ steps.deploy_to_cluster.service_arn }}"
