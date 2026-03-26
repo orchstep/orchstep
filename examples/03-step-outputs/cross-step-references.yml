@@ -27,26 +27,27 @@ tasks:
         then:
           - name: select_region
             func: shell
-            do: echo "Selected region: us-west-2 (nonproduction)"
+            do: "echo 'Selected region: us-west-2 (nonproduction)'"
             outputs:
               region: "us-west-2"
           - name: configure_cluster
             func: shell
-            do: echo "Configuring cluster in {{ steps.select_region.region }}"
+            do: |
+              echo "Configuring cluster in {{ steps.select_region.region }}"
             outputs:
               cluster: "nonprod-{{ steps.select_region.region }}"
         else:
           - name: select_region
             func: shell
-            do: echo "Selected region: us-east-1 (production)"
+            do: "echo 'Selected region: us-east-1 (production)'"
             outputs:
               region: "us-east-1"
           - name: configure_cluster
             func: shell
-            do: echo "Configuring cluster in {{ steps.select_region.region }}"
+            do: |
+              echo "Configuring cluster in {{ steps.select_region.region }}"
             outputs:
               cluster: "prod-{{ steps.select_region.region }}"
-        # Parent outputs expose the inner step values
         outputs:
           target_region: "{{ steps.configure_cluster.cluster }}"
 
