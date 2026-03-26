@@ -1,0 +1,172 @@
+# Example: Incident Response Automation
+# Automated incident response that checks service health,
+# extracts diagnostic data, evaluates conditions, and takes action.
+#
+# Combines: shell commands, data extraction, conditionals,
+# assertions, and structured outputs.
+#
+# Try: orchstep run
+# Try: orchstep run --var service_url="https://my-service.example.com"
+
+name: incident-response
+desc: "Automated incident response with diagnostics and remediation"
+
+defaults:
+  service_name: "order-service"
+  service_url: "https://order-service.example.com"
+  alert_threshold_ms: 500
+  error_rate_threshold: 5
+  escalation_channel: "#incidents"
+
+tasks:
+  # --- Gather diagnostics ---
+  gather_diagnostics:
+    desc: "Collect system health and performance data"
+    steps:
+      - name: check_health
+        desc: "Query the service health endpoint"
+        func: shell
+        do: |
+          echo "Checking {{ vars.service_url }}/health"
+          echo "HTTP 200"
+          echo '{"status":"degraded","version":"v2.3.1","uptime":"72h","db":"healthy","cache":"timeout"}'
+        outputs:
+          http_status: 200
+          health_data: '{"status":"degraded","version":"v2.3.1","uptime":"72h","db":"healthy","cache":"timeout"}'
+          service_status: "degraded"
+
+      - name: check_metrics
+        desc: "Pull recent performance metrics"
+        func: shell
+        do: |
+          echo "=== Performance Metrics ==="
+          echo "p50_latency_ms: 120"
+          echo "p99_latency_ms: 850"
+          echo "error_rate_pct: 3.2"
+          echo "requests_per_sec: 1500"
+        outputs:
+          p50_latency: 120
+          p99_latency: 850
+          error_rate: 3.2
+          rps: 1500
+
+      - name: check_resources
+        desc: "Check resource utilization"
+        func: shell
+        do: |
+          echo "=== Resource Utilization ==="
+          echo "cpu_pct: 78"
+          echo "memory_pct: 65"
+          echo "disk_pct: 42"
+          echo "pod_restarts: 0"
+        outputs:
+          cpu: 78
+          memory: 65
+          disk: 42
+          restarts: 0
+
+  # --- Evaluate severity ---
+  evaluate:
+    desc: "Determine incident severity and required actions"
+    steps:
+      - name: run_diagnostics
+        task: gather_diagnostics
+
+      - name: check_critical
+        desc: "Check for critical conditions"
+        func: assert
+        args:
+          conditions:
+            - condition: "steps.run_diagnostics.http_status === 200"
+              desc: "Service is reachable"
+            - condition: 'steps.run_diagnostics.service_status !== "down"'
+              desc: "Service is not completely down"
+        catch:
+          - name: critical_alert
+            func: shell
+            do: |
+              echo "CRITICAL: Service is unreachable or down!"
+              echo "Escalating to {{ vars.escalation_channel }}"
+
+      # Check if latency exceeds threshold
+      - name: latency_check
+        if: "{{ gt steps.run_diagnostics.p99_latency vars.alert_threshold_ms }}"
+        func: shell
+        do: |
+          echo "WARNING: p99 latency ({{ steps.run_diagnostics.p99_latency }}ms) exceeds threshold ({{ vars.alert_threshold_ms }}ms)"
+        outputs:
+          latency_alert: "true"
+
+      # Determine recommended action based on conditions
+      - name: recommend_action
+        func: shell
+        do: |
+          echo "=== Incident Assessment ==="
+          echo "Service: {{ vars.service_name }}"
+          echo "Status:  {{ steps.run_diagnostics.service_status }}"
+          echo "p99:     {{ steps.run_diagnostics.p99_latency }}ms"
+          echo "Errors:  {{ steps.run_diagnostics.error_rate }}%"
+          echo "CPU:     {{ steps.run_diagnostics.cpu }}%"
+          echo ""
+          echo "Recommended actions:"
+          echo "  1. Check cache connectivity (cache: timeout)"
+          echo "  2. Monitor p99 latency trend"
+          echo "  3. Review recent deployments"
+        outputs:
+          severity: "warning"
+          action: "investigate_cache"
+
+  # --- Remediation ---
+  remediate:
+    desc: "Execute automated remediation"
+    steps:
+      - name: assess
+        task: evaluate
+
+      - name: restart_cache
+        desc: "Restart the cache layer"
+        func: shell
+        do: |
+          echo "Restarting cache connection pool..."
+          echo "Cache reconnected successfully"
+        outputs:
+          cache_status: "healthy"
+
+      - name: verify_fix
+        desc: "Verify the remediation worked"
+        func: shell
+        do: |
+          echo "Post-remediation health check:"
+          echo "Status: healthy"
+          echo "p99 latency: 180ms"
+          echo "Cache: connected"
+        outputs:
+          post_status: "healthy"
+          post_latency: 180
+
+      - name: validate_recovery
+        func: assert
+        args:
+          conditions:
+            - condition: 'steps.verify_fix.post_status === "healthy"'
+              desc: "Service recovered to healthy state"
+            - condition: "steps.verify_fix.post_latency < 500"
+              desc: "Latency is back within threshold"
+
+  main:
+    desc: "Run full incident response workflow"
+    steps:
+      - name: respond
+        task: remediate
+
+      - name: report
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  Incident Response Complete"
+          echo "=========================================="
+          echo "  Service:     {{ vars.service_name }}"
+          echo "  Resolution:  Cache reconnection"
+          echo "  Status:      Recovered"
+          echo "=========================================="

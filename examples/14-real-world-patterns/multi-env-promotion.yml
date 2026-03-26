@@ -1,0 +1,124 @@
+# Example: Multi-Environment Promotion
+# Promote an application through dev -> staging -> production using
+# loops, conditionals, variables, and task calling.
+#
+# This pattern is common in CI/CD: deploy to each environment in
+# sequence, run validation, and only promote if checks pass.
+#
+# Try: orchstep run
+# Try: orchstep run --var skip_prod=true
+
+name: multi-env-promotion
+desc: "Promote a release through dev, staging, and production"
+
+defaults:
+  app_name: "checkout-service"
+  version: "v3.2.0"
+  skip_prod: false
+  environments:
+    - name: "dev"
+      replicas: 1
+      run_e2e: false
+    - name: "staging"
+      replicas: 3
+      run_e2e: true
+    - name: "production"
+      replicas: 10
+      run_e2e: true
+
+tasks:
+  # --- Deploy to a single environment ---
+  deploy_to_env:
+    desc: "Deploy and validate in one environment"
+    vars:
+      env_name: ""
+      replicas: 1
+      run_e2e: false
+    steps:
+      - name: deploy
+        func: shell
+        do: |
+          echo "--- Deploying {{ vars.app_name }}:{{ vars.version }} to {{ vars.env_name }} ---"
+          echo "Scaling to {{ vars.replicas }} replicas"
+          echo "Deployment complete"
+        outputs:
+          status: "deployed"
+
+      - name: basic_check
+        func: shell
+        do: |
+          echo "Health check for {{ vars.env_name }}: OK"
+        outputs:
+          healthy: "true"
+
+      # Run E2E tests only if the environment requires them
+      - name: e2e_tests
+        if: "{{ vars.run_e2e }}"
+        func: shell
+        do: |
+          echo "Running E2E tests in {{ vars.env_name }}..."
+          echo "12 scenarios passed"
+        outputs:
+          passed: 12
+          failed: 0
+
+      - name: validate
+        func: assert
+        args:
+          condition: 'steps.deploy.status === "deployed"'
+          desc: "Deployment to {{ vars.env_name }} must succeed"
+
+  # --- Loop through environments ---
+  promote_through_envs:
+    desc: "Deploy to each environment in sequence"
+    steps:
+      # Loop over the environments list
+      - name: deploy_dev
+        desc: "Deploy to dev"
+        task: deploy_to_env
+        vars:
+          env_name: "dev"
+          replicas: 1
+          run_e2e: false
+
+      - name: deploy_staging
+        desc: "Deploy to staging with E2E tests"
+        task: deploy_to_env
+        vars:
+          env_name: "staging"
+          replicas: 3
+          run_e2e: true
+
+      # Conditionally skip production
+      - name: deploy_prod
+        desc: "Deploy to production (skipped if skip_prod=true)"
+        if: '{{ not (eq vars.skip_prod true) }}'
+        task: deploy_to_env
+        vars:
+          env_name: "production"
+          replicas: 10
+          run_e2e: true
+
+  main:
+    desc: "Run the full promotion pipeline"
+    steps:
+      - name: announce
+        func: shell
+        do: |
+          echo "=========================================="
+          echo "  Release Promotion: {{ vars.app_name }} {{ vars.version }}"
+          echo "=========================================="
+
+      - name: promote
+        task: promote_through_envs
+
+      - name: summary
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  Promotion Complete"
+          echo "=========================================="
+          echo "  {{ vars.app_name }} {{ vars.version }}"
+          echo "  dev -> staging -> production"
+          echo "=========================================="

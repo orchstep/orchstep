@@ -1,0 +1,59 @@
+# Example: Nested Modules
+# Modules can import other modules, creating a dependency chain.
+# OrchStep resolves the full chain and executes bottom-up.
+#
+# In this example:
+#   Consumer (this file)
+#     -> app-stack module
+#         -> database module (from the same modules/ directory)
+#
+# Each layer is scope-isolated. Config flows down through imports;
+# outputs flow up through step outputs.
+#
+# Try: orchstep run
+
+name: nested-modules-demo
+desc: "Composing modules that use other modules"
+
+# Import the top-level module (it imports its own dependencies)
+modules:
+  - name: stack
+    source: "./modules/app-stack"
+    config:
+      region: "us-west-2"
+      app_name: "order-service"
+      app_version: "2.1.0"
+
+tasks:
+  main:
+    desc: "Deploy a full application stack through nested modules"
+    steps:
+      # One call triggers the entire chain:
+      # app-stack -> database -> (network if configured)
+      - name: deploy_stack
+        module: stack
+        task: deploy
+
+      - name: show_result
+        func: shell
+        do: |
+          echo "=== Deployment Complete ==="
+          echo "Deployment ID: {{ steps.deploy_stack.deployment_id }}"
+          echo "App URL:       {{ steps.deploy_stack.app_url }}"
+          echo "Status:        {{ steps.deploy_stack.status }}"
+
+      - name: explain
+        func: shell
+        do: |
+          echo ""
+          echo "=== Module Nesting ==="
+          echo "Execution chain:"
+          echo "  1. Consumer calls app-stack.deploy"
+          echo "  2. app-stack calls database.query"
+          echo "  3. Each layer is scope-isolated"
+          echo ""
+          echo "Config flows DOWN through module imports."
+          echo "Outputs flow UP through step outputs."
+          echo ""
+          echo "OrchStep tracks nesting depth and warns if"
+          echo "the chain becomes too deep (> 3 levels)."

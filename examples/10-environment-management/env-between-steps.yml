@@ -1,0 +1,130 @@
+# Example: Environment Variable Scoping Between Steps
+# Shows how env vars flow between steps and tasks, including override
+# precedence and scope isolation.
+#
+# Precedence (highest to lowest):
+#   Step-level env  >  Task-level env  >  Workflow-level env
+#
+# When a step calls a task with `env:`, those vars override the
+# target task's own `env:` for that invocation only.
+#
+# Try: orchstep run
+# Try: orchstep run show_override_hierarchy
+
+name: env-between-steps
+desc: "Environment variable scoping between steps and tasks"
+
+tasks:
+  # --- Step-level env overrides task-level env ---
+  show_override_hierarchy:
+    desc: "Step env overrides task env; function env overrides step env"
+    env:
+      DB_HOST: "task-db.example.com"
+      DB_PORT: "5432"
+      LOG_LEVEL: "info"
+    steps:
+      - name: task_level_only
+        desc: "This step inherits task-level env"
+        func: shell
+        do: |
+          echo "=== Task-level env ==="
+          echo "DB_HOST   = {{ env.DB_HOST }}"
+          echo "DB_PORT   = {{ env.DB_PORT }}"
+          echo "LOG_LEVEL = {{ env.LOG_LEVEL }}"
+
+      - name: step_override
+        desc: "This step overrides DB_HOST for just this step"
+        func: shell
+        env:
+          DB_HOST: "step-db.internal"
+          LOG_LEVEL: "debug"
+        do: |
+          echo "=== Step-level override ==="
+          echo "DB_HOST   = {{ env.DB_HOST }}"
+          echo "DB_PORT   = {{ env.DB_PORT }}"
+          echo "LOG_LEVEL = {{ env.LOG_LEVEL }}"
+
+      - name: back_to_task_level
+        desc: "After the step, task-level env is restored"
+        func: shell
+        do: |
+          echo "=== Back to task-level ==="
+          echo "DB_HOST   = {{ env.DB_HOST }}"
+          echo "LOG_LEVEL = {{ env.LOG_LEVEL }}"
+
+  # --- Passing env vars from a step to a called task ---
+  backend_task:
+    desc: "Backend service configuration"
+    env:
+      SERVICE_HOST: "default-backend.local"
+      SERVICE_PORT: "8080"
+    steps:
+      - name: show_config
+        func: shell
+        do: |
+          echo "SERVICE_HOST = {{ env.SERVICE_HOST }}"
+          echo "SERVICE_PORT = {{ env.SERVICE_PORT }}"
+          echo "EXTRA_VAR    = {{ env.EXTRA_VAR }}"
+
+  call_task_with_env:
+    desc: "Override target task's env from the calling step"
+    steps:
+      # Call backend_task with default env
+      - name: call_with_defaults
+        desc: "Use the task's own env"
+        task: backend_task
+
+      # Override env for this specific invocation
+      - name: call_with_overrides
+        desc: "Override SERVICE_HOST and inject EXTRA_VAR"
+        task: backend_task
+        env:
+          SERVICE_HOST: "prod-backend.example.com"
+          EXTRA_VAR: "injected-from-caller"
+
+      # After the call, the override is gone (scope isolation)
+      - name: call_again_with_defaults
+        desc: "Overrides do not persist -- back to defaults"
+        task: backend_task
+
+  # --- Template expressions in env vars ---
+  template_env:
+    desc: "Env vars can use template expressions for dynamic values"
+    steps:
+      - name: set_base
+        desc: "Set a base URL via env_var"
+        func: env_var
+        do: set
+        args:
+          vars:
+            API_HOST: "api.example.com"
+            API_VERSION: "v2"
+
+      - name: use_template
+        desc: "Build a connection string from env templates"
+        func: shell
+        env:
+          API_URL: "https://{{ env.API_HOST }}/{{ env.API_VERSION }}"
+        do: |
+          echo "API_URL = {{ env.API_URL }}"
+
+  main:
+    desc: "Run all env scoping demos"
+    steps:
+      - name: demo_hierarchy
+        task: show_override_hierarchy
+
+      - name: demo_task_calls
+        task: call_task_with_env
+
+      - name: demo_templates
+        task: template_env
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Environment Scoping Rules ==="
+          echo "  1. Step env overrides task env (for that step only)"
+          echo "  2. Step->task env overrides target task env (for that call)"
+          echo "  3. Overrides are scoped -- they do not persist"
+          echo "  4. Env values support template expressions"

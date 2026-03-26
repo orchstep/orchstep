@@ -1,0 +1,195 @@
+# Example: Release Automation
+# Automate the full release lifecycle: version bump, changelog,
+# build, tag, and publish -- using shell commands, variables, loops,
+# and task composition.
+#
+# Combines: git operations, shell, variables, step outputs,
+# assertions, and task calling.
+#
+# Try: orchstep run
+# Try: orchstep run --var release_type=minor
+# Try: orchstep run --var dry_run=true
+
+name: release-automation
+desc: "Automated release pipeline with versioning, tagging, and publish"
+
+defaults:
+  project_name: "orchstep-sdk"
+  release_type: "patch"       # major, minor, or patch
+  current_version: "2.3.1"
+  dry_run: false
+  artifacts:
+    - name: "linux-amd64"
+      os: "linux"
+      arch: "amd64"
+    - name: "darwin-arm64"
+      os: "darwin"
+      arch: "arm64"
+    - name: "windows-amd64"
+      os: "windows"
+      arch: "amd64"
+
+tasks:
+  # --- Calculate new version ---
+  bump_version:
+    desc: "Calculate the next version based on release type"
+    steps:
+      - name: calculate
+        func: shell
+        do: |
+          echo "Current version: {{ vars.current_version }}"
+          echo "Release type:    {{ vars.release_type }}"
+          echo "New version:     2.3.2"
+        outputs:
+          new_version: "2.3.2"
+          tag: "v2.3.2"
+
+      - name: validate_version
+        func: assert
+        args:
+          conditions:
+            - condition: 'steps.calculate.new_version !== "{{ vars.current_version }}"'
+              desc: "New version must differ from current"
+            - condition: 'matches("^\\d+\\.\\d+\\.\\d+$", steps.calculate.new_version)'
+              desc: "Version must follow semver format"
+
+  # --- Generate changelog ---
+  changelog:
+    desc: "Generate changelog from recent commits"
+    steps:
+      - name: collect_changes
+        func: shell
+        do: |
+          echo "=== Changelog ==="
+          echo ""
+          echo "## What's Changed"
+          echo "- fix: resolve timeout in payment processor"
+          echo "- feat: add webhook retry with exponential backoff"
+          echo "- docs: update API reference for v2 endpoints"
+          echo "- chore: upgrade Go to 1.22"
+          echo ""
+          echo "3 contributors, 12 commits since v{{ vars.current_version }}"
+        outputs:
+          entry_count: 4
+          changelog: "fix: timeout, feat: webhook retry, docs: API ref, chore: Go 1.22"
+
+      - name: verify_changelog
+        func: assert
+        args:
+          condition: "steps.collect_changes.entry_count > 0"
+          desc: "Changelog must have at least one entry"
+
+  # --- Build artifacts ---
+  build_artifacts:
+    desc: "Build release artifacts for all platforms"
+    steps:
+      - name: build_linux
+        func: shell
+        do: |
+          echo "Building {{ vars.project_name }} for linux/amd64..."
+          echo "Binary: dist/{{ vars.project_name }}-linux-amd64"
+        outputs:
+          artifact: "dist/{{ vars.project_name }}-linux-amd64"
+
+      - name: build_darwin
+        func: shell
+        do: |
+          echo "Building {{ vars.project_name }} for darwin/arm64..."
+          echo "Binary: dist/{{ vars.project_name }}-darwin-arm64"
+        outputs:
+          artifact: "dist/{{ vars.project_name }}-darwin-arm64"
+
+      - name: build_windows
+        func: shell
+        do: |
+          echo "Building {{ vars.project_name }} for windows/amd64..."
+          echo "Binary: dist/{{ vars.project_name }}-windows-amd64.exe"
+        outputs:
+          artifact: "dist/{{ vars.project_name }}-windows-amd64.exe"
+
+      - name: verify_builds
+        func: assert
+        args:
+          conditions:
+            - condition: '{{ steps.build_linux.artifact | contains "linux" }}'
+              desc: "Linux artifact built"
+            - condition: '{{ steps.build_darwin.artifact | contains "darwin" }}'
+              desc: "Darwin artifact built"
+            - condition: '{{ steps.build_windows.artifact | contains "windows" }}'
+              desc: "Windows artifact built"
+
+  # --- Tag and publish ---
+  publish:
+    desc: "Create git tag and publish release"
+    steps:
+      - name: create_tag
+        func: shell
+        do: |
+          echo "Creating git tag {{ vars.tag }}"
+          echo "Tag created successfully"
+        outputs:
+          tag: "{{ vars.tag }}"
+
+      - name: push_tag
+        if: '{{ not (eq vars.dry_run true) }}'
+        func: shell
+        do: |
+          echo "Pushing tag {{ steps.create_tag.tag }} to origin"
+          echo "Tag pushed"
+
+      - name: create_release
+        if: '{{ not (eq vars.dry_run true) }}'
+        func: shell
+        do: |
+          echo "Creating GitHub release for {{ steps.create_tag.tag }}"
+          echo "Uploading 3 artifacts..."
+          echo "Release published"
+        outputs:
+          release_url: "https://github.com/example/{{ vars.project_name }}/releases/tag/{{ steps.create_tag.tag }}"
+
+      - name: dry_run_notice
+        if: "{{ vars.dry_run }}"
+        func: shell
+        do: |
+          echo "DRY RUN: Skipped push and release creation"
+          echo "Would have published {{ steps.create_tag.tag }}"
+
+  # --- Full pipeline ---
+  main:
+    desc: "Run the complete release automation"
+    steps:
+      - name: announce
+        func: shell
+        do: |
+          echo "=========================================="
+          echo "  Release: {{ vars.project_name }}"
+          echo "  Type:    {{ vars.release_type }}"
+          echo "  Dry run: {{ vars.dry_run }}"
+          echo "=========================================="
+
+      - name: version
+        task: bump_version
+
+      - name: changes
+        task: changelog
+
+      - name: build
+        task: build_artifacts
+
+      - name: release
+        task: publish
+        vars:
+          tag: "v2.3.2"
+
+      - name: report
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  Release Complete"
+          echo "=========================================="
+          echo "  Project:  {{ vars.project_name }}"
+          echo "  Version:  {{ vars.current_version }} -> v2.3.2"
+          echo "  Artifacts: 3 platforms"
+          echo "  Changelog: 4 entries"
+          echo "=========================================="

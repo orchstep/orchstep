@@ -1,0 +1,23 @@
+# Module: greeting
+# A simple module that works standalone AND as a reusable module.
+# No orchstep-module.yml needed -- OrchStep treats any orchstep.yml
+# as an implicit module.
+
+name: greeting-module
+desc: "Reusable greeting utility"
+
+defaults:
+  message: "Hello from the greeting module"
+  recipient: "World"
+
+tasks:
+  greet:
+    desc: "Print a greeting"
+    steps:
+      - name: say_hello
+        func: shell
+        do: |
+          echo "{{ vars.message }}, {{ vars.recipient }}!"
+        outputs:
+          greeting: "{{ vars.message }}, {{ vars.recipient }}!"
+          recipient: "{{ vars.recipient }}"

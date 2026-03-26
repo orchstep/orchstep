@@ -1,0 +1,83 @@
+# Example: Self-Contained Module
+# A module can be a single YAML file that contains everything:
+# metadata, config schema, exports, and task implementations.
+#
+# This is ideal for simple, portable modules that you want to
+# share without a directory structure.
+#
+# The module file: modules/deploy.yml
+#
+# Try: orchstep run
+# Try: orchstep run deploy_with_custom_replicas
+
+name: self-contained-module-demo
+desc: "Module with full metadata, exports, and config schema in one file"
+
+# Import a single-file module (direct file reference, not a directory)
+modules:
+  - name: deployer
+    source: "./modules/deploy.yml"
+    config:
+      environment: "staging"
+      registry: "my-registry.example.com"
+
+tasks:
+  # Basic deployment using module defaults
+  deploy_basic:
+    desc: "Deploy with default replicas"
+    steps:
+      - name: deploy_app
+        module: deployer
+        task: deploy
+        with:
+          app_name: "user-service"
+          version: "v2.0.0"
+          # replicas omitted -- uses module default (3)
+
+      - name: show_result
+        func: shell
+        do: |
+          echo "Deployment ID: {{ steps.deploy_app.deployment_id }}"
+          echo "Status:        {{ steps.deploy_app.status }}"
+          echo "Replicas:      {{ steps.deploy_app.replicas }}"
+
+  # Deployment with all params specified
+  deploy_with_custom_replicas:
+    desc: "Deploy with custom replica count"
+    steps:
+      - name: deploy_scaled
+        module: deployer
+        task: deploy
+        with:
+          app_name: "order-service"
+          version: "v3.5.1"
+          replicas: 10
+
+      - name: show_result
+        func: shell
+        do: |
+          echo "App:      {{ steps.deploy_scaled.app_name }}"
+          echo "Version:  {{ steps.deploy_scaled.version }}"
+          echo "Replicas: {{ steps.deploy_scaled.replicas }}"
+
+  main:
+    desc: "Run both deployment scenarios"
+    steps:
+      - name: basic
+        task: deploy_basic
+
+      - name: custom
+        task: deploy_with_custom_replicas
+
+      - name: summary
+        func: shell
+        do: |
+          echo ""
+          echo "=== Self-Contained Modules ==="
+          echo "A single .yml file can contain:"
+          echo "  - metadata:  name, version, author, license"
+          echo "  - config:    schema with validation rules"
+          echo "  - exports:   public task interfaces with params/returns"
+          echo "  - tasks:     the actual implementation"
+          echo ""
+          echo "Import with: source: ./path/to/module.yml"

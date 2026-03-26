@@ -1,0 +1,80 @@
+# Self-Contained Module: deploy
+# Everything in a single file -- metadata, config schema, exports, and tasks.
+# No separate orchstep-module.yml or directory needed.
+
+name: "Deploy Module"
+desc: "Self-contained deployment module with config schema and exports"
+
+# Module metadata
+metadata:
+  name: "deploy"
+  version: "1.0.0"
+  description: "Application deployment to container platform"
+  author: "Platform Team"
+  license: "MIT"
+
+# Config schema -- validates what consumers must/can provide
+config:
+  schema:
+    type: object
+    properties:
+      environment:
+        type: string
+        required: true
+        desc: "Target environment"
+        enum: ["dev", "staging", "prod"]
+      registry:
+        type: string
+        required: false
+        default: "registry.example.com"
+        desc: "Container registry URL"
+
+# Exports -- declare what tasks are public and their interfaces
+exports:
+  deploy:
+    desc: "Deploy an application"
+    params:
+      - name: "app_name"
+        type: "string"
+        required: true
+        desc: "Application name"
+      - name: "version"
+        type: "string"
+        required: true
+        desc: "Version tag to deploy"
+      - name: "replicas"
+        type: "integer"
+        required: false
+        default: 3
+        desc: "Number of replicas"
+    returns:
+      type: object
+      properties:
+        deployment_id:
+          type: string
+          required: true
+        status:
+          type: string
+          required: true
+
+# Implementation
+defaults:
+  replicas: 3
+
+tasks:
+  deploy:
+    desc: "Deploy application"
+    steps:
+      - name: run_deploy
+        func: shell
+        do: |
+          echo "Deploying {{ vars.app_name }}:{{ vars.version }}"
+          echo "Environment: {{ vars.environment }}"
+          echo "Registry:    {{ vars.registry }}"
+          echo "Replicas:    {{ vars.replicas }}"
+        outputs:
+          deployment_id: "deploy-{{ vars.environment }}-{{ vars.app_name }}-001"
+          status: "deployed"
+          app_name: "{{ vars.app_name }}"
+          version: "{{ vars.version }}"
+          replicas: "{{ vars.replicas }}"
