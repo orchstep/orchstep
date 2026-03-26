@@ -1,0 +1,6 @@
+
+# Python build artifacts
+pip/build/
+pip/dist/
+pip/*.egg-info/
+pip/orchstep.egg-info/
