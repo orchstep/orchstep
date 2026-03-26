@@ -1,0 +1,144 @@
+# Example: Git Checkout Operations
+# Shows how to checkout branches, tags, and specific commits
+# using the built-in git function.
+#
+# Common use cases:
+#   - Switch branches for multi-branch CI builds
+#   - Checkout a release tag for deployment
+#   - Inspect a specific commit for debugging
+#
+# Try: orchstep run checkout-workflow
+
+name: git-checkout-demo
+desc: "Checkout branches, tags, and commits"
+
+vars:
+  repo_url: "https://github.com/orchstep/example-repo.git"
+  work_dir: "/tmp/orchstep-checkout-demo"
+
+tasks:
+  # -- Complete checkout workflow --
+  checkout-workflow:
+    desc: "Clone and perform various checkout operations"
+    steps:
+      - name: setup
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}
+          mkdir -p {{ vars.work_dir }}
+
+      # Clone with some history so we can checkout
+      - name: clone_repo
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.work_dir }}/repo"
+          depth: 10    # Need some history for checkout operations
+        outputs:
+          repo_path: "{{ result.dest }}"
+          clone_success: "{{ result.success }}"
+
+      # Inspect what we have to work with
+      - name: explore_repo
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          echo "=== Repository State ==="
+          echo "Current branch:"
+          git branch
+          echo ""
+          echo "Available commits:"
+          git log --oneline -5
+          echo ""
+          echo "Current HEAD:"
+          git rev-parse HEAD
+
+      # Checkout a previous commit (detached HEAD)
+      - name: checkout_previous
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          CURRENT=$(git rev-parse HEAD)
+          echo "Current SHA: $CURRENT"
+
+          # Try checking out the previous commit
+          git checkout HEAD~1 2>/dev/null && echo "Checked out previous commit" || echo "Only one commit in shallow clone"
+          echo "Now at: $(git rev-parse HEAD)"
+
+          # Return to original branch
+          git checkout - 2>/dev/null || git checkout main 2>/dev/null || true
+
+      - name: summary
+        func: shell
+        do: echo "Checkout operations completed"
+
+  # -- Branch-based CI build --
+  build-for-branch:
+    desc: "Clone a specific branch and build"
+    vars:
+      branch: "main"
+    steps:
+      - name: setup
+        func: shell
+        do: rm -rf {{ vars.work_dir }}/branch-build
+
+      - name: clone_branch
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.work_dir }}/branch-build"
+          branch: "{{ vars.branch }}"
+          depth: 1
+        outputs:
+          success: "{{ result.success }}"
+
+      - name: build
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/branch-build
+          echo "Building from branch: {{ vars.branch }}"
+          echo "Commit: $(git rev-parse --short HEAD)"
+          # In real usage: make build, npm run build, etc.
+          echo "Build complete"
+
+  # -- Tag-based release deployment --
+  deploy-release-tag:
+    desc: "Checkout a release tag and deploy"
+    vars:
+      release_tag: "v1.0.0"
+    steps:
+      - name: setup
+        func: shell
+        do: rm -rf {{ vars.work_dir }}/release
+
+      - name: clone_at_tag
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.work_dir }}/release"
+          branch: "{{ vars.release_tag }}"
+          depth: 1
+        outputs:
+          success: "{{ result.success }}"
+
+      - name: deploy
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/release
+          echo "Deploying release {{ vars.release_tag }}"
+          echo "Commit: $(git rev-parse --short HEAD)"
+          # In real usage: docker build, helm upgrade, etc.
+          echo "Deployment complete"
+
+  # -- Cleanup --
+  cleanup:
+    desc: "Remove working directory"
+    steps:
+      - name: remove
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}
+          echo "Cleanup complete"

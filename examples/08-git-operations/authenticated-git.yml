@@ -1,0 +1,143 @@
+# Example: Authenticated Git Operations
+# Shows how to clone private repositories using tokens and
+# SSH keys for authentication.
+#
+# Authentication methods:
+#   Token auth:  auth: { type: token, token: "ghp_..." }
+#   SSH:         Use SSH URLs (git@github.com:org/repo.git)
+#
+# IMPORTANT: Never hardcode tokens in workflow files.
+# Use --var flags or environment variables instead.
+#
+# Try: orchstep run clone-private-repo --var github_token=ghp_your_token
+# Try: orchstep run ssh-clone
+
+name: authenticated-git-demo
+desc: "Clone private repositories with token or SSH auth"
+
+vars:
+  work_dir: "/tmp/orchstep-auth-git"
+
+tasks:
+  # -- Clone with HTTPS token --
+  clone-private-repo:
+    desc: "Clone a private repository using a GitHub token"
+    vars:
+      # Pass token at runtime: --var github_token=ghp_xxxx
+      github_token: "{{ env.GITHUB_TOKEN }}"
+      repo_url: "https://github.com/your-org/private-repo.git"
+    steps:
+      - name: setup
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}/private
+          mkdir -p {{ vars.work_dir }}
+
+      - name: clone_with_token
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.work_dir }}/private"
+          depth: 1
+          auth:
+            type: "token"
+            token: "{{ vars.github_token }}"
+        outputs:
+          success: "{{ result.success }}"
+          url: "{{ result.url }}"
+
+      - name: verify_clone
+        func: shell
+        do: |
+          if [ -d "{{ vars.work_dir }}/private/.git" ]; then
+            echo "Repository cloned successfully"
+            cd {{ vars.work_dir }}/private
+            echo "Current commit: $(git rev-parse --short HEAD)"
+          else
+            echo "Clone failed"
+            exit 1
+          fi
+
+      # Verify no token leakage in git config
+      - name: verify_security
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/private
+          remote_url=$(git remote get-url origin)
+          # Ensure the token is not embedded in the remote URL
+          if echo "$remote_url" | grep -q "ghp_"; then
+            echo "WARNING: Token found in remote URL"
+          else
+            echo "Remote URL is clean (no embedded tokens)"
+          fi
+
+  # -- Clone using SSH key --
+  ssh-clone:
+    desc: "Clone a repository using SSH authentication"
+    vars:
+      ssh_repo: "git@github.com:your-org/private-repo.git"
+    steps:
+      - name: setup
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}/ssh-repo
+          mkdir -p {{ vars.work_dir }}
+
+      - name: verify_ssh_agent
+        func: shell
+        do: |
+          echo "Checking SSH agent..."
+          if ssh-add -l 2>/dev/null; then
+            echo "SSH keys loaded"
+          else
+            echo "No SSH keys found. Add keys with: ssh-add ~/.ssh/id_ed25519"
+          fi
+
+      - name: clone_via_ssh
+        func: shell
+        do: |
+          echo "Cloning via SSH..."
+          git clone --depth 1 {{ vars.ssh_repo }} {{ vars.work_dir }}/ssh-repo
+          echo "Clone complete"
+        on_error: warn
+
+  # -- Token from environment variable --
+  env-token-clone:
+    desc: "Use environment variable for the token (recommended)"
+    vars:
+      repo_url: "https://github.com/your-org/private-repo.git"
+    steps:
+      - name: check_token
+        func: shell
+        do: |
+          if [ -n "${GITHUB_TOKEN}" ]; then
+            echo "GITHUB_TOKEN is set (length: ${#GITHUB_TOKEN} chars)"
+          else
+            echo "GITHUB_TOKEN not found in environment"
+            echo "Set it with: export GITHUB_TOKEN=ghp_your_token"
+            exit 1
+          fi
+
+      - name: clone_with_env_token
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.work_dir }}/env-token"
+          depth: 1
+          auth:
+            type: "token"
+            token: "{{ env.GITHUB_TOKEN }}"
+        outputs:
+          success: "{{ result.success }}"
+
+  # -- Cleanup --
+  cleanup:
+    desc: "Remove all cloned repositories"
+    steps:
+      - name: remove
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}
+          echo "Cleanup complete"

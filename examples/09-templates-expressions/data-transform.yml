@@ -1,0 +1,160 @@
+# Example: Data Transform Function
+# The `transform` function executes JavaScript to process,
+# filter, and reshape data within your workflow.
+#
+# Usage:
+#   func: transform
+#   do: |
+#     // JavaScript code
+#     return { key: value };
+#
+# Available context:
+#   vars.*            - Read/write workflow variables
+#   steps.*           - Read outputs from previous steps
+#   utils.parseJSON() - Parse JSON strings
+#   utils.stringifyJSON() - Serialize to JSON
+#   utils.unique()    - Deduplicate an array
+#   utils.sum()       - Sum an array of numbers
+#
+# Return value becomes the step output:
+#   - Object: fields accessible as steps.<name>.<field>
+#   - Primitive/Array: wrapped as steps.<name>.result
+#
+# Try: orchstep run filter-api-data
+# Try: orchstep run compute-metrics
+
+name: data-transform-demo
+desc: "JavaScript transform function for data manipulation"
+
+tasks:
+  # -- Return different types --
+  basic-transforms:
+    desc: "Transform returning primitives, objects, and arrays"
+    steps:
+      - name: return_number
+        func: transform
+        do: |
+          return 42;
+      # Access: steps.return_number.result == 42
+
+      - name: return_string
+        func: transform
+        do: |
+          return "deployment-ready";
+      # Access: steps.return_string.result == "deployment-ready"
+
+      - name: return_object
+        func: transform
+        do: |
+          return {
+            count: 42,
+            status: "success",
+            active: true
+          };
+      # Access: steps.return_object.count, steps.return_object.status
+
+      - name: return_array
+        func: transform
+        do: |
+          return [1, 2, 3, 4, 5];
+      # Access: steps.return_array.result.length == 5
+
+      - name: verify
+        func: shell
+        do: |
+          echo "Number: {{ steps.return_number.result }}"
+          echo "Object status: {{ steps.return_object.status }}"
+
+  # -- Access and modify variables --
+  compute-metrics:
+    desc: "Read variables and compute derived values"
+    vars:
+      input_value: 100
+      multiplier: 2
+      counter: 0
+    steps:
+      - name: calculate
+        func: transform
+        do: |
+          const input = vars.input_value;
+          const mult = vars.multiplier;
+          return { result: input * mult };
+
+      - name: increment_counter
+        func: transform
+        do: |
+          // Transform can modify task-level variables
+          vars.counter = vars.counter + 1;
+          return { incremented: true };
+
+      - name: read_counter
+        func: transform
+        do: |
+          return { counter_value: vars.counter };
+
+      - name: show_results
+        func: shell
+        do: |
+          echo "Computed: {{ steps.calculate.result }}"
+          echo "Counter: {{ steps.read_counter.counter_value }}"
+
+  # -- Filter and reshape API data --
+  filter-api-data:
+    desc: "Parse API response and filter active users"
+    steps:
+      - name: fetch_users
+        func: shell
+        do: |
+          echo '{"users":[{"id":1,"name":"Alice","active":true},{"id":2,"name":"Bob","active":false},{"id":3,"name":"Charlie","active":true}]}'
+
+      - name: process_users
+        func: transform
+        do: |
+          const data = utils.parseJSON(steps.fetch_users.output);
+          const activeUsers = data.users.filter(u => u.active);
+          const names = activeUsers.map(u => u.name);
+
+          return {
+            total_users: data.users.length,
+            active_count: activeUsers.length,
+            active_names: names
+          };
+
+      - name: display_results
+        func: shell
+        do: |
+          echo "Total users: {{ steps.process_users.total_users }}"
+          echo "Active users: {{ steps.process_users.active_count }}"
+
+  # -- Utility functions --
+  utility-functions:
+    desc: "Use built-in utility functions for common operations"
+    steps:
+      - name: json_round_trip
+        func: transform
+        do: |
+          // Serialize and parse JSON
+          const obj = { name: "deployment", version: 42 };
+          const json = utils.stringifyJSON(obj);
+          const parsed = utils.parseJSON(json);
+          return { name: parsed.name, version: parsed.version };
+
+      - name: array_operations
+        func: transform
+        do: |
+          // Deduplicate and sum
+          const arr = [1, 2, 2, 3, 3, 3];
+          const unique = utils.unique(arr);
+          const total = utils.sum(unique);
+          return {
+            original_count: arr.length,
+            unique_count: unique.length,
+            sum: total
+          };
+
+      - name: show_results
+        func: shell
+        do: |
+          echo "JSON name: {{ steps.json_round_trip.name }}"
+          echo "Unique values: {{ steps.array_operations.unique_count }}"
+          echo "Sum: {{ steps.array_operations.sum }}"

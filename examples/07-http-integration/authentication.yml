@@ -1,0 +1,129 @@
+# Example: HTTP Authentication Patterns
+# Shows how to authenticate HTTP requests with different methods:
+#
+#   Bearer token - auth: { type: bearer, token: "..." }
+#   Basic auth   - auth: { type: basic, username: "...", password: "..." }
+#   API key      - auth: { type: apikey, key: "...", in: header|query, name: "..." }
+#
+# Tokens and credentials should come from variables or environment
+# variables -- never hardcode secrets in workflow files.
+#
+# Try: orchstep run bearer-auth
+# Try: orchstep run api-key-auth
+
+name: authentication-demo
+desc: "Bearer, Basic, and API Key authentication patterns"
+
+vars:
+  api_base: "https://httpbin.org"
+
+tasks:
+  # -- Bearer token authentication --
+  bearer-auth:
+    desc: "Authenticate with a Bearer token (e.g., OAuth2, JWT)"
+    vars:
+      # In real usage: orchstep run bearer-auth --var api_token=your-token
+      api_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+    steps:
+      - name: call_protected_api
+        func: http
+        args:
+          url: "{{ vars.api_base }}/bearer"
+          method: GET
+          auth:
+            type: bearer
+            token: "{{ vars.api_token }}"
+        outputs:
+          status: "{{ result.status_code }}"
+          authenticated: "{{ result.data_object.authenticated }}"
+
+      - name: show_result
+        func: shell
+        do: |
+          echo "Status: {{ steps.call_protected_api.status }}"
+          echo "Authenticated: {{ steps.call_protected_api.authenticated }}"
+
+  # -- Basic authentication --
+  basic-auth:
+    desc: "Authenticate with username and password"
+    vars:
+      # In real usage: pass via --var or environment variables
+      username: "admin"
+      password: "secret"
+    steps:
+      - name: login_to_service
+        func: http
+        args:
+          url: "{{ vars.api_base }}/basic-auth/{{ vars.username }}/{{ vars.password }}"
+          method: GET
+          auth:
+            type: basic
+            username: "{{ vars.username }}"
+            password: "{{ vars.password }}"
+        outputs:
+          status: "{{ result.status_code }}"
+          authenticated: "{{ result.data_object.authenticated }}"
+          user: "{{ result.data_object.user }}"
+
+  # -- API key in header --
+  api-key-auth:
+    desc: "Authenticate with an API key sent in a header"
+    vars:
+      # In real usage: orchstep run api-key-auth --var api_key=your-key
+      api_key: "sk-prod-abc123def456"
+    steps:
+      - name: call_with_api_key
+        func: http
+        args:
+          url: "{{ vars.api_base }}/headers"
+          method: GET
+          auth:
+            type: apikey
+            key: "{{ vars.api_key }}"
+            in: header              # Send key as a header
+            name: "X-API-Key"      # Header name
+        outputs:
+          status: "{{ result.status_code }}"
+          api_key_sent: '{{ index result.data_object.headers "X-Api-Key" }}'
+
+  # -- API key in query parameter --
+  api-key-query:
+    desc: "Authenticate with an API key in the URL query string"
+    vars:
+      api_key: "pk-query-789xyz"
+    steps:
+      - name: call_with_query_key
+        func: http
+        args:
+          url: "{{ vars.api_base }}/get"
+          method: GET
+          auth:
+            type: apikey
+            key: "{{ vars.api_key }}"
+            in: query               # Send key as a query parameter
+            name: "api_key"         # Query parameter name
+        outputs:
+          status: "{{ result.status_code }}"
+          api_key_param: "{{ result.data_object.args.api_key }}"
+
+  # -- Combine auth with custom headers --
+  auth-with-custom-headers:
+    desc: "Use API key auth alongside additional custom headers"
+    steps:
+      - name: enriched_request
+        func: http
+        args:
+          url: "{{ vars.api_base }}/headers"
+          method: GET
+          headers:
+            X-Request-ID: "req-999-abc"
+            X-Client-Version: "3.0.0"
+          auth:
+            type: apikey
+            key: "my-api-key-123"
+            in: header
+            name: "X-API-Key"
+        outputs:
+          status: "{{ result.status_code }}"
+          request_id: '{{ index result.data_object.headers "X-Request-Id" }}'
+          api_key: '{{ index result.data_object.headers "X-Api-Key" }}'

@@ -1,0 +1,119 @@
+# Example: Conditional Retry
+# Shows how to retry only when a specific condition is met,
+# using the `when` clause inside retry configuration.
+#
+# Conditions can be written in JavaScript or Go template syntax.
+# Available context: result.exit_code, result.output, retry.attempt, vars.*
+#
+# Try: orchstep run retry-on-timeout
+# Try: orchstep run retry-on-output-match
+
+name: conditional-retry-demo
+desc: "Retry only when specific conditions are met"
+
+tasks:
+  # -- Retry only on timeout exit codes --
+  retry-on-timeout:
+    desc: "Retry network calls only when they time out (exit code 124)"
+    steps:
+      - name: call_external_api
+        func: shell
+        do: |
+          echo "Calling payment gateway..."
+          # In real usage: curl --max-time 5 https://api.payment.com/charge
+          # Exit code 124 = timeout, 0 = success, other = permanent error
+          echo "Request completed"
+        retry:
+          max_attempts: 3
+          interval: 2s
+          # JavaScript expression: only retry on timeout
+          when: |
+            result.exit_code == 124
+
+  # -- Retry based on output content --
+  retry-on-output-match:
+    desc: "Retry only when output indicates a transient error"
+    steps:
+      - name: sync_database
+        func: shell
+        do: |
+          echo "Syncing database replica..."
+          # In real usage: pg_basebackup or similar
+          echo "Sync complete"
+        retry:
+          max_attempts: 5
+          interval: 1s
+          # JavaScript: retry when output contains "timeout" or "connection refused"
+          when: |
+            result.exit_code != 0 && result.output.includes('timeout')
+
+  # -- Retry with attempt-aware logic --
+  retry-with-escalation:
+    desc: "Change retry behavior based on attempt number"
+    steps:
+      - name: provision_resource
+        func: shell
+        do: |
+          echo "Provisioning cloud resource..."
+          # In real usage: terraform apply
+          echo "Resource provisioned"
+        retry:
+          max_attempts: 5
+          interval: 1s
+          # JavaScript: stop retrying after 3 attempts for exit code 1
+          when: |
+            retry.attempt < 3 && result.exit_code == 1
+
+  # -- Go template syntax for conditions --
+  retry-go-template:
+    desc: "Retry using Go template when condition"
+    steps:
+      - name: deploy_container
+        func: shell
+        do: |
+          echo "Pulling and deploying container image..."
+          # In real usage: docker pull && docker run
+          echo "Container deployed"
+        retry:
+          max_attempts: 4
+          interval: 500ms
+          # Go template syntax: retry on non-zero exit with retryable output
+          when: '{{ and (ne .result.exit_code 0) (contains "Retryable" .result.output) }}'
+
+  # -- Retry with variable-based conditions --
+  retry-with-vars:
+    desc: "Use task variables in retry conditions"
+    vars:
+      max_retryable_exit_code: 10
+    steps:
+      - name: run_migration
+        func: shell
+        do: |
+          echo "Running database migration..."
+          # In real usage: flyway migrate or alembic upgrade
+          echo "Migration complete"
+        retry:
+          max_attempts: 3
+          interval: 500ms
+          # JavaScript: only retry if exit code is within retryable range
+          when: |
+            result.exit_code <= vars.max_retryable_exit_code
+
+  # -- Multiple AND conditions --
+  retry-multi-condition:
+    desc: "Retry only when multiple conditions match"
+    steps:
+      - name: push_to_registry
+        func: shell
+        do: |
+          echo "Pushing image to container registry..."
+          # In real usage: docker push myregistry.io/app:latest
+          echo "Push complete"
+        retry:
+          max_attempts: 5
+          interval: 1s
+          # JavaScript: all conditions must be true to retry
+          when: |
+            result.exit_code == 2 &&
+            result.output.includes('WARN') &&
+            result.output.includes('temporary')
