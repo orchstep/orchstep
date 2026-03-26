@@ -19,14 +19,14 @@ tasks:
       - name: using_do_shorthand
         desc: "Run a shell command using 'do:' syntax"
         func: shell
-        do: echo 'This uses the do: shorthand'
+        do: "echo 'This uses the do: shorthand'"
 
       # Pattern 2: "args: cmd:" explicit form
       - name: using_args_cmd
         desc: "Run a shell command using explicit 'args: cmd:' syntax"
         func: shell
         args:
-          cmd: echo 'This uses the args:cmd: form'
+          cmd: "echo 'This uses the args:cmd: form'"
 
       # Pattern 3: Multi-line shell script with "do:"
       - name: multi_line_script
