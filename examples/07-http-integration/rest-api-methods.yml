@@ -1,0 +1,161 @@
+# Example: REST API Methods (POST, PUT, PATCH, DELETE)
+# Shows how to use all standard HTTP methods with JSON payloads.
+#
+# Body can be specified as:
+#   body: { ... }         - YAML object (auto-serialized to JSON)
+#   body: "text"          - Plain text body
+#   body_json: '{"k":"v"}'- JSON string
+#
+# Try: orchstep run create-user
+# Try: orchstep run crud-workflow
+
+name: rest-api-methods-demo
+desc: "POST, PUT, PATCH, DELETE with JSON bodies"
+
+vars:
+  api_base: "https://httpbin.org"
+
+tasks:
+  # -- POST with JSON body --
+  create-user:
+    desc: "Create a resource with POST"
+    steps:
+      - name: create_user
+        func: http
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body:
+            name: "Alice Johnson"
+            email: "alice@example.com"
+            role: "developer"
+            active: true
+        outputs:
+          status: "{{ result.status_code }}"
+          created_name: "{{ result.data_object.json.name }}"
+
+      - name: confirm
+        func: shell
+        do: |
+          echo "Created user: {{ steps.create_user.created_name }}"
+          echo "Status: {{ steps.create_user.status }}"
+
+  # -- POST with plain text body --
+  post-plain-text:
+    desc: "Send plain text content"
+    steps:
+      - name: send_log
+        func: http
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body: "2024-01-15T10:30:00Z [INFO] Deployment completed successfully"
+          headers:
+            Content-Type: "text/plain"
+        outputs:
+          status: "{{ result.status_code }}"
+
+  # -- POST with JSON string body --
+  post-json-string:
+    desc: "Send a pre-formed JSON string"
+    steps:
+      - name: send_order
+        func: http
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body_json: '{"product": "OrchStep Pro", "quantity": 5, "price": 99.99}'
+        outputs:
+          status: "{{ result.status_code }}"
+          product: "{{ result.data_object.json.product }}"
+
+  # -- PUT to update a resource --
+  update-user:
+    desc: "Update an existing resource with PUT"
+    vars:
+      user_id: "usr-12345"
+    steps:
+      - name: update_user_data
+        func: http
+        args:
+          url: "{{ vars.api_base }}/put"
+          method: PUT
+          body:
+            id: "{{ vars.user_id }}"
+            name: "Alice Smith"
+            email: "alice.smith@example.com"
+        outputs:
+          status: "{{ result.status_code }}"
+
+  # -- PATCH for partial update --
+  patch-user-email:
+    desc: "Partially update a resource with PATCH"
+    steps:
+      - name: patch_email
+        func: http
+        args:
+          url: "{{ vars.api_base }}/patch"
+          method: PATCH
+          body:
+            email: "newemail@example.com"
+        outputs:
+          status: "{{ result.status_code }}"
+
+  # -- DELETE a resource --
+  delete-user:
+    desc: "Remove a resource with DELETE"
+    steps:
+      - name: delete_resource
+        func: http
+        args:
+          url: "{{ vars.api_base }}/delete?id=usr-12345"
+          method: DELETE
+        outputs:
+          status: "{{ result.status_code }}"
+
+  # -- Full CRUD workflow --
+  crud-workflow:
+    desc: "Create, read, update, delete in sequence"
+    steps:
+      - name: create_item
+        func: http
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body:
+            title: "New Feature"
+            description: "Add retry with jitter support"
+            priority: "high"
+        outputs:
+          status: "{{ result.status_code }}"
+
+      - name: update_item
+        func: http
+        args:
+          url: "{{ vars.api_base }}/put"
+          method: PUT
+          headers:
+            X-Request-ID: "req-98765"
+            X-Client-Version: "2.0.0"
+          body:
+            title: "New Feature (Updated)"
+            status: "in_progress"
+        outputs:
+          status: "{{ result.status_code }}"
+          request_id: '{{ index result.data_object.headers "X-Request-Id" }}'
+
+      - name: delete_item
+        func: http
+        args:
+          url: "{{ vars.api_base }}/delete?id=feat-001"
+          method: DELETE
+        outputs:
+          status: "{{ result.status_code }}"
+
+      - name: summary
+        func: shell
+        do: |
+          echo "CRUD workflow complete"
+          echo "Create: {{ steps.create_item.status }}"
+          echo "Update: {{ steps.update_item.status }}"
+          echo "Delete: {{ steps.delete_item.status }}"

@@ -1,0 +1,140 @@
+# Example: Repository Information
+# Shows how to query git repository information: fetch updates,
+# list branches and tags, and retrieve commit details.
+#
+# These operations are useful in CI/CD pipelines to determine
+# what to build, tag, or deploy based on repository state.
+#
+# Try: orchstep run get-repo-info
+# Try: orchstep run list-releases
+
+name: repository-info-demo
+desc: "Fetch, list branches/tags, and get commit info"
+
+vars:
+  repo_url: "https://github.com/orchstep/example-repo.git"
+  work_dir: "/tmp/orchstep-repo-info"
+
+tasks:
+  # -- Fetch and inspect a repository --
+  get-repo-info:
+    desc: "Clone, fetch, and display repository information"
+    steps:
+      - name: setup
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}
+          mkdir -p {{ vars.work_dir }}
+
+      - name: clone_repo
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.work_dir }}/repo"
+          depth: 10
+        outputs:
+          repo_path: "{{ result.dest }}"
+
+      - name: get_current_commit
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          echo "SHA: $(git rev-parse HEAD)"
+          echo "Short SHA: $(git rev-parse --short HEAD)"
+          echo "Author: $(git log -1 --format='%an')"
+          echo "Date: $(git log -1 --format='%ci')"
+          echo "Message: $(git log -1 --format='%s')"
+
+      - name: list_recent_commits
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          echo "=== Recent Commits ==="
+          git log --oneline -5
+
+  # -- List branches --
+  list-branches:
+    desc: "List all branches in the repository"
+    steps:
+      - name: setup
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}
+          git clone {{ vars.repo_url }} {{ vars.work_dir }}/repo 2>/dev/null
+
+      - name: show_branches
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          echo "=== Local Branches ==="
+          git branch
+          echo ""
+          echo "=== All Branches (including remote) ==="
+          git branch --all
+
+  # -- List tags and filter releases --
+  list-releases:
+    desc: "List tags and filter for release versions"
+    steps:
+      - name: setup
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}
+          git clone {{ vars.repo_url }} {{ vars.work_dir }}/repo 2>/dev/null
+
+      - name: list_all_tags
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          echo "=== All Tags ==="
+          git tag --list
+        outputs:
+          tags: "{{ result.output }}"
+
+      - name: list_version_tags
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          echo "=== Version Tags (v*) ==="
+          git tag --list "v*"
+        outputs:
+          versions: "{{ result.output }}"
+
+      - name: get_latest_tag
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          LATEST=$(git describe --tags --abbrev=0 2>/dev/null || echo "no tags")
+          echo "Latest tag: $LATEST"
+
+  # -- Fetch with prune --
+  fetch-updates:
+    desc: "Fetch latest changes and prune stale remote refs"
+    steps:
+      - name: setup
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}
+          git clone {{ vars.repo_url }} {{ vars.work_dir }}/repo 2>/dev/null
+
+      - name: fetch_and_prune
+        func: shell
+        do: |
+          cd {{ vars.work_dir }}/repo
+          echo "Fetching latest changes..."
+          git fetch --prune origin
+          echo "Fetch complete"
+          echo ""
+          echo "Remote branches:"
+          git branch -r
+
+  # -- Cleanup --
+  cleanup:
+    desc: "Remove working directory"
+    steps:
+      - name: remove
+        func: shell
+        do: |
+          rm -rf {{ vars.work_dir }}
+          echo "Cleanup complete"

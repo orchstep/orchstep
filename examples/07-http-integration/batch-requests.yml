@@ -1,0 +1,191 @@
+# Example: Batch HTTP Requests with Loops
+# Shows how to make multiple HTTP requests using loop,
+# with data transformation via map_in and map_out.
+#
+# map_in:  JavaScript that runs BEFORE the request to prepare data
+# map_out: JavaScript that runs AFTER the response to transform results
+# loop:    Iterate over a list, making one request per item
+#
+# In map_in/map_out, use:
+#   spec.<name> = value  - Set a variable for use in the request/outputs
+#   vars.<name>          - Read workflow variables
+#   result.*             - (map_out only) Access the HTTP response
+#
+# Try: orchstep run batch-create
+# Try: orchstep run process-products
+
+name: batch-http-requests-demo
+desc: "HTTP requests with loops, map_in, and map_out"
+
+vars:
+  api_base: "https://httpbin.org"
+
+tasks:
+  # -- Loop over items for batch requests --
+  batch-create:
+    desc: "Create multiple resources in a batch"
+    vars:
+      resources:
+        - { id: 1, action: "create", name: "Web Server" }
+        - { id: 2, action: "create", name: "Database" }
+        - { id: 3, action: "create", name: "Cache Layer" }
+    steps:
+      - name: create_resources
+        func: http
+        loop:
+          items: "{{ vars.resources }}"
+          as: resource
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body:
+            id: "{{ loop.resource.id }}"
+            action: "{{ loop.resource.action }}"
+            name: "{{ loop.resource.name }}"
+        outputs:
+          status: "{{ result.status_code }}"
+
+  # -- map_in: Transform data before sending --
+  computed-request:
+    desc: "Use map_in to compute values before the request"
+    vars:
+      first_name: "John"
+      last_name: "Doe"
+    steps:
+      - name: build_and_send
+        func: http
+        map_in: |
+          // Compute derived fields in JavaScript
+          spec.full_name = vars.first_name + " " + vars.last_name;
+          spec.username = vars.first_name.toLowerCase() + vars.last_name.toLowerCase();
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body:
+            name: "{{ vars.full_name }}"
+            username: "{{ vars.username }}"
+        outputs:
+          posted_name: "{{ result.data_object.json.name }}"
+          posted_username: "{{ result.data_object.json.username }}"
+
+  # -- map_out: Transform the response --
+  transform-response:
+    desc: "Use map_out to extract and compute from response data"
+    steps:
+      - name: get_and_transform
+        func: http
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body:
+            user:
+              first_name: "Alice"
+              last_name: "Johnson"
+              age: 30
+        map_out: |
+          // Extract and transform response fields
+          var user = result.data_object.json.user;
+          spec.display_name = user.first_name + " " + user.last_name;
+          spec.age_group = user.age < 18 ? "minor" : user.age < 65 ? "adult" : "senior";
+          spec.initials = user.first_name.charAt(0) + user.last_name.charAt(0);
+        outputs:
+          display_name: "{{ vars.display_name }}"
+          age_group: "{{ vars.age_group }}"
+          initials: "{{ vars.initials }}"
+
+  # -- Loop + map_in + map_out combined --
+  process-products:
+    desc: "Process a product catalog: compute totals per item"
+    vars:
+      products:
+        - { name: "Widget", price: 9.99, quantity: 5 }
+        - { name: "Gadget", price: 19.99, quantity: 3 }
+        - { name: "Doohickey", price: 29.99, quantity: 2 }
+    steps:
+      - name: process_each_product
+        func: http
+        loop:
+          items: "{{ vars.products }}"
+          var: product
+        map_in: |
+          // Calculate line item total before sending
+          spec.item_total = (vars.product.price * vars.product.quantity).toFixed(2);
+          spec.item_name = vars.product.name.toUpperCase();
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body:
+            name: "{{ vars.item_name }}"
+            price: "{{ vars.product.price }}"
+            quantity: "{{ vars.product.quantity }}"
+            total: "{{ vars.item_total }}"
+        map_out: |
+          // Build a summary line from the response
+          var data = result.data_object.json;
+          spec.summary = data.name + ": $" + data.total;
+        outputs:
+          summary: "{{ vars.summary }}"
+
+  # -- Aggregate data from batch responses --
+  aggregate-inventory:
+    desc: "Post items and aggregate totals from responses"
+    steps:
+      - name: post_inventory
+        func: http
+        args:
+          url: "{{ vars.api_base }}/post"
+          method: POST
+          body:
+            items:
+              - { name: "Apple", quantity: 5, price: 1.20 }
+              - { name: "Banana", quantity: 3, price: 0.80 }
+              - { name: "Orange", quantity: 7, price: 1.50 }
+        map_out: |
+          // Aggregate totals from the response
+          var items = result.data_object.json.items;
+          var totalCost = 0;
+          var totalQty = 0;
+          var names = [];
+
+          for (var i = 0; i < items.length; i++) {
+            totalCost += items[i].quantity * items[i].price;
+            totalQty += items[i].quantity;
+            names.push(items[i].name);
+          }
+
+          spec.total_cost = totalCost.toFixed(2);
+          spec.total_quantity = totalQty;
+          spec.item_list = names.join(", ");
+        outputs:
+          total_cost: "{{ vars.total_cost }}"
+          total_qty: "{{ vars.total_quantity }}"
+          items: "{{ vars.item_list }}"
+
+      - name: show_totals
+        func: shell
+        do: |
+          echo "Inventory Summary"
+          echo "Items: {{ steps.post_inventory.items }}"
+          echo "Total Quantity: {{ steps.post_inventory.total_qty }}"
+          echo "Total Cost: ${{ steps.post_inventory.total_cost }}"
+
+  # -- Loop with error handling --
+  resilient-batch:
+    desc: "Process batch with error handling per item"
+    vars:
+      endpoints:
+        - "/post"
+        - "/status/404"
+        - "/post"
+    steps:
+      - name: call_endpoints
+        func: http
+        loop:
+          items: "{{ vars.endpoints }}"
+          as: path
+          on_error: continue    # Continue loop even if one request fails
+        args:
+          url: "{{ vars.api_base }}{{ loop.path }}"
+          method: GET
+        outputs:
+          status: "{{ result.status_code }}"

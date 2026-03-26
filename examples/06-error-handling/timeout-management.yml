@@ -1,0 +1,115 @@
+# Example: Timeout Management
+# Shows how to set time limits on step execution and combine
+# timeouts with retry for resilient operations.
+#
+# Supported duration formats: 500ms, 2s, 1m, 5m
+# Timeout exit code: 124 (can be used in retry conditions)
+#
+# Try: orchstep run api-call-with-timeout
+# Try: orchstep run timeout-with-retry
+
+name: timeout-management-demo
+desc: "Control step execution time with timeouts"
+
+tasks:
+  # -- Basic timeout on a step --
+  api-call-with-timeout:
+    desc: "Prevent API calls from hanging indefinitely"
+    steps:
+      - name: fetch_user_data
+        func: shell
+        do: |
+          echo "Fetching user data from API..."
+          # In real usage: curl --max-time 5 https://api.example.com/users
+          sleep 0.5
+          echo "Data received"
+        timeout: 5s    # Kill step if it takes longer than 5 seconds
+
+      - name: process_results
+        func: shell
+        do: |
+          echo "Processing user data..."
+          echo "Done"
+
+  # -- Different timeout formats --
+  timeout-formats:
+    desc: "Demonstrate different duration format options"
+    steps:
+      - name: quick_check
+        func: shell
+        do: echo "Fast operation"
+        timeout: 500ms    # Milliseconds
+
+      - name: moderate_task
+        func: shell
+        do: echo "Medium operation"
+        timeout: 10s      # Seconds
+
+      - name: long_running_job
+        func: shell
+        do: echo "Long operation"
+        timeout: 5m       # Minutes
+
+  # -- Timeout combined with retry --
+  timeout-with-retry:
+    desc: "Retry operations that time out, with per-attempt timeout"
+    steps:
+      - name: wait_for_service
+        func: shell
+        do: |
+          echo "Waiting for service to become ready..."
+          # In real usage: curl http://service:8080/ready
+          # Each attempt has its own 2-second timeout window
+          sleep 0.5
+          echo "Service is ready"
+        timeout: 2s       # Each attempt gets 2 seconds max
+        retry:
+          max_attempts: 4
+          interval: 1s
+        outputs:
+          status: "{{ result.output }}"
+
+  # -- Retry only on timeout (not other errors) --
+  selective-timeout-retry:
+    desc: "Retry on timeout but fail fast on other errors"
+    steps:
+      - name: deploy_and_wait
+        func: shell
+        do: |
+          echo "Deploying and waiting for rollout..."
+          # In real usage: kubectl rollout status deployment/app
+          echo "Rollout complete"
+        timeout: 30s
+        retry:
+          max_attempts: 3
+          interval: 5s
+          # Exit code 124 = timeout. Only retry timeouts.
+          when: |
+            result.exit_code == 124
+
+  # -- Timeout with error handling --
+  timeout-with-catch:
+    desc: "Handle timeout failures gracefully"
+    steps:
+      - name: long_running_report
+        func: shell
+        do: |
+          echo "Generating quarterly report..."
+          # In real usage: complex data aggregation query
+          sleep 0.5
+          echo "Report generated"
+        timeout: 5s
+        catch:
+          - name: handle_report_timeout
+            func: shell
+            do: |
+              echo "Report generation timed out"
+              echo "Scheduling async report job instead..."
+              echo "Exit code: {{ vars.error.exit_code }}"
+              # In real usage: enqueue background job
+        finally:
+          - name: notify_status
+            func: shell
+            do: |
+              echo "Sending status notification..."
+              echo "Report task completed"

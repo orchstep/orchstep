@@ -1,0 +1,126 @@
+# Example: External Template File Inclusion
+# Use `templateFile` to load and render external template files
+# within your workflow. Great for generating Kubernetes manifests,
+# config files, or any structured output.
+#
+# Syntax: {{ templateFile "path/to/template.tpl" }}
+#
+# Template files:
+#   - Are relative to the workflow directory
+#   - Have full access to vars, steps, env context
+#   - Support Sprig functions (upper, lower, default, etc.)
+#   - Can include other templates (nested inclusion)
+#   - Path traversal (..) is blocked for security
+#
+# This example includes template files in the templates/ subdirectory.
+# See: templates/greeting.tpl, templates/k8s-deployment.tpl,
+#      templates/k8s-metadata.tpl
+#
+# Try: orchstep run generate-greeting
+# Try: orchstep run generate-k8s-manifest
+
+name: template-files-demo
+desc: "External template file inclusion for config generation"
+
+defaults:
+  name: "Alice"
+  app_name: "payment-service"
+  environment: "production"
+  namespace: "prod-ns"
+  replicas: 3
+  image: "myregistry.io/payment-service"
+  tag: "v2.1.0"
+
+tasks:
+  # -- Basic template file loading --
+  generate-greeting:
+    desc: "Render a simple template file with variables"
+    steps:
+      - name: render_greeting
+        func: shell
+        do: |
+          mkdir -p output
+          cat > output/greeting.txt <<'EOF'
+          {{ templateFile "templates/greeting.tpl" }}
+          EOF
+          cat output/greeting.txt
+        outputs:
+          greeting: "{{ result.output }}"
+
+      - name: show_result
+        func: shell
+        do: |
+          echo "Generated greeting:"
+          echo "{{ steps.render_greeting.greeting }}"
+
+  # -- Nested template inclusion (Kubernetes manifests) --
+  generate-k8s-manifest:
+    desc: "Generate a K8s deployment manifest with nested templates"
+    steps:
+      - name: render_deployment
+        func: shell
+        do: |
+          mkdir -p output
+          cat > output/deployment.yaml <<'EOF'
+          {{ templateFile "templates/k8s-deployment.tpl" }}
+          EOF
+          cat output/deployment.yaml
+        outputs:
+          manifest: "{{ result.output }}"
+
+      - name: show_manifest
+        func: shell
+        do: |
+          echo "=== Generated Kubernetes Manifest ==="
+          echo "{{ steps.render_deployment.manifest }}"
+
+  # -- Template with step context --
+  generate-build-info:
+    desc: "Use step outputs inside templates"
+    steps:
+      - name: get_build_id
+        func: shell
+        do: echo "build-$(date +%Y%m%d)-42"
+        outputs:
+          build_id: "{{ result.output | trim }}"
+
+      - name: create_build_info
+        func: shell
+        do: |
+          mkdir -p output
+          cat > output/build-info.txt <<'EOF'
+          Build ID: {{ steps.get_build_id.build_id }}
+          App: {{ vars.app_name }}
+          Image: {{ vars.image }}:{{ vars.tag }}
+          Environment: {{ upper vars.environment }}
+          EOF
+          cat output/build-info.txt
+        outputs:
+          info: "{{ result.output }}"
+
+  # -- Load template into a variable --
+  template-to-variable:
+    desc: "Render a template file and store in a variable"
+    steps:
+      - name: load_template
+        func: shell
+        do: echo "Template loaded"
+        outputs:
+          # Render the template and capture the output
+          rendered: '{{ templateFile "templates/greeting.tpl" }}'
+
+      - name: use_rendered
+        func: shell
+        do: |
+          echo "Rendered template content:"
+          echo "{{ steps.load_template.rendered }}"
+
+  # -- Cleanup --
+  cleanup:
+    desc: "Remove generated output files"
+    steps:
+      - name: remove_output
+        func: shell
+        do: |
+          rm -rf output
+          echo "Output files removed"

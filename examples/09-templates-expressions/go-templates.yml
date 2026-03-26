@@ -1,0 +1,116 @@
+# Example: Go Template Syntax
+# OrchStep supports Go templates with Sprig functions for
+# string manipulation, conditionals, and data formatting.
+#
+# Syntax: {{ expression }}
+#
+# Key features:
+#   - Variable access: {{ vars.name }}, {{ .vars.name }} (legacy dot syntax)
+#   - Step outputs: {{ steps.step_name.output }}
+#   - Environment: {{ env.PATH }}, {{ .env.HOME }}
+#   - Sprig functions: upper, lower, trim, contains, default, etc.
+#   - Conditionals: {{ if }}, {{ else }}, {{ end }}
+#   - Comparisons: eq, ne, gt, lt, and, or, not
+#
+# Try: orchstep run string-operations
+# Try: orchstep run conditional-config
+
+name: go-templates-demo
+desc: "Go template syntax with Sprig functions"
+
+defaults:
+  app_name: "web-api"
+  environment: "production"
+  version: "2.5.0"
+
+tasks:
+  # -- String manipulation with Sprig --
+  string-operations:
+    desc: "Use Sprig functions for string operations"
+    steps:
+      - name: format_strings
+        func: shell
+        do: |
+          echo "App: {{ vars.app_name }}"
+          echo "Uppercase: {{ upper vars.app_name }}"
+          echo "Environment: {{ upper vars.environment }}"
+          echo "Deployment ID: {{ vars.app_name }}-{{ vars.environment }}"
+
+      - name: use_default_values
+        func: shell
+        do: |
+          # default provides a fallback when a value is empty
+          echo "Region: {{ vars.region | default "us-east-1" }}"
+          echo "Timeout: {{ vars.timeout | default "30s" }}"
+
+  # -- Conditionals in templates --
+  conditional-config:
+    desc: "Use if/else for environment-specific configuration"
+    steps:
+      - name: configure_for_env
+        func: shell
+        do: |
+          echo "=== Configuration for {{ vars.environment }} ==="
+          echo "Log level: {{ if eq vars.environment "production" }}error{{ else }}debug{{ end }}"
+          echo "Replicas: {{ if eq vars.environment "production" }}3{{ else }}1{{ end }}"
+          echo "Debug: {{ if ne vars.environment "production" }}true{{ else }}false{{ end }}"
+
+  # -- Variable interpolation patterns --
+  variable-patterns:
+    desc: "Different ways to access variables in templates"
+    vars:
+      deployment_id: "{{ vars.app_name }}-{{ vars.environment }}"
+      config_path: "/etc/{{ vars.app_name }}/config.yml"
+    steps:
+      - name: setup_environment
+        func: shell
+        do: |
+          echo "Setting up {{ vars.app_name }} version {{ vars.version }}"
+          echo "Config: {{ vars.config_path }}"
+          echo "Deployment: {{ vars.deployment_id }}"
+        outputs:
+          status: "ready"
+          app_url: "https://{{ vars.app_name }}.{{ vars.environment }}.example.com"
+
+      - name: deploy_application
+        func: shell
+        do: |
+          echo "Deploying to {{ steps.setup_environment.app_url }}"
+          echo "Status: {{ steps.setup_environment.status }}"
+
+  # -- Legacy dot syntax (still supported) --
+  legacy-dot-syntax:
+    desc: "The .vars, .env, .steps prefix syntax still works"
+    steps:
+      - name: legacy_example
+        func: shell
+        do: |
+          # Both forms are equivalent:
+          echo "New syntax: {{ vars.app_name }}"
+          echo "Dot syntax: {{ .vars.app_name }}"
+          echo "Env access: {{ .env.HOME }}"
+        outputs:
+          # Check if an env var exists
+          has_home: "{{ if .env.HOME }}true{{ else }}false{{ end }}"
+
+  # -- Assertions with Go template syntax --
+  template-assertions:
+    desc: "Use Go templates in assert conditions"
+    steps:
+      - name: check_equality
+        func: assert
+        args:
+          condition: "{{ eq vars.environment \"production\" }}"
+          desc: "Environment must be production"
+
+      - name: check_comparison
+        func: assert
+        args:
+          condition: "{{ and (eq vars.app_name \"web-api\") (ne vars.environment \"dev\") }}"
+          desc: "Must be web-api and not dev"
+
+      - name: check_contains
+        func: assert
+        args:
+          condition: "{{ contains vars.version \"2.5\" }}"
+          desc: "Version must include 2.5"

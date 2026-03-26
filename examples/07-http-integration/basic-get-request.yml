@@ -1,0 +1,103 @@
+# Example: Basic HTTP GET Requests
+# Shows how to make GET requests with the built-in http function.
+#
+# The http function supports two syntaxes:
+#   - Short form:  do: "GET https://api.example.com/data"
+#   - Args form:   args: { url: "...", method: GET }
+#
+# Response data is available via:
+#   result.status_code   - HTTP status code (200, 404, etc.)
+#   result.body          - Raw response body as string
+#   result.data_object   - Auto-parsed JSON response (if JSON)
+#   result.headers       - Response headers map
+#   result.url           - Requested URL
+#   result.method        - HTTP method used
+#
+# Try: orchstep run fetch-api-data
+# Try: orchstep run get-with-variables
+
+name: basic-get-request-demo
+desc: "HTTP GET requests with variable URLs and response parsing"
+
+vars:
+  api_base: "https://httpbin.org"
+
+tasks:
+  # -- Simple GET request --
+  fetch-api-data:
+    desc: "Fetch data from a REST API"
+    steps:
+      - name: get_users
+        func: http
+        do: "GET {{ vars.api_base }}/get"
+        outputs:
+          status: "{{ result.status_code }}"
+          url: "{{ result.url }}"
+          method: "{{ result.method }}"
+
+      - name: show_result
+        func: shell
+        do: |
+          echo "Status: {{ steps.get_users.status }}"
+          echo "URL: {{ steps.get_users.url }}"
+          echo "Method: {{ steps.get_users.method }}"
+
+  # -- GET with template variables in the URL --
+  get-with-variables:
+    desc: "Build URLs dynamically using variables"
+    vars:
+      resource: "users"
+      api_version: "v2"
+    steps:
+      - name: fetch_resource
+        func: http
+        do: "GET {{ vars.api_base }}/{{ vars.resource }}"
+        outputs:
+          status: "{{ result.status_code }}"
+
+  # -- GET using args syntax --
+  get-args-syntax:
+    desc: "Use explicit args instead of the do shorthand"
+    steps:
+      - name: fetch_with_args
+        func: http
+        args:
+          url: "{{ vars.api_base }}/get"
+          method: GET
+        outputs:
+          status: "{{ result.status_code }}"
+
+  # -- Parse JSON response --
+  parse-json-response:
+    desc: "Access fields from a JSON response body"
+    steps:
+      - name: get_json_data
+        func: http
+        do: "GET {{ vars.api_base }}/json"
+        outputs:
+          # Auto-parsed JSON fields via result.data_object
+          author: "{{ result.data_object.slideshow.author }}"
+          title: "{{ result.data_object.slideshow.title }}"
+
+      - name: display_parsed_data
+        func: shell
+        do: |
+          echo "Author: {{ steps.get_json_data.author }}"
+          echo "Title: {{ steps.get_json_data.title }}"
+
+  # -- Access response headers --
+  read-response-headers:
+    desc: "Read headers from the HTTP response"
+    steps:
+      - name: get_with_headers
+        func: http
+        do: "GET {{ vars.api_base }}/response-headers?X-Custom=hello"
+        outputs:
+          content_type: '{{ index result.headers "Content-Type" }}'
+          custom_header: '{{ index result.headers "X-Custom" }}'
+
+      - name: show_headers
+        func: shell
+        do: |
+          echo "Content-Type: {{ steps.get_with_headers.content_type }}"
+          echo "X-Custom: {{ steps.get_with_headers.custom_header }}"

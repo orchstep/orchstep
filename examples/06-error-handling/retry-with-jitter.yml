@@ -1,0 +1,119 @@
+# Example: Retry with Exponential Backoff and Jitter
+# Shows how to prevent "thundering herd" problems by adding
+# random jitter to retry delays.
+#
+# Jitter adds randomness to retry intervals so that multiple
+# clients retrying simultaneously don't all hit the server
+# at the same moment.
+#
+# jitter: 0.0  = no randomness (deterministic delays)
+# jitter: 0.3  = +/-30% variation around the calculated delay
+# jitter: 0.5  = +/-50% variation
+# jitter: 1.0  = +/-100% variation (0 to 2x the delay)
+#
+# Try: orchstep run resilient-deploy
+# Try: orchstep run api-with-backoff
+
+name: retry-with-jitter-demo
+desc: "Resilient retry with jitter to prevent thundering herd"
+
+tasks:
+  # -- Basic jitter for distributed retries --
+  resilient-deploy:
+    desc: "Deploy with jitter to avoid retry storms"
+    steps:
+      - name: deploy_to_cluster
+        func: shell
+        do: |
+          echo "Deploying application to cluster..."
+          # In real usage: kubectl apply -f deployment.yml
+          echo "Deployment successful"
+        retry:
+          max_attempts: 5
+          interval: 2s
+          jitter: 0.3     # +/-30% variation: delays between 1.4s and 2.6s
+
+  # -- Exponential backoff with jitter --
+  api-with-backoff:
+    desc: "API calls with exponential backoff and jitter"
+    steps:
+      - name: call_rate_limited_api
+        func: shell
+        do: |
+          echo "Calling rate-limited API..."
+          # In real usage: curl https://api.example.com/data
+          echo "Response received"
+        retry:
+          max_attempts: 5
+          interval: 100ms
+          backoff_rate: 2.0    # Double the delay each time
+          jitter: 0.3          # +/-30% jitter on each backoff delay
+          # Approximate delays:
+          # Attempt 1->2: ~100ms  (70ms  - 130ms)
+          # Attempt 2->3: ~200ms  (140ms - 260ms)
+          # Attempt 3->4: ~400ms  (280ms - 520ms)
+          # Attempt 4->5: ~800ms  (560ms - 1040ms)
+
+  # -- Jitter with max delay cap --
+  capped-backoff:
+    desc: "Backoff with jitter capped at a maximum delay"
+    steps:
+      - name: sync_to_remote
+        func: shell
+        do: |
+          echo "Syncing data to remote storage..."
+          # In real usage: aws s3 sync ./data s3://bucket/
+          echo "Sync complete"
+        retry:
+          max_attempts: 5
+          interval: 100ms
+          backoff_rate: 3.0     # Triple each time (aggressive backoff)
+          max_delay: 500ms      # Never wait more than 500ms
+          jitter: 0.5           # +/-50% on the capped delay
+          # Delays: 100ms, 300ms, 500ms (capped), 500ms (capped)
+          # With jitter: varies +/-50% around each value
+
+  # -- High jitter for maximum spread --
+  distributed-workers:
+    desc: "Maximum jitter spread for distributed worker retries"
+    steps:
+      - name: acquire_lock
+        func: shell
+        do: |
+          echo "Acquiring distributed lock..."
+          # In real usage: redis SET lock NX EX 30
+          echo "Lock acquired"
+        retry:
+          max_attempts: 4
+          interval: 200ms
+          jitter: 1.0     # +/-100%: delays between 0ms and 400ms
+          # Maximum spread prevents multiple workers from colliding
+
+  # -- Multiple steps with independent jitter --
+  parallel-service-calls:
+    desc: "Each step retries with its own jitter pattern"
+    steps:
+      - name: call_auth_service
+        func: shell
+        do: echo "Authenticating with auth service..."
+        retry:
+          max_attempts: 3
+          interval: 100ms
+          jitter: 0.3
+        on_error: warn
+
+      - name: call_data_service
+        func: shell
+        do: echo "Fetching data from data service..."
+        retry:
+          max_attempts: 3
+          interval: 200ms
+          jitter: 0.5
+        on_error: warn
+
+      - name: aggregate_results
+        func: shell
+        do: |
+          echo "Aggregating service responses..."
+          echo "Auth status: {{ steps.call_auth_service.status }}"
+          echo "Data status: {{ steps.call_data_service.status }}"

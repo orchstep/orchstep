@@ -1,0 +1,148 @@
+# Example: on_error Modes (fail / ignore / warn)
+# Controls what happens when a step fails:
+#
+#   fail   - (default) Stop the task immediately
+#   ignore - Silently continue to the next step
+#   warn   - Continue but mark the step with "warning" status
+#
+# Use `steps.<name>.status` and `steps.<name>.error` to inspect
+# the result of warned/ignored steps in subsequent steps.
+#
+# Try: orchstep run graceful-monitoring
+# Try: orchstep run best-effort-cleanup
+
+name: on-error-modes-demo
+desc: "Control error behavior per step: fail, ignore, or warn"
+
+tasks:
+  # -- Default behavior: fail stops the task --
+  strict-pipeline:
+    desc: "Default fail mode - task stops on first error"
+    steps:
+      - name: critical_step
+        func: shell
+        do: |
+          echo "Running critical validation..."
+          # If this fails, the task stops immediately
+          echo "Validation passed"
+
+      - name: next_step
+        func: shell
+        do: |
+          echo "This only runs if the previous step succeeded"
+
+  # -- Ignore mode: continue despite errors --
+  best-effort-cleanup:
+    desc: "Clean up resources, ignoring individual failures"
+    steps:
+      - name: delete_temp_files
+        func: shell
+        do: |
+          echo "Deleting temporary files..."
+          # Even if this fails, continue with other cleanup
+          rm -rf /tmp/orchstep-build-* 2>/dev/null || true
+          echo "Temp files cleaned"
+        on_error: ignore
+
+      - name: remove_containers
+        func: shell
+        do: |
+          echo "Removing stopped containers..."
+          # docker rm $(docker ps -aq --filter status=exited) 2>/dev/null
+          echo "Containers cleaned"
+        on_error: ignore
+
+      - name: cleanup_summary
+        func: shell
+        do: |
+          echo "Cleanup finished (errors were ignored)"
+
+  # -- Warn mode: continue with status tracking --
+  graceful-monitoring:
+    desc: "Monitor multiple services, tracking warnings"
+    steps:
+      - name: check_database
+        func: shell
+        do: |
+          echo "Checking database health..."
+          # In real usage: pg_isready -h db-host
+          echo "Database OK"
+        on_error: warn
+
+      - name: check_cache
+        func: shell
+        do: |
+          echo "Checking cache health..."
+          # In real usage: redis-cli ping
+          echo "Cache OK"
+        on_error: warn
+
+      - name: check_queue
+        func: shell
+        do: |
+          echo "Checking message queue health..."
+          # In real usage: rabbitmqctl status
+          echo "Queue OK"
+        on_error: warn
+
+      - name: report_health
+        func: shell
+        do: |
+          echo "=== Health Check Report ==="
+          echo "Database: {{ steps.check_database.status }}"
+          echo "Cache: {{ steps.check_cache.status }}"
+          echo "Queue: {{ steps.check_queue.status }}"
+
+  # -- Combine on_error with retry --
+  retry-then-warn:
+    desc: "Retry first, then warn if all attempts fail"
+    steps:
+      - name: sync_metrics
+        func: shell
+        do: |
+          echo "Pushing metrics to monitoring service..."
+          # In real usage: curl -X POST http://prometheus/api/v1/write
+          echo "Metrics pushed"
+        retry:
+          max_attempts: 3
+          interval: 500ms
+        on_error: warn    # If all retries fail, warn but continue
+
+      - name: continue_pipeline
+        func: shell
+        do: |
+          echo "Pipeline continues regardless of metrics push"
+          echo "Metrics step status: {{ steps.sync_metrics.status }}"
+
+  # -- on_error with loops --
+  loop-with-warnings:
+    desc: "Process items in a loop, warning on individual failures"
+    steps:
+      - name: process_batch
+        loop:
+          count: 3
+        func: shell
+        do: |
+          echo "Processing item {{ loop.index }}..."
+          # Some items may fail, but we want to process them all
+          echo "Item {{ loop.index }} done"
+        on_error: warn
+
+  # -- Mixed modes in a single workflow --
+  mixed-error-modes:
+    desc: "Different error modes for different step importance"
+    steps:
+      - name: optional_warmup
+        func: shell
+        do: echo "Warming up cache (optional)..."
+        on_error: ignore    # Not critical, skip silently
+
+      - name: advisory_check
+        func: shell
+        do: echo "Running advisory security scan..."
+        on_error: warn      # Want to know, but not blocking
+
+      - name: critical_deploy
+        func: shell
+        do: echo "Deploying to production..."
+        # on_error defaults to "fail" - this MUST succeed

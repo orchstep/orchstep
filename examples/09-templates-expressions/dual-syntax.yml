@@ -1,0 +1,174 @@
+# Example: Go Templates vs JavaScript Expressions
+# OrchStep auto-detects which syntax you are using:
+#
+#   - Starts with {{ }}  ->  Go Template (Sprig functions)
+#   - Otherwise          ->  JavaScript (Goja engine)
+#
+# Both syntaxes work in assert conditions, retry when clauses,
+# and anywhere expressions are evaluated.
+#
+# Try: orchstep run compare-syntax
+
+name: dual-syntax-demo
+desc: "Side-by-side comparison of Go template and JavaScript"
+
+defaults:
+  environment: "prod"
+  count: 10
+  status: "ok"
+  message: "deployment successful"
+  items:
+    - name: "web-server"
+      cpu: 100
+    - name: "database"
+      cpu: 200
+
+tasks:
+  # -- Same assertions in both syntaxes --
+  compare-syntax:
+    desc: "Equivalent checks in Go template and JavaScript"
+    steps:
+      # === Equality ===
+      - name: go_equality
+        desc: "Go Template: equality check"
+        func: assert
+        args:
+          condition: "{{ eq vars.environment \"prod\" }}"
+          desc: "Environment is prod (Go template)"
+
+      - name: js_equality
+        desc: "JavaScript: equality check"
+        func: assert
+        args:
+          condition: "vars.environment === 'prod'"
+          desc: "Environment is prod (JavaScript)"
+
+      # === Numeric comparison ===
+      - name: go_numeric
+        desc: "Go Template: numeric comparison"
+        func: assert
+        args:
+          condition: "{{ gt vars.count 5 }}"
+          desc: "Count > 5 (Go template)"
+
+      - name: js_numeric
+        desc: "JavaScript: numeric comparison"
+        func: assert
+        args:
+          condition: "vars.count > 5"
+          desc: "Count > 5 (JavaScript)"
+
+      # === String contains ===
+      - name: go_contains
+        desc: "Go Template: string contains"
+        func: assert
+        args:
+          condition: "{{ contains vars.message \"successful\" }}"
+          desc: "Message contains 'successful' (Go template)"
+
+      - name: js_contains
+        desc: "JavaScript: string contains"
+        func: assert
+        args:
+          condition: "vars.message.includes('successful')"
+          desc: "Message contains 'successful' (JavaScript)"
+
+      # === Logical AND ===
+      - name: go_and
+        desc: "Go Template: logical AND"
+        func: assert
+        args:
+          condition: "{{ and (eq vars.status \"ok\") (gt vars.count 5) }}"
+          desc: "Status ok AND count > 5 (Go template)"
+
+      - name: js_and
+        desc: "JavaScript: logical AND"
+        func: assert
+        args:
+          condition: "vars.status === 'ok' && vars.count > 5"
+          desc: "Status ok AND count > 5 (JavaScript)"
+
+      # === Logical OR ===
+      - name: go_or
+        desc: "Go Template: logical OR"
+        func: assert
+        args:
+          condition: "{{ or (eq vars.environment \"prod\") (eq vars.environment \"staging\") }}"
+          desc: "Environment is prod or staging (Go template)"
+
+      - name: js_or
+        desc: "JavaScript: logical OR"
+        func: assert
+        args:
+          condition: "vars.environment === 'prod' || vars.environment === 'staging'"
+          desc: "Environment is prod or staging (JavaScript)"
+
+      # === NOT / Negation ===
+      - name: go_not
+        desc: "Go Template: NOT"
+        func: assert
+        args:
+          condition: "{{ not (eq vars.environment \"dev\") }}"
+          desc: "Environment is not dev (Go template)"
+
+      - name: js_not
+        desc: "JavaScript: NOT"
+        func: assert
+        args:
+          condition: "vars.environment !== 'dev'"
+          desc: "Environment is not dev (JavaScript)"
+
+  # -- JavaScript-only features --
+  javascript-extras:
+    desc: "JavaScript supports array access and complex expressions"
+    steps:
+      - name: array_access
+        desc: "Access array elements by index"
+        func: assert
+        args:
+          condition: "vars.items[0].cpu === 100"
+          desc: "First item CPU is 100"
+
+      - name: array_length
+        desc: "Check array length"
+        func: assert
+        args:
+          condition: "vars.items.length === 2"
+          desc: "Must have exactly 2 items"
+
+      - name: complex_expression
+        desc: "Multi-line JavaScript expression"
+        func: assert
+        args:
+          condition: |
+            vars.count > 5 &&
+            vars.status === 'ok' &&
+            vars.message.includes('successful')
+          desc: "All conditions must be met"
+
+  # -- Quick reference --
+  syntax-summary:
+    desc: "Print a quick reference of both syntaxes"
+    steps:
+      - name: show_reference
+        func: shell
+        do: |
+          echo "=== Syntax Quick Reference ==="
+          echo ""
+          echo "Go Template:"
+          echo '  Equality:     {{ eq vars.x "value" }}'
+          echo '  Greater than: {{ gt vars.n 5 }}'
+          echo '  Contains:     {{ contains vars.s "text" }}'
+          echo '  AND:          {{ and (cond1) (cond2) }}'
+          echo '  OR:           {{ or (cond1) (cond2) }}'
+          echo '  NOT:          {{ not (cond) }}'
+          echo ""
+          echo "JavaScript:"
+          echo "  Equality:     vars.x === 'value'"
+          echo "  Greater than: vars.n > 5"
+          echo "  Contains:     vars.s.includes('text')"
+          echo "  AND:          cond1 && cond2"
+          echo "  OR:           cond1 || cond2"
+          echo "  NOT:          !cond  or  vars.x !== 'value'"
+          echo ""
+          echo "Detection: starts with {{ -> Go Template, otherwise -> JavaScript"

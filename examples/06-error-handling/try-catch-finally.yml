@@ -1,0 +1,172 @@
+# Example: Try / Catch / Finally Error Handling
+# Shows the full error handling chain: retry -> catch -> finally.
+#
+# - catch: runs when a step fails (after retries are exhausted)
+# - finally: always runs, whether the step succeeded or failed
+# - catch + finally can be combined for robust error recovery
+#
+# The error context (vars.error) provides: step_name, exit_code,
+# output, message, timestamp, and attempt count.
+#
+# Try: orchstep run deploy-pipeline
+# Try: orchstep run database-migration
+# Try: orchstep run full-error-chain
+
+name: try-catch-finally-demo
+desc: "Robust error handling with catch and finally blocks"
+
+tasks:
+  # -- Catch block for error recovery --
+  deploy-pipeline:
+    desc: "Deploy with rollback on failure"
+    steps:
+      - name: deploy_to_production
+        func: shell
+        do: |
+          echo "Deploying v2.5.0 to production cluster..."
+          # In real usage: kubectl apply -f manifests/
+          echo "Deployment applied"
+        catch:
+          # Catch runs if deploy_to_production fails
+          - name: rollback_deployment
+            func: shell
+            do: |
+              echo "Deployment failed! Rolling back..."
+              echo "Error: {{ vars.error.message }}"
+              echo "Failed step: {{ vars.error.step_name }}"
+              # In real usage: kubectl rollout undo deployment/app
+              echo "Rollback complete"
+
+          - name: notify_team
+            func: shell
+            do: |
+              echo "Sending failure notification..."
+              echo "Exit code was: {{ vars.error.exit_code }}"
+              # In real usage: curl -X POST slack-webhook-url
+
+      # This step runs if deploy succeeded or catch recovered
+      - name: verify_deployment
+        func: shell
+        do: |
+          echo "Running smoke tests..."
+          echo "All checks passed"
+
+  # -- Finally block for guaranteed cleanup --
+  database-migration:
+    desc: "Database migration with guaranteed cleanup"
+    steps:
+      - name: run_migration
+        func: shell
+        do: |
+          echo "Acquiring migration lock..."
+          echo "Running schema changes..."
+          # In real usage: flyway migrate -url=jdbc:postgresql://db:5432/app
+          echo "Migration complete"
+        finally:
+          # Finally ALWAYS runs - success or failure
+          - name: release_lock
+            func: shell
+            do: |
+              echo "Releasing migration lock..."
+              # In real usage: release distributed lock
+              echo "Lock released"
+
+          - name: log_completion
+            func: shell
+            do: |
+              echo "Logging migration result..."
+              # Check if there was an error
+              echo "Error context: {{ vars.error | default \"none\" }}"
+
+  # -- Full chain: retry + catch + finally --
+  full-error-chain:
+    desc: "Complete error handling: retry, catch, and finally combined"
+    steps:
+      - name: sync_data
+        func: shell
+        do: |
+          echo "Syncing data to backup region..."
+          # In real usage: aws s3 sync or rsync
+          echo "Sync complete"
+        # 1. First, retry on transient failures
+        retry:
+          max_attempts: 3
+          interval: 1s
+        # 2. If all retries fail, catch handles the error
+        catch:
+          - name: log_sync_failure
+            func: shell
+            do: |
+              echo "Data sync failed after retries"
+              echo "Attempts made: {{ vars.error.attempt }}"
+              echo "Last error: {{ vars.error.output }}"
+              # Mark region as degraded instead of failing hard
+              echo "Marking backup region as degraded"
+        # 3. Finally always runs (cleanup, metrics, etc.)
+        finally:
+          - name: report_metrics
+            func: shell
+            do: |
+              echo "Recording sync metrics..."
+              # In real usage: push to Prometheus / Datadog
+              echo "Metrics recorded"
+
+  # -- Conditional retry + catch fallback --
+  conditional-with-catch:
+    desc: "Stop retrying on fatal errors, fall through to catch"
+    steps:
+      - name: connect_to_service
+        func: shell
+        do: |
+          echo "Connecting to external service..."
+          echo "Connection established"
+        retry:
+          max_attempts: 5
+          interval: 500ms
+          # Only retry on transient errors (exit code 1)
+          # Fatal errors (exit code 2+) go straight to catch
+          when: |
+            result.exit_code == 1
+        catch:
+          - name: handle_fatal_error
+            func: shell
+            do: |
+              echo "Fatal error detected: {{ vars.error.output }}"
+              echo "Switching to fallback service..."
+        finally:
+          - name: close_connections
+            func: shell
+            do: |
+              echo "Closing all connections..."
+              echo "Cleanup complete"
+
+  # -- Multi-step workflow with mixed error handling --
+  multi-step-pipeline:
+    desc: "Pipeline where each step has its own error handling"
+    steps:
+      - name: build_artifact
+        func: shell
+        do: |
+          echo "Building application artifact..."
+          echo "Build successful"
+        retry:
+          max_attempts: 3
+          interval: 200ms
+        finally:
+          - name: cleanup_build_cache
+            func: shell
+            do: echo "Clearing build cache..."
+
+      - name: run_tests
+        func: shell
+        do: |
+          echo "Running integration tests..."
+          echo "All tests passed"
+        catch:
+          - name: collect_test_logs
+            func: shell
+            do: echo "Collecting test failure logs..."
+        finally:
+          - name: teardown_test_env
+            func: shell
+            do: echo "Tearing down test environment..."

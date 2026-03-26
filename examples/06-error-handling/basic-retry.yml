@@ -1,0 +1,64 @@
+# Example: Basic Retry with Backoff
+# Shows how to automatically retry failed steps with configurable
+# max attempts, interval, and exponential backoff.
+#
+# Retry is useful for flaky operations like network calls,
+# cloud API requests, or CI/CD deployments.
+#
+# Try: orchstep run deploy-with-retry
+# Try: orchstep run health-check
+
+name: basic-retry-demo
+desc: "Automatic retry for unreliable operations"
+
+tasks:
+  # -- Retry a deployment that may fail transiently --
+  deploy-with-retry:
+    desc: "Deploy service with automatic retry on failure"
+    steps:
+      - name: deploy_service
+        func: shell
+        do: |
+          echo "Deploying payment-service..."
+          # In real usage: kubectl apply -f deployment.yml
+          # Simulating a flaky deploy that succeeds on attempt 3
+          COUNT_FILE="/tmp/deploy_attempt"
+          if [ -f "$COUNT_FILE" ]; then
+            COUNT=$(cat $COUNT_FILE)
+          else
+            COUNT=0
+          fi
+          COUNT=$((COUNT + 1))
+          echo $COUNT > $COUNT_FILE
+          echo "Attempt: $COUNT"
+          if [ $COUNT -lt 3 ]; then
+            echo "Error: connection reset by peer"
+            exit 1
+          fi
+          echo "Deployment successful"
+        retry:
+          max_attempts: 5       # Try up to 5 times
+          interval: 100ms       # Start with 100ms between attempts
+          backoff_rate: 1.5     # Each wait = previous * 1.5
+        outputs:
+          result: "{{ result.output }}"
+
+      - name: cleanup
+        func: shell
+        do: rm -f /tmp/deploy_attempt
+
+  # -- Retry with a delay cap --
+  health-check:
+    desc: "Health check with capped backoff delay"
+    steps:
+      - name: check_service
+        func: shell
+        do: |
+          echo "Checking service health..."
+          # In real usage: curl -f http://service:8080/healthz
+          echo "Service responding"
+        retry:
+          max_attempts: 4
+          interval: 500ms       # Start at 500ms
+          backoff_rate: 3.0     # Aggressive backoff: 500ms -> 1.5s -> 4.5s
+          max_delay: 2s         # But never wait more than 2 seconds
