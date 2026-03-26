@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
   "label": "tests",
-  "message": "429/433 passing",
-  "color": "brightgreen"
+  "message": "429/433 (4 flaky)",
+  "color": "yellow"
 }
