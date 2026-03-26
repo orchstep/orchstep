@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "label": "tests",
+  "message": "431/431 passing",
+  "color": "brightgreen",
+  "total": 431,
+  "passed": 431,
+  "failed": 0,
+  "passRate": "100%",
+  "lastUpdated": "2026-03-26T00:00:00Z",
+  "platforms": 6,
+  "categories": 14
+}

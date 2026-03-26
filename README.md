@@ -1,5 +1,9 @@
 # OrchStep
 
+![Tests](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Forchstep%2Forchstep%2Fmain%2Ftest-results.json)
+![Release](https://img.shields.io/github/v/release/orchstep/orchstep)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue)
+
 **YAML-first workflow orchestration engine.** Run anywhere, no vendor lock-in.
 
 OrchStep orchestrates multi-step workflows defined in YAML. It delegates to your existing tools (terraform, kubectl, aws, docker) rather than reimplementing them.
