@@ -18,7 +18,7 @@ OrchStep uses a 4-level variable hierarchy. When the same variable name exists a
 Set defaults for the entire workflow file:
 
 ```yaml
-vars:
+defaults:
   environment: staging
   version: "1.0.0"
   replicas: 2
@@ -35,7 +35,7 @@ tasks:
 Override definition variables for a specific task:
 
 ```yaml
-vars:
+defaults:
   environment: staging
 
 tasks:
@@ -90,7 +90,7 @@ orchstep run deploy --vars-file base.yml --var environment=production
 ## Override Behavior Example
 
 ```yaml
-vars:
+defaults:
   environment: dev          # Level 4: definition
 
 tasks:

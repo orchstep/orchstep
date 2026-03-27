@@ -55,7 +55,7 @@ error instead of producing garbage results:
   func: assert
   args:
     condition: '{{ and (ne steps.terraform_plan.additions "") (ne steps.terraform_plan.changes "") }}'
-    message: "Terraform plan output must be parsed into additions, changes, and deletions"
+    desc: "Terraform plan output must be parsed into additions, changes, and deletions"
 ```
 
 ### Severity Classification

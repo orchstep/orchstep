@@ -167,7 +167,7 @@ steps:
 ### Variable-Based List
 
 ```yaml
-vars:
+defaults:
   servers: ["web1", "web2", "web3"]
 
 steps:
@@ -230,7 +230,7 @@ steps:
 ### Loop with Condition (Filter)
 
 ```yaml
-vars:
+defaults:
   servers:
     - name: web1
       enabled: true

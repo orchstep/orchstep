@@ -78,7 +78,7 @@ Template:
 name: [descriptive-name]
 desc: "[What this workflow does in real-world terms]"
 
-vars:
+defaults:
   # Use realistic variable names, not test_var or foo
   environment: staging
   version: "2.0.0"
