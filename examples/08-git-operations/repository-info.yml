@@ -11,7 +11,7 @@
 name: repository-info-demo
 desc: "Fetch, list branches/tags, and get commit info"
 
-vars:
+defaults:
   repo_url: "https://github.com/orchstep/example-repo.git"
   work_dir: "/tmp/orchstep-repo-info"
 

@@ -19,7 +19,7 @@
 name: basic-get-request-demo
 desc: "HTTP GET requests with variable URLs and response parsing"
 
-vars:
+defaults:
   api_base: "https://httpbin.org"
 
 tasks:

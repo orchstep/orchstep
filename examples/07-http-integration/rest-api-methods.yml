@@ -12,7 +12,7 @@
 name: rest-api-methods-demo
 desc: "POST, PUT, PATCH, DELETE with JSON bodies"
 
-vars:
+defaults:
   api_base: "https://httpbin.org"
 
 tasks:
