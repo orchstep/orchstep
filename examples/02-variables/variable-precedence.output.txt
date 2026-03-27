@@ -1,0 +1,130 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: variable-precedence-demo
+│ 📋 Shows how variables at different levels override each other
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run all precedence demonstrations
+│
+├─ ⚡ STEP: demo_definition
+│  ┌─ 🔄 INVOKING SUBTASK: show_definition_vars
+
+┌─ 🎯 TASK: show_definition_vars
+│  💡 Display definition-level defaults
+│
+└─ ⚡ STEP: show_globals
+   ┌─ 💻 COMMAND: echo "environment = global-default"
+echo "region      = us-east-1"
+echo "replicas    = 1"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ environment = global-default
+        │ region      = us-east-1
+        │ replicas    = 1
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'show_definition_vars' COMPLETED
+│  └─ ✅ SUBTASK 'show_definition_vars' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_task
+│  ┌─ 🔄 INVOKING SUBTASK: show_task_override
+
+┌─ 🎯 TASK: show_task_override
+│  💡 Task vars override definition vars
+│
+└─ ⚡ STEP: show_task_vars
+   ┌─ 💻 COMMAND: echo "environment = task-staging"
+echo "replicas    = 3"
+echo "region      = us-east-1"
+echo "task_only   = only-visible-in-this-task"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ environment = task-staging
+        │ replicas    = 3
+        │ region      = us-east-1
+        │ task_only   = only-visible-in-this-task
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'show_task_override' COMPLETED
+│  └─ ✅ SUBTASK 'show_task_override' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_step
+│  ┌─ 🔄 INVOKING SUBTASK: show_step_override
+
+┌─ 🎯 TASK: show_step_override
+│  💡 Step vars override task vars
+│
+├─ ⚡ STEP: step_with_overrides
+│  📝 This step overrides environment and replicas
+│  ┌─ 💻 COMMAND: echo "=== Inside step with overrides ==="
+echo "environment = step-production"
+echo "replicas    = 10"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Inside step with overrides ===
+│       │ environment = step-production
+│       │ replicas    = 10
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: step_without_overrides
+   📝 This step inherits from the task level
+   ┌─ 💻 COMMAND: echo "=== Inside step without overrides ==="
+echo "environment = task-qa"
+echo "replicas    = 5"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Inside step without overrides ===
+        │ environment = task-qa
+        │ replicas    = 5
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'show_step_override' COMPLETED
+│  └─ ✅ SUBTASK 'show_step_override' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_template
+│  ┌─ 🔄 INVOKING SUBTASK: show_template_vars
+
+┌─ 🎯 TASK: show_template_vars
+│  💡 Variables can use template expressions
+│
+└─ ⚡ STEP: computed_variable
+   📝 Build a URL from other variables
+   ┌─ 💻 COMMAND: echo "Base URL:    https://api.example.com"
+echo "API Version: v2"
+echo "Full URL:    https://api.example.com/v2/users"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Base URL:    https://api.example.com
+        │ API Version: v2
+        │ Full URL:    https://api.example.com/v2/users
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'show_template_vars' COMPLETED
+│  └─ ✅ SUBTASK 'show_template_vars' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Variable Precedence (highest to lowest) ==="
+echo "  1. Runtime (--var key=value)"
+echo "  2. Step vars"
+echo "  3. Task vars"
+echo "  4. Definition vars (defaults:)"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Variable Precedence (highest to lowest) ===
+        │   1. Runtime (--var key=value)
+        │   2. Step vars
+        │   3. Task vars
+        │   4. Definition vars (defaults:)
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

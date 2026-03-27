@@ -1,0 +1,71 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: auto-parse-json-demo
+│ 📋 Automatically parse JSON and YAML from command output
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Demonstrate auto-parsing of structured output
+│
+├─ ⚡ STEP: get_api_response
+│  📝 Simulate an API call that returns JSON
+│  ┌─ 💻 COMMAND: echo '{"message": "Hello World", "code": 200, "data": {"user": "alice", "role": "admin"}}'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ {"message": "Hello World", "code": 200, "data": {"user": "alice", "role": "admin"}}
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: get_pod_info
+│  📝 Simulate kubectl output with nested JSON
+│  ┌─ 💻 COMMAND: echo '{"apiVersion":"v1","kind":"Pod","metadata":{"name":"my-pod","namespace":"default","labels":{"app":"web"}},"spec":{"containers":[{"name":"nginx","image":"nginx:1.21"}]}}'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ {"apiVersion":"v1","kind":"Pod","metadata":{"name":"my-pod","namespace":"default","labels":{"app":"web"}},"spec":{"containers":[{"name":"nginx","image":"nginx:1.21"}]}}
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: get_service_config
+│  📝 Simulate a command that returns YAML
+│  ┌─ 💻 COMMAND: printf 'name: my-service\nversion: 1.2.3\nconfig:\n  enabled: true\n  replicas: 3\n'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ name: my-service
+│       │ version: 1.2.3
+│       │ config:
+│       │   enabled: true
+│       │   replicas: 3
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: plain_text_output
+│  📝 Non-structured output uses result.output as usual
+│  ┌─ 💻 COMMAND: echo "This is plain text, not JSON or YAML"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ This is plain text, not JSON or YAML
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Auto-Parse Results ==="
+echo "API user:     alice (admin)"
+echo "Pod:          my-pod in default"
+echo "Container:    nginx:1.21"
+echo "Service:      my-service v1.2.3"
+echo "Plain text:   This is plain text, not JSON or YAML"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Auto-Parse Results ===
+        │ API user:     alice (admin)
+        │ Pod:          my-pod in default
+        │ Container:    nginx:1.21
+        │ Service:      my-service v1.2.3
+        │ Plain text:   This is plain text, not JSON or YAML
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

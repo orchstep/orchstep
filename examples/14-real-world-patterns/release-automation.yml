@@ -111,11 +111,11 @@ tasks:
         func: assert
         args:
           conditions:
-            - condition: '{{ steps.build_linux.artifact | contains "linux" }}'
+            - condition: '{{ contains "linux" steps.build_linux.artifact }}'
               desc: "Linux artifact built"
-            - condition: '{{ steps.build_darwin.artifact | contains "darwin" }}'
+            - condition: '{{ contains "darwin" steps.build_darwin.artifact }}'
               desc: "Darwin artifact built"
-            - condition: '{{ steps.build_windows.artifact | contains "windows" }}'
+            - condition: '{{ contains "windows" steps.build_windows.artifact }}'
               desc: "Windows artifact built"
 
   # --- Tag and publish ---

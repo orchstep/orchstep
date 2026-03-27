@@ -1,0 +1,58 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: parallel-build-demo
+│ 📋 Build frontend and backend in parallel, then deploy
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: build-and-deploy
+│  💡 Parallel build followed by sequential deploy
+│
+├─ ⚡ STEP: build_all
+│  📝 Build both services in parallel
+│  Starting parallel execution of 2 steps
+│  ┌─ 💻 COMMAND: echo "Building frontend v2.0.0..."
+echo "Compiling TypeScript..."
+echo "Bundling assets..."
+echo "FRONTEND_ARTIFACT=frontend-2.0.0.js"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│  ┌─ 💻 COMMAND: echo "Building backend v2.0.0..."
+echo "Compiling Go..."
+echo "Running unit tests..."
+echo "BACKEND_ARTIFACT=backend-2.0.0"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Building frontend v2.0.0...
+│       │ Building backend v2.0.0...
+│       │ Compiling TypeScript...
+│       │ Compiling Go...
+│       │ Bundling assets...
+│       │ FRONTEND_ARTIFACT=frontend-2.0.0.js
+│       │ Running unit tests...
+│       │ BACKEND_ARTIFACT=backend-2.0.0
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  Parallel step 'build_frontend' completed successfully
+│  Parallel step 'build_backend' completed successfully
+│  Parallel block completed: 2/2 succeeded
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: deploy
+   📝 Deploy both artifacts
+   ┌─ 💻 COMMAND: echo "Deploying to staging..."
+echo "Frontend: frontend-2.0.0.js"
+echo "Backend: backend-2.0.0"
+echo "Deploy complete!"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying to staging...
+        │ Frontend: frontend-2.0.0.js
+        │ Backend: backend-2.0.0
+        │ Deploy complete!
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'build-and-deploy' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

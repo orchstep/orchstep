@@ -1,0 +1,35 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: timeout-management-demo
+│ 📋 Control step execution time with timeouts
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: api-call-with-timeout
+│  💡 Prevent API calls from hanging indefinitely
+│
+├─ ⚡ STEP: fetch_user_data
+│  ┌─ 💻 COMMAND: echo "Fetching user data from API..."
+# In real usage: curl --max-time 5 https://api.example.com/users
+sleep 0.5
+echo "Data received"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Fetching user data from API...
+│       │ Data received
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: process_results
+   ┌─ 💻 COMMAND: echo "Processing user data..."
+echo "Done"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Processing user data...
+        │ Done
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'api-call-with-timeout' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

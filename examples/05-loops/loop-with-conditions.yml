@@ -51,7 +51,7 @@ tasks:
         loop: '{{ vars.servers }}'
         if: '{{ loop.item.enabled }}'
         func: shell
-        do: echo "Deploying enabled server: {{ loop.item.name }} on port {{ loop.item.port }}"
+        do: 'echo "Deploying enabled server: {{ loop.item.name }} on port {{ loop.item.port }}"'
 
       # Complex filter: multiple conditions
       # Only web servers that are enabled
@@ -59,14 +59,14 @@ tasks:
         loop: '{{ vars.servers }}'
         if: '{{ and (eq loop.item.type "web") loop.item.enabled }}'
         func: shell
-        do: echo "Web server: {{ loop.item.name }} on port {{ loop.item.port }}"
+        do: 'echo "Web server: {{ loop.item.name }} on port {{ loop.item.port }}"'
 
       # Filter by type
       - name: setup_databases
         loop: '{{ vars.servers }}'
         if: '{{ eq loop.item.type "database" }}'
         func: shell
-        do: echo "Setting up database: {{ loop.item.name }} on port {{ loop.item.port }}"
+        do: 'echo "Setting up database: {{ loop.item.name }} on port {{ loop.item.port }}"'
 
       # Show iteration metadata with filtering
       - name: enabled_server_report

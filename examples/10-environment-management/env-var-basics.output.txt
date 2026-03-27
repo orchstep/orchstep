@@ -1,0 +1,128 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: env-var-basics
+│ 📋 Setting, loading, and using environment variables
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run all environment variable demos
+│
+├─ ⚡ STEP: demo_task_env
+│  ┌─ 🔄 INVOKING SUBTASK: show_task_env
+
+┌─ 🎯 TASK: show_task_env
+│  💡 Env vars set at the task level
+│
+└─ ⚡ STEP: print_env
+   📝 Read env vars with {{ env.VAR_NAME }}
+   ┌─ 💻 COMMAND: echo "APP_NAME  = my-service"
+echo "APP_PORT  = 8080"
+echo "LOG_LEVEL = info"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ APP_NAME  = my-service
+        │ APP_PORT  = 8080
+        │ LOG_LEVEL = info
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'show_task_env' COMPLETED
+│  └─ ✅ SUBTASK 'show_task_env' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_env_var_function
+│  ┌─ 🔄 INVOKING SUBTASK: use_env_var_function
+
+┌─ 🎯 TASK: use_env_var_function
+│  💡 Set, save, clear, and restore env vars with env_var function
+│
+├─ ⚡ STEP: save_snapshot
+│  📝 Save env vars to a named set for later restoration
+│  💾 Saving environment variable snapshot: before_deploy
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: set_deploy_vars
+│  📝 Set additional env vars via the env_var function
+│  🔧 Setting 2 definition-level environment variables
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: show_deploy_vars
+│  📝 Verify new env vars are available
+│  ┌─ 💻 COMMAND: echo "DEPLOY_TARGET = production"
+echo "DEPLOY_REGION = us-west-2"
+echo "APP_NAME      = api-gateway"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ DEPLOY_TARGET = production
+│       │ DEPLOY_REGION = us-west-2
+│       │ APP_NAME      = api-gateway
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: clear_env
+│  📝 Clear all environment variables
+│  🧹 Clearing definition-level environment variables
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: restore_env
+│  📝 Load env vars back from the saved snapshot
+│  📂 Loading environment variables from snapshot: before_deploy
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: verify_restored
+   📝 Confirm the original vars are back
+   ┌─ 💻 COMMAND: echo "After restore:"
+echo "APP_NAME = api-gateway"
+echo "APP_PORT = 3000"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ After restore:
+        │ APP_NAME = api-gateway
+        │ APP_PORT = 3000
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'use_env_var_function' COMPLETED
+│  └─ ✅ SUBTASK 'use_env_var_function' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_masking
+│  ┌─ 🔄 INVOKING SUBTASK: show_masking
+
+┌─ 🎯 TASK: show_masking
+│  💡 Sensitive env vars are masked based on security policy
+│
+└─ ⚡ STEP: show_vars
+   📝 Safe vars show values; sensitive vars are masked with ***
+   ┌─ 💻 COMMAND: echo "APP_NAME   = public-service"
+echo "SECRET_KEY = ***"
+echo "AUTH_TOKEN  = ***"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ APP_NAME   = public-service
+        │ SECRET_KEY = ***
+        │ AUTH_TOKEN  = ***
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'show_masking' COMPLETED
+│  └─ ✅ SUBTASK 'show_masking' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Environment Variable Features ==="
+echo "  - env:       Set vars on tasks or steps"
+echo "  - env_var:   Programmatic set / save / load / clear"
+echo "  - Security:  Mask sensitive vars in output"
+echo "  - Templates: Access with <no value>"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Environment Variable Features ===
+        │   - env:       Set vars on tasks or steps
+        │   - env_var:   Programmatic set / save / load / clear
+        │   - Security:  Mask sensitive vars in output
+        │   - Templates: Access with <no value>
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

@@ -1,0 +1,9 @@
+desc: "Build the application"
+steps:
+  - name: compile
+    func: shell
+    do: echo "Building application..."
+
+  - name: done
+    func: shell
+    do: echo "Build complete."

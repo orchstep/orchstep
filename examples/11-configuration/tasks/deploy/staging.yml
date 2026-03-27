@@ -1,0 +1,5 @@
+desc: "Deploy to staging"
+steps:
+  - name: deploy
+    func: shell
+    do: echo "Deploying to staging..."

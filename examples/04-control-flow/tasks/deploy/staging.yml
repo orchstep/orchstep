@@ -1,0 +1,9 @@
+desc: "Deploy to staging environment"
+steps:
+  - name: deploy
+    func: shell
+    do: echo "Deploying to staging environment..."
+
+  - name: verify
+    func: shell
+    do: echo "Staging deployment verified."

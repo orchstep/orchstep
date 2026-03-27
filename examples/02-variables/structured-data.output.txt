@@ -1,0 +1,71 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: structured-data-demo
+│ 📋 Transform data with map_in and map_out (JavaScript)
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Data transformation pipeline
+│
+├─ ⚡ STEP: build_greeting
+│  📝 Use map_in to prepare variables
+│  ┌─ 💻 COMMAND: echo 'Hello, OrchStep User!'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Hello, OrchStep User!
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: parse_status
+│  📝 Use map_out to parse structured output
+│  ┌─ 💻 COMMAND: echo 'status=success,count=42'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ status=success,count=42
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: transform_user_id
+│  📝 Use both map_in and map_out together
+│  ┌─ 💻 COMMAND: echo 'USR-00042'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ USR-00042
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: parse_json_output
+│  📝 Use utils.parseJSON in map_out
+│  ┌─ 💻 COMMAND: echo '{"status":"ok","items":[1,2,3,4,5]}'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ {"status":"ok","items":[1,2,3,4,5]}
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Structured Data Results ==="
+echo "Greeting:   Hello, OrchStep User!"
+echo "Status:     success"
+echo "Count:      42"
+echo "User ID:    USR-00042"
+echo "Valid:      true"
+echo "API Status: ok"
+echo "Items:      5 (total: 15)"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Structured Data Results ===
+        │ Greeting:   Hello, OrchStep User!
+        │ Status:     success
+        │ Count:      42
+        │ User ID:    USR-00042
+        │ Valid:      true
+        │ API Status: ok
+        │ Items:      5 (total: 15)
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

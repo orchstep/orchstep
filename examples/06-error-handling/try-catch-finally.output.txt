@@ -1,0 +1,34 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: try-catch-finally-demo
+│ 📋 Robust error handling with catch and finally blocks
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: deploy-pipeline
+│  💡 Deploy with rollback on failure
+│
+├─ ⚡ STEP: deploy_to_production
+│  ┌─ 💻 COMMAND: echo "Deploying v2.5.0 to production cluster..."
+# In real usage: kubectl apply -f manifests/
+echo "Deployment applied"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying v2.5.0 to production cluster...
+│       │ Deployment applied
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: verify_deployment
+   ┌─ 💻 COMMAND: echo "Running smoke tests..."
+echo "All checks passed"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Running smoke tests...
+        │ All checks passed
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy-pipeline' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

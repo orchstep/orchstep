@@ -83,7 +83,7 @@ tasks:
               then:
                 - name: admin_perms
                   func: shell
-                  do: echo "Permissions: full access (create, read, update, delete)"
+                  do: 'echo "Permissions: full access (create, read, update, delete)"'
                   outputs:
                     access_level: "full"
 
@@ -91,7 +91,7 @@ tasks:
               then:
                 - name: editor_perms
                   func: shell
-                  do: echo "Permissions: edit access (create, read, update)"
+                  do: 'echo "Permissions: edit access (create, read, update)"'
                   outputs:
                     access_level: "edit"
 
@@ -99,14 +99,14 @@ tasks:
               then:
                 - name: viewer_perms
                   func: shell
-                  do: echo "Permissions: read-only"
+                  do: 'echo "Permissions: read-only"'
                   outputs:
                     access_level: "read"
 
           default:
             - name: guest_perms
               func: shell
-              do: echo "Permissions: no access"
+              do: 'echo "Permissions: no access"'
               outputs:
                 access_level: "none"
 

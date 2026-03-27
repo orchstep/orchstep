@@ -1,0 +1,134 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: multi-conditions
+│ 📋 Multiple conditions in a single assertion step
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run all multi-condition demos
+│
+├─ ⚡ STEP: demo_deployment
+│  ┌─ 🔄 INVOKING SUBTASK: validate_deployment
+
+┌─ 🎯 TASK: validate_deployment
+│  💡 Validate a deployment meets all requirements
+│
+├─ ⚡ STEP: simulate_deploy
+│  ┌─ 💻 COMMAND: echo "Deployed payments-api v2.4.1"
+echo "Replicas: 3/3 ready"
+echo "Health: OK"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deployed payments-api v2.4.1
+│       │ Replicas: 3/3 ready
+│       │ Health: OK
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: check_all_conditions
+   📝 All conditions must pass
+   ┌─ 🔍 ASSERTION: {{ eq steps.simulate_deploy.exit_code 0 }}
+   └─ ✅ ASSERTION PASSED
+   ┌─ 🔍 ASSERTION: {{ contains "Health: OK" steps.simulate_deploy.log }}
+   └─ ✅ ASSERTION PASSED
+   ┌─ 🔍 ASSERTION: {{ contains "3/3 ready" steps.simulate_deploy.log }}
+   └─ ✅ ASSERTION PASSED
+   ┌─ 🔍 ASSERTION: steps.simulate_deploy.status === "success"
+   └─ ✅ ASSERTION PASSED
+   ✅ All 4 conditions passed
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'validate_deployment' COMPLETED
+│  └─ ✅ SUBTASK 'validate_deployment' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_mixed
+│  ┌─ 🔄 INVOKING SUBTASK: mixed_syntax
+
+┌─ 🎯 TASK: mixed_syntax
+│  💡 Go template and JavaScript conditions can coexist
+│
+└─ ⚡ STEP: check_config
+   📝 Validate app config from multiple angles
+   ┌─ 🔍 ASSERTION: {{ eq vars.app_name "payments-api" }}
+   └─ ✅ ASSERTION PASSED
+   ┌─ 🔍 ASSERTION: vars.replicas >= 2
+   └─ ✅ ASSERTION PASSED
+   ┌─ 🔍 ASSERTION: {{ gt (len vars.features) 2 }}
+   └─ ✅ ASSERTION PASSED
+   ┌─ 🔍 ASSERTION: vars.features.length === 3
+   └─ ✅ ASSERTION PASSED
+   ✅ All 4 conditions passed
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'mixed_syntax' COMPLETED
+│  └─ ✅ SUBTASK 'mixed_syntax' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_failure_handling
+│  ┌─ 🔄 INVOKING SUBTASK: graceful_failure
+
+┌─ 🎯 TASK: graceful_failure
+│  💡 Handle assertion failures gracefully
+│
+└─ ⚡ STEP: risky_check
+   📝 Some conditions may fail -- catch handles it
+   ┌─ 🔍 ASSERTION: {{ eq vars.app_name "payments-api" }}
+   └─ ✅ ASSERTION PASSED
+   ┌─ 🔍 ASSERTION: vars.replicas >= 10
+   └─ ❌ ASSERTION FAILED
+⚠️  Step 'risky_check' failed after 1 attempts
+   🔄 Executing catch steps for 'risky_check'...
+│  ┌─ 💻 COMMAND: echo "Assertion failed: not enough replicas for production"
+echo "Current replicas: 3"
+echo "Consider scaling up before promoting to production"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Assertion failed: not enough replicas for production
+│       │ Current replicas: 3
+│       │ Consider scaling up before promoting to production
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ Catch steps recovered from error
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'graceful_failure' COMPLETED
+│  └─ ✅ SUBTASK 'graceful_failure' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Multi-Condition Assertions ==="
+echo ""
+echo "Use 'conditions:' (plural) for multiple checks:"
+echo "  func: assert"
+echo "  args:"
+echo "    conditions:"
+echo "      - condition: expr1"
+echo "        desc: what it checks"
+echo "      - condition: expr2"
+echo "        desc: what it checks"
+echo ""
+echo "Benefits:"
+echo "  - All conditions evaluated in one step"
+echo "  - Clear reporting of which conditions failed"
+echo "  - Mix Go template and JavaScript freely"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Multi-Condition Assertions ===
+        │ 
+        │ Use 'conditions:' (plural) for multiple checks:
+        │   func: assert
+        │   args:
+        │     conditions:
+        │       - condition: expr1
+        │         desc: what it checks
+        │       - condition: expr2
+        │         desc: what it checks
+        │ 
+        │ Benefits:
+        │   - All conditions evaluated in one step
+        │   - Clear reporting of which conditions failed
+        │   - Mix Go template and JavaScript freely
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

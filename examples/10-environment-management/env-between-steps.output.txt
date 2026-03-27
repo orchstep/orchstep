@@ -1,0 +1,179 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: env-between-steps
+│ 📋 Environment variable scoping between steps and tasks
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run all env scoping demos
+│
+├─ ⚡ STEP: demo_hierarchy
+│  ┌─ 🔄 INVOKING SUBTASK: show_override_hierarchy
+
+┌─ 🎯 TASK: show_override_hierarchy
+│  💡 Step env overrides task env; function env overrides step env
+│
+├─ ⚡ STEP: task_level_only
+│  📝 This step inherits task-level env
+│  ┌─ 💻 COMMAND: echo "=== Task-level env ==="
+echo "DB_HOST   = task-db.example.com"
+echo "DB_PORT   = 5432"
+echo "LOG_LEVEL = info"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Task-level env ===
+│       │ DB_HOST   = task-db.example.com
+│       │ DB_PORT   = 5432
+│       │ LOG_LEVEL = info
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: step_override
+│  📝 This step overrides DB_HOST for just this step
+│  ┌─ 💻 COMMAND: echo "=== Step-level override ==="
+echo "DB_HOST   = step-db.internal"
+echo "DB_PORT   = 5432"
+echo "LOG_LEVEL = debug"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Step-level override ===
+│       │ DB_HOST   = step-db.internal
+│       │ DB_PORT   = 5432
+│       │ LOG_LEVEL = debug
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: back_to_task_level
+   📝 After the step, task-level env is restored
+   ┌─ 💻 COMMAND: echo "=== Back to task-level ==="
+echo "DB_HOST   = task-db.example.com"
+echo "LOG_LEVEL = info"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Back to task-level ===
+        │ DB_HOST   = task-db.example.com
+        │ LOG_LEVEL = info
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'show_override_hierarchy' COMPLETED
+│  └─ ✅ SUBTASK 'show_override_hierarchy' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_task_calls
+│  ┌─ 🔄 INVOKING SUBTASK: call_task_with_env
+
+┌─ 🎯 TASK: call_task_with_env
+│  💡 Override target task's env from the calling step
+│
+├─ ⚡ STEP: call_with_defaults
+│  📝 Use the task's own env
+│  ┌─ 🔄 INVOKING SUBTASK: backend_task
+
+┌─ 🎯 TASK: backend_task
+│  💡 Backend service configuration
+│
+└─ ⚡ STEP: show_config
+   ┌─ 💻 COMMAND: echo "SERVICE_HOST = default-backend.local"
+echo "SERVICE_PORT = 8080"
+echo "EXTRA_VAR    = <no value>"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ SERVICE_HOST = default-backend.local
+        │ SERVICE_PORT = 8080
+        │ EXTRA_VAR    = <no value>
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'backend_task' COMPLETED
+│  └─ ✅ SUBTASK 'backend_task' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: call_with_overrides
+│  📝 Override SERVICE_HOST and inject EXTRA_VAR
+│  ┌─ 🔄 INVOKING SUBTASK: backend_task
+
+┌─ 🎯 TASK: backend_task
+│  💡 Backend service configuration
+│
+└─ ⚡ STEP: show_config
+   ┌─ 💻 COMMAND: echo "SERVICE_HOST = prod-backend.example.com"
+echo "SERVICE_PORT = 8080"
+echo "EXTRA_VAR    = injected-from-caller"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ SERVICE_HOST = prod-backend.example.com
+        │ SERVICE_PORT = 8080
+        │ EXTRA_VAR    = injected-from-caller
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'backend_task' COMPLETED
+│  └─ ✅ SUBTASK 'backend_task' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: call_again_with_defaults
+   📝 Overrides do not persist -- back to defaults
+   ┌─ 🔄 INVOKING SUBTASK: backend_task
+
+┌─ 🎯 TASK: backend_task
+│  💡 Backend service configuration
+│
+└─ ⚡ STEP: show_config
+   ┌─ 💻 COMMAND: echo "SERVICE_HOST = default-backend.local"
+echo "SERVICE_PORT = 8080"
+echo "EXTRA_VAR    = <no value>"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ SERVICE_HOST = default-backend.local
+        │ SERVICE_PORT = 8080
+        │ EXTRA_VAR    = <no value>
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'backend_task' COMPLETED
+   └─ ✅ SUBTASK 'backend_task' COMPLETED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'call_task_with_env' COMPLETED
+│  └─ ✅ SUBTASK 'call_task_with_env' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: demo_templates
+│  ┌─ 🔄 INVOKING SUBTASK: template_env
+
+┌─ 🎯 TASK: template_env
+│  💡 Env vars can use template expressions for dynamic values
+│
+├─ ⚡ STEP: set_base
+│  📝 Set a base URL via env_var
+│  🔧 Setting 2 definition-level environment variables
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: use_template
+   📝 Build a connection string from env templates
+   ┌─ 💻 COMMAND: echo "API_URL = https://api.example.com/v2"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ API_URL = https://api.example.com/v2
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'template_env' COMPLETED
+│  └─ ✅ SUBTASK 'template_env' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Environment Scoping Rules ==="
+echo "  1. Step env overrides task env (for that step only)"
+echo "  2. Step->task env overrides target task env (for that call)"
+echo "  3. Overrides are scoped -- they do not persist"
+echo "  4. Env values support template expressions"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Environment Scoping Rules ===
+        │   1. Step env overrides task env (for that step only)
+        │   2. Step->task env overrides target task env (for that call)
+        │   3. Overrides are scoped -- they do not persist
+        │   4. Env values support template expressions
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

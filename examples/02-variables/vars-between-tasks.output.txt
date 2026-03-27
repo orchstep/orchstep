@@ -1,0 +1,146 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: vars-between-tasks-demo
+│ 📋 Reusable tasks with parameterized inputs
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Orchestrate deployments across environments
+│
+├─ ⚡ STEP: deploy_to_staging
+│  📝 Deploy auth-service to staging
+│  ┌─ 🔄 INVOKING SUBTASK: deploy_service
+
+┌─ 🎯 TASK: deploy_service
+│  💡 Deploy a service (reusable task)
+│
+├─ ⚡ STEP: show_config
+│  ┌─ 💻 COMMAND: echo "=== Deploying auth-service ==="
+echo "Org:         acme-corp"
+echo "Environment: staging"
+echo "Replicas:    2"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Deploying auth-service ===
+│       │ Org:         acme-corp
+│       │ Environment: staging
+│       │ Replicas:    2
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: execute
+   ┌─ 💻 COMMAND: echo "kubectl apply -f auth-service.yml \
+  --replicas=2"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ kubectl apply -f auth-service.yml   --replicas=2
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_service' COMPLETED
+│  └─ ✅ SUBTASK 'deploy_service' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_to_production
+│  📝 Deploy auth-service to production
+│  ┌─ 🔄 INVOKING SUBTASK: deploy_service
+
+┌─ 🎯 TASK: deploy_service
+│  💡 Deploy a service (reusable task)
+│
+├─ ⚡ STEP: show_config
+│  ┌─ 💻 COMMAND: echo "=== Deploying auth-service ==="
+echo "Org:         acme-corp"
+echo "Environment: production"
+echo "Replicas:    5"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Deploying auth-service ===
+│       │ Org:         acme-corp
+│       │ Environment: production
+│       │ Replicas:    5
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: execute
+   ┌─ 💻 COMMAND: echo "kubectl apply -f auth-service.yml \
+  --replicas=5"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ kubectl apply -f auth-service.yml   --replicas=5
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_service' COMPLETED
+│  └─ ✅ SUBTASK 'deploy_service' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_worker
+│  📝 Deploy worker to production
+│  ┌─ 🔄 INVOKING SUBTASK: deploy_service
+
+┌─ 🎯 TASK: deploy_service
+│  💡 Deploy a service (reusable task)
+│
+├─ ⚡ STEP: show_config
+│  ┌─ 💻 COMMAND: echo "=== Deploying background-worker ==="
+echo "Org:         acme-corp"
+echo "Environment: production"
+echo "Replicas:    8"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Deploying background-worker ===
+│       │ Org:         acme-corp
+│       │ Environment: production
+│       │ Replicas:    8
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: execute
+   ┌─ 💻 COMMAND: echo "kubectl apply -f background-worker.yml \
+  --replicas=8"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ kubectl apply -f background-worker.yml   --replicas=8
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_service' COMPLETED
+│  └─ ✅ SUBTASK 'deploy_service' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: check_auth
+│  📝 Health check the auth service
+│  ┌─ 🔄 INVOKING SUBTASK: health_check
+
+┌─ 🎯 TASK: health_check
+│  💡 Run a health check (reusable task)
+│
+└─ ⚡ STEP: check
+   ┌─ 💻 COMMAND: echo "curl http://auth.example.com:8080/health"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ curl http://auth.example.com:8080/health
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'health_check' COMPLETED
+│  └─ ✅ SUBTASK 'health_check' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Deployment Summary ==="
+echo "Staging:  <no value> (<no value> replicas)"
+echo "Prod:     <no value> (<no value> replicas)"
+echo "Worker:   <no value> (<no value> replicas)"
+echo "Health:   <no value>"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Deployment Summary ===
+        │ Staging:  <no value> (<no value> replicas)
+        │ Prod:     <no value> (<no value> replicas)
+        │ Worker:   <no value> (<no value> replicas)
+        │ Health:   <no value>
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

@@ -1,0 +1,5 @@
+desc: "Deploy to production"
+steps:
+  - name: deploy
+    func: shell
+    do: echo "Deploying to production..."

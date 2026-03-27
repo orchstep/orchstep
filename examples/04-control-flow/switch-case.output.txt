@@ -1,0 +1,45 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: switch-case-demo
+│ 📋 Pattern matching with switch/case
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Configure based on environment and role
+│
+├─ ⚡ STEP: env_config
+│  ┌─ 💻 COMMAND: echo "Environment: Staging"
+echo "LOG_LEVEL=warn"
+echo "REPLICAS=2"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Environment: Staging
+│       │ LOG_LEVEL=warn
+│       │ REPLICAS=2
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: permissions
+│  ┌─ 💻 COMMAND: echo "Permissions: full access (create, read, update, delete)"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Permissions: full access (create, read, update, delete)
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Configuration Summary ==="
+echo "Environment: staging"
+echo "User Role:   admin"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Configuration Summary ===
+        │ Environment: staging
+        │ User Role:   admin
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

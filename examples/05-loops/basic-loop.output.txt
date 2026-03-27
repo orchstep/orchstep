@@ -1,0 +1,139 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: basic-loop-demo
+│ 📋 Iterate over lists, counts, and ranges
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Demonstrate loop patterns
+│
+├─ ⚡ STEP: check_servers
+│  📝 Health-check each server
+   ↻ Starting loop with 3 iterations for step 'check_servers'
+     ↻ Iteration 1/3
+│  ┌─ 💻 COMMAND: echo "Checking server 1/3: web-01.example.com"
+echo "  First: true, Last: false"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Checking server 1/3: web-01.example.com
+│       │   First: true, Last: false
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 2/3
+│  ┌─ 💻 COMMAND: echo "Checking server 2/3: web-02.example.com"
+echo "  First: false, Last: false"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Checking server 2/3: web-02.example.com
+│       │   First: false, Last: false
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 3/3
+│  ┌─ 💻 COMMAND: echo "Checking server 3/3: web-03.example.com"
+echo "  First: false, Last: true"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Checking server 3/3: web-03.example.com
+│       │   First: false, Last: true
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ↻ Completed loop with 3 iterations
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: retry_attempts
+│  📝 Simulate 5 retry attempts
+   ↻ Starting loop with 5 iterations for step 'retry_attempts'
+     ↻ Iteration 1/5
+│  ┌─ 💻 COMMAND: echo "Attempt 1 of 5"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Attempt 1 of 5
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 2/5
+│  ┌─ 💻 COMMAND: echo "Attempt 2 of 5"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Attempt 2 of 5
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 3/5
+│  ┌─ 💻 COMMAND: echo "Attempt 3 of 5"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Attempt 3 of 5
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 4/5
+│  ┌─ 💻 COMMAND: echo "Attempt 4 of 5"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Attempt 4 of 5
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 5/5
+│  ┌─ 💻 COMMAND: echo "Attempt 5 of 5"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Attempt 5 of 5
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ↻ Completed loop with 5 iterations
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: port_scan
+│  📝 Check ports 8080-8084
+   ↻ Starting loop with 5 iterations for step 'port_scan'
+     ↻ Iteration 1/5
+│  ┌─ 💻 COMMAND: echo "Scanning port 8080"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Scanning port 8080
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 2/5
+│  ┌─ 💻 COMMAND: echo "Scanning port 8081"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Scanning port 8081
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 3/5
+│  ┌─ 💻 COMMAND: echo "Scanning port 8082"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Scanning port 8082
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 4/5
+│  ┌─ 💻 COMMAND: echo "Scanning port 8083"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Scanning port 8083
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 5/5
+│  ┌─ 💻 COMMAND: echo "Scanning port 8084"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Scanning port 8084
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ↻ Completed loop with 5 iterations
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: deploy_servers
+   📝 Deploy to each server using a named loop variable
+   ↻ Starting loop with 3 iterations for step 'deploy_servers'
+     ↻ Iteration 1/3
+   ┌─ 💻 COMMAND: echo "Deploying to web-01.example.com (1/3)"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying to web-01.example.com (1/3)
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 2/3
+   ┌─ 💻 COMMAND: echo "Deploying to web-02.example.com (2/3)"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying to web-02.example.com (2/3)
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 3/3
+   ┌─ 💻 COMMAND: echo "Deploying to web-03.example.com (3/3)"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying to web-03.example.com (3/3)
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ↻ Completed loop with 3 iterations
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

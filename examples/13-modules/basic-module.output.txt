@@ -1,0 +1,52 @@
+📦 Loaded module 'greeter' from './modules/greeting'
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: basic-module-demo
+│ 📋 Simple module usage with implicit modules
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Use the greeting module
+│
+├─ ⚡ STEP: say_hello
+│  ┌─ 🔄 INVOKING SUBTASK: greeter.greet
+   ┌─ 💻 COMMAND: echo "Hello from the greeting module, World!"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Hello from the greeting module, World!
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'greeter.greet' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: show_result
+│  ┌─ 💻 COMMAND: echo "Module returned: Hello from the greeting module, World!"
+echo "Recipient was:   World"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Module returned: Hello from the greeting module, World!
+│       │ Recipient was:   World
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: explain
+   ┌─ 💻 COMMAND: echo ""
+echo "=== Module Basics ==="
+echo "1. Create a directory with an orchstep.yml"
+echo "2. Import it:  modules: [{name: x, source: ./path}]"
+echo "3. Call tasks:  module: x, task: task_name"
+echo "4. Read outputs: steps.<step_name>.<output_name>"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ 
+        │ === Module Basics ===
+        │ 1. Create a directory with an orchstep.yml
+        │ 2. Import it:  modules: [{name: x, source: ./path}]
+        │ 3. Call tasks:  module: x, task: task_name
+        │ 4. Read outputs: steps.<step_name>.<output_name>
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

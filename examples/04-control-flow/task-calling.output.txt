@@ -1,0 +1,126 @@
+📂 Discovered 4 task file(s) from tasks/ directory
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: task-calling-demo
+│ 📋 Orchestrate auto-discovered task files
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 CI/CD pipeline using auto-discovered tasks
+│
+├─ ⚡ STEP: run_build
+│  📝 Execute the build task (from tasks/build.yml)
+│  ┌─ 🔄 INVOKING SUBTASK: build
+
+┌─ 🎯 TASK: build
+│  💡 Build the application
+│
+├─ ⚡ STEP: compile
+│  ┌─ 💻 COMMAND: echo "Compiling application..."
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Compiling application...
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: package
+   ┌─ 💻 COMMAND: echo "Packaging build artifacts..."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Packaging build artifacts...
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'build' COMPLETED
+│  └─ ✅ SUBTASK 'build' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: run_tests
+│  📝 Execute the test task (from tasks/test.yml)
+│  ┌─ 🔄 INVOKING SUBTASK: test
+
+┌─ 🎯 TASK: test
+│  💡 Run tests
+│
+├─ ⚡ STEP: unit_tests
+│  ┌─ 💻 COMMAND: echo "Running unit tests... PASSED"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Running unit tests... PASSED
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: integration_tests
+   ┌─ 💻 COMMAND: echo "Running integration tests... PASSED"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Running integration tests... PASSED
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'test' COMPLETED
+│  └─ ✅ SUBTASK 'test' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_staging
+│  📝 Deploy to staging (from tasks/deploy/staging.yml)
+│  ┌─ 🔄 INVOKING SUBTASK: deploy-staging
+
+┌─ 🎯 TASK: deploy-staging
+│  💡 Deploy to staging environment
+│
+├─ ⚡ STEP: deploy
+│  ┌─ 💻 COMMAND: echo "Deploying to staging environment..."
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying to staging environment...
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: verify
+   ┌─ 💻 COMMAND: echo "Staging deployment verified."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Staging deployment verified.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy-staging' COMPLETED
+│  └─ ✅ SUBTASK 'deploy-staging' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_production
+│  📝 Deploy to production (from tasks/deploy/production.yml)
+│  ┌─ 🔄 INVOKING SUBTASK: deploy-production
+
+┌─ 🎯 TASK: deploy-production
+│  💡 Deploy to production environment
+│
+├─ ⚡ STEP: deploy
+│  ┌─ 💻 COMMAND: echo "Deploying to production environment..."
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying to production environment...
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: verify
+   ┌─ 💻 COMMAND: echo "Production deployment verified."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Production deployment verified.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy-production' COMPLETED
+│  └─ ✅ SUBTASK 'deploy-production' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: done
+   ┌─ 💻 COMMAND: echo "Pipeline complete -- all tasks executed."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Pipeline complete -- all tasks executed.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

@@ -1,0 +1,68 @@
+📂 Discovered 4 task file(s) from tasks/ directory
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: config-defaults-demo
+│ 📋 Setting default function configuration via config file
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run commands using config-file defaults
+│
+├─ ⚡ STEP: hello
+│  📝 Uses the shell type from config -- no need to specify it
+│  ┌─ 💻 COMMAND: echo 'Hello with config defaults!'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Hello with config defaults!
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: system_info
+│  📝 Another shell step -- also inherits the config defaults
+│  ┌─ 💻 COMMAND: echo "Shell type: inherited from orchstep-config.yml"
+echo "Timeout:    inherited from orchstep-config.yml"
+echo "User:       $USER"
+echo "Working in: $(pwd)"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Shell type: inherited from orchstep-config.yml
+│       │ Timeout:    inherited from orchstep-config.yml
+│       │ User:       mindbuger
+│       │ Working in: /Users/mindbuger/data/git/orchstep/orchstep-public/examples/11-configuration
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: explain
+   ┌─ 💻 COMMAND: echo ""
+echo "=== Config Defaults ==="
+echo "Place an orchstep-config.yml alongside your orchstep.yml:"
+echo ""
+echo "  func:"
+echo "    shell:"
+echo "      type: shell       # Override default interpreter"
+echo "      timeout: 120      # Default timeout in seconds"
+echo "    http:"
+echo "      timeout: 30       # HTTP request timeout"
+echo ""
+echo "All functions will use these defaults automatically."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ 
+        │ === Config Defaults ===
+        │ Place an orchstep-config.yml alongside your orchstep.yml:
+        │ 
+        │   func:
+        │     shell:
+        │       type: shell       # Override default interpreter
+        │       timeout: 120      # Default timeout in seconds
+        │     http:
+        │       timeout: 30       # HTTP request timeout
+        │ 
+        │ All functions will use these defaults automatically.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

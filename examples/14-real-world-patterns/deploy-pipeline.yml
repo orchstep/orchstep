@@ -109,7 +109,7 @@ tasks:
           conditions:
             - condition: "steps.health_check.http_status === 200"
               desc: "Health endpoint returns 200"
-            - condition: '{{ steps.health_check.response | contains "healthy" }}'
+            - condition: '{{ contains "healthy" steps.health_check.response }}'
               desc: "Service reports healthy status"
 
       - name: smoke_test

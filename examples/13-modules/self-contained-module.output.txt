@@ -1,0 +1,112 @@
+📦 Loaded module 'deployer' from './modules/deploy.yml'
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: self-contained-module-demo
+│ 📋 Module with full metadata, exports, and config schema in one file
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run both deployment scenarios
+│
+├─ ⚡ STEP: basic
+│  ┌─ 🔄 INVOKING SUBTASK: deploy_basic
+
+┌─ 🎯 TASK: deploy_basic
+│  💡 Deploy with default replicas
+│
+├─ ⚡ STEP: deploy_app
+│  ┌─ 🔄 INVOKING SUBTASK: deployer.deploy
+   ┌─ 💻 COMMAND: echo "Deploying user-service:v2.0.0"
+echo "Environment: staging"
+echo "Registry:    my-registry.example.com"
+echo "Replicas:    3"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying user-service:v2.0.0
+        │ Environment: staging
+        │ Registry:    my-registry.example.com
+        │ Replicas:    3
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'deployer.deploy' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: show_result
+   ┌─ 💻 COMMAND: echo "Deployment ID: deploy-staging-user-service-001"
+echo "Status:        deployed"
+echo "Replicas:      3"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deployment ID: deploy-staging-user-service-001
+        │ Status:        deployed
+        │ Replicas:      3
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_basic' COMPLETED
+│  └─ ✅ SUBTASK 'deploy_basic' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: custom
+│  ┌─ 🔄 INVOKING SUBTASK: deploy_with_custom_replicas
+
+┌─ 🎯 TASK: deploy_with_custom_replicas
+│  💡 Deploy with custom replica count
+│
+├─ ⚡ STEP: deploy_scaled
+│  ┌─ 🔄 INVOKING SUBTASK: deployer.deploy
+   ┌─ 💻 COMMAND: echo "Deploying order-service:v3.5.1"
+echo "Environment: staging"
+echo "Registry:    my-registry.example.com"
+echo "Replicas:    10"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying order-service:v3.5.1
+        │ Environment: staging
+        │ Registry:    my-registry.example.com
+        │ Replicas:    10
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'deployer.deploy' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: show_result
+   ┌─ 💻 COMMAND: echo "App:      order-service"
+echo "Version:  v3.5.1"
+echo "Replicas: 10"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ App:      order-service
+        │ Version:  v3.5.1
+        │ Replicas: 10
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_with_custom_replicas' COMPLETED
+│  └─ ✅ SUBTASK 'deploy_with_custom_replicas' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo ""
+echo "=== Self-Contained Modules ==="
+echo "A single .yml file can contain:"
+echo "  - metadata:  name, version, author, license"
+echo "  - config:    schema with validation rules"
+echo "  - exports:   public task interfaces with params/returns"
+echo "  - tasks:     the actual implementation"
+echo ""
+echo "Import with: source: ./path/to/module.yml"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ 
+        │ === Self-Contained Modules ===
+        │ A single .yml file can contain:
+        │   - metadata:  name, version, author, license
+        │   - config:    schema with validation rules
+        │   - exports:   public task interfaces with params/returns
+        │   - tasks:     the actual implementation
+        │ 
+        │ Import with: source: ./path/to/module.yml
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

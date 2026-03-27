@@ -1,0 +1,69 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: env-file-loading
+│ 📋 Loading environment variables from .env and .envrc files
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Demonstrate env file loading
+│
+└─ ⚡ STEP: explain
+   ┌─ 💻 COMMAND: echo "=== .env / .envrc File Loading ==="
+echo ""
+echo "Supported file formats:"
+echo ""
+echo "  .env format:"
+echo "    HOST=prod.example.com"
+echo "    PORT=6432"
+echo "    DATABASE_URL=postgres://host:port/app"
+echo ""
+echo "  .envrc format (bash-style):"
+echo "    export HOST=dev.example.com"
+echo "    export PORT=5432"
+echo "    export FEATURE_FLAGS='{\"beta\":true}'"
+echo ""
+echo "Load files with:"
+echo "  func: env_var"
+echo "  do: load_env_file"
+echo "  args:"
+echo "    file:"
+echo "      - ./base.envrc"
+echo "      - ./overrides.env"
+echo ""
+echo "Or use hierarchical YAML directories with:"
+echo "  env_config:"
+echo "    env_dir: environments"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === .env / .envrc File Loading ===
+        │ 
+        │ Supported file formats:
+        │ 
+        │   .env format:
+        │     HOST=prod.example.com
+        │     PORT=6432
+        │     DATABASE_URL=postgres://host:port/app
+        │ 
+        │   .envrc format (bash-style):
+        │     export HOST=dev.example.com
+        │     export PORT=5432
+        │     export FEATURE_FLAGS='{"beta":true}'
+        │ 
+        │ Load files with:
+        │   func: env_var
+        │   do: load_env_file
+        │   args:
+        │     file:
+        │       - ./base.envrc
+        │       - ./overrides.env
+        │ 
+        │ Or use hierarchical YAML directories with:
+        │   env_config:
+        │     env_dir: environments
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

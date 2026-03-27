@@ -1,0 +1,93 @@
+📦 Loaded module 'db' from './modules/database'
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: module-overrides-demo
+│ 📋 Override module defaults with 'with:' for specific calls
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Show how 'with:' overrides config per call
+│
+├─ ⚡ STEP: normal_query
+│  📝 Normal query uses config values
+│  ┌─ 🔄 INVOKING SUBTASK: db.query
+   ┌─ 💻 COMMAND: echo "Connecting to prod-db.example.com:5432"
+echo "Pool size: 50"
+echo "Timeout:   60s"
+echo "Retries:   5"
+echo "Query executed successfully"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Connecting to prod-db.example.com:5432
+        │ Pool size: 50
+        │ Timeout:   60s
+        │ Retries:   5
+        │ Query executed successfully
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'db.query' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: lightweight_query
+│  📝 Quick query with reduced pool and timeout
+│  ┌─ 🔄 INVOKING SUBTASK: db.query
+   ┌─ 💻 COMMAND: echo "Connecting to prod-db.example.com:5432"
+echo "Pool size: 5"
+echo "Timeout:   10s"
+echo "Retries:   5"
+echo "Query executed successfully"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Connecting to prod-db.example.com:5432
+        │ Pool size: 5
+        │ Timeout:   10s
+        │ Retries:   5
+        │ Query executed successfully
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'db.query' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: another_normal_query
+│  📝 Back to config defaults (with does not persist)
+│  ┌─ 🔄 INVOKING SUBTASK: db.query
+   ┌─ 💻 COMMAND: echo "Connecting to prod-db.example.com:5432"
+echo "Pool size: 50"
+echo "Timeout:   60s"
+echo "Retries:   5"
+echo "Query executed successfully"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Connecting to prod-db.example.com:5432
+        │ Pool size: 50
+        │ Timeout:   60s
+        │ Retries:   5
+        │ Query executed successfully
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'db.query' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: compare
+   ┌─ 💻 COMMAND: echo "=== Override Comparison ==="
+echo ""
+echo "Normal query:     pool=50, timeout=60"
+echo "Lightweight:      pool=5, timeout=10"
+echo "Back to normal:   pool=50, timeout=60"
+echo ""
+echo "Precedence: with > config > module defaults"
+echo "'with:' only affects the step it is on."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Override Comparison ===
+        │ 
+        │ Normal query:     pool=50, timeout=60
+        │ Lightweight:      pool=5, timeout=10
+        │ Back to normal:   pool=50, timeout=60
+        │ 
+        │ Precedence: with > config > module defaults
+        │ 'with:' only affects the step it is on.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

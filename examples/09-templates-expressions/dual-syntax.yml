@@ -63,7 +63,7 @@ tasks:
         desc: "Go Template: string contains"
         func: assert
         args:
-          condition: "{{ contains vars.message \"successful\" }}"
+          condition: "{{ contains \"successful\" vars.message }}"
           desc: "Message contains 'successful' (Go template)"
 
       - name: js_contains
@@ -158,7 +158,7 @@ tasks:
           echo "Go Template:"
           echo '  Equality:     {{ eq vars.x "value" }}'
           echo '  Greater than: {{ gt vars.n 5 }}'
-          echo '  Contains:     {{ contains vars.s "text" }}'
+          echo '  Contains:     {{ contains "text" vars.s }}'
           echo '  AND:          {{ and (cond1) (cond2) }}'
           echo '  OR:           {{ or (cond1) (cond2) }}'
           echo '  NOT:          {{ not (cond) }}'

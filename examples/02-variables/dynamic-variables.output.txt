@@ -1,0 +1,74 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: dynamic-variables-demo
+│ 📋 Pass data between steps using outputs
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Docker build and deploy pipeline showing dynamic variables
+│
+├─ ⚡ STEP: build_image
+│  📝 Build the Docker image and capture metadata
+│  ┌─ 💻 COMMAND: echo "Building Docker image..."
+echo "Image: web-api:v2.1.0"
+echo "Build complete."
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Building Docker image...
+│       │ Image: web-api:v2.1.0
+│       │ Build complete.
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: tag_for_registry
+│  📝 Tag the image for the remote registry
+│  ┌─ 💻 COMMAND: echo "Tagging web-api:v2.1.0"
+echo "  as registry.example.com/web-api:v2.1.0"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Tagging web-api:v2.1.0
+│       │   as registry.example.com/web-api:v2.1.0
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: push_image
+│  📝 Push the tagged image to the registry
+│  ┌─ 💻 COMMAND: echo "Pushing registry.example.com/web-api:v2.1.0"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Pushing registry.example.com/web-api:v2.1.0
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy
+│  📝 Deploy the pushed image to Kubernetes
+│  ┌─ 💻 COMMAND: echo "kubectl set image deployment/web-api \
+  web-api=registry.example.com/web-api:v2.1.0 \
+  -n production"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ kubectl set image deployment/web-api   web-api=registry.example.com/web-api:v2.1.0   -n production
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   📝 Show the full pipeline result
+   ┌─ 💻 COMMAND: echo "=== Deployment Summary ==="
+echo "Image:    web-api:v2.1.0"
+echo "Registry: registry.example.com/web-api:v2.1.0"
+echo "Status:   completed"
+echo "Deployed: registry.example.com/web-api:v2.1.0"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Deployment Summary ===
+        │ Image:    web-api:v2.1.0
+        │ Registry: registry.example.com/web-api:v2.1.0
+        │ Status:   completed
+        │ Deployed: registry.example.com/web-api:v2.1.0
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

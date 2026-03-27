@@ -1,0 +1,43 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: rest-api-methods-demo
+│ 📋 POST, PUT, PATCH, DELETE with JSON bodies
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: crud-workflow
+│  💡 Create, read, update, delete in sequence
+│
+├─ ⚡ STEP: create_item
+│  ┌─ 💻 COMMAND: POST http://localhost:8080/post
+│  └─ 📤 OUTPUT: {"args":{},"data":{"description":"Add retry with jitter support","priority":"high","title":"New Feature"},"description":"Add retry with jitter support","headers":{"Accept-Encoding":"gzip","Content-Len... (373 bytes)
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: update_item
+│  ┌─ 💻 COMMAND: PUT http://localhost:8080/put
+│  └─ 📤 OUTPUT: {"args":{},"data":{"status":"in_progress","title":"New Feature (Updated)"},"headers":{"Accept-Encoding":"gzip","Content-Length":"56","Content-Type":"application/json","User-Agent":"Go-http-client/1.1"... (363 bytes)
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: delete_item
+│  ┌─ 💻 COMMAND: DELETE http://localhost:8080/delete?id=feat-001
+│  └─ 📤 OUTPUT: {"args":{"id":"feat-001"},"method":"DELETE","origin":"[::1]:51801","url":"/delete?id=feat-001"}
+
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "CRUD workflow complete"
+echo "Create: 200"
+echo "Update: 200"
+echo "Delete: 200"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ CRUD workflow complete
+        │ Create: 200
+        │ Update: 200
+        │ Delete: 200
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'crud-workflow' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

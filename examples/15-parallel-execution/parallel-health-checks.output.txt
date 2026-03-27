@@ -1,0 +1,64 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: parallel-health_checks
+│ 📋 Check multiple service endpoints in parallel
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: check-all
+│  💡 Verify all services are healthy
+│
+├─ ⚡ STEP: health_checks
+│  📝 Run all health checks in parallel
+│  Starting parallel execution of 3 steps
+│  ┌─ 💻 COMMAND: echo "Checking admin at https://admin.example.com..."
+echo "ADMIN_STATUS=healthy"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│  ┌─ 💻 COMMAND: echo "Checking API at https://api.example.com..."
+echo "API_STATUS=healthy"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│  ┌─ 💻 COMMAND: echo "Checking web at https://www.example.com..."
+echo "WEB_STATUS=healthy"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Checking API at https://api.example.com...
+│       │ API_STATUS=healthy
+│       │ Checking admin at https://admin.example.com...
+│       │ ADMIN_STATUS=healthy
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│       │ Checking web at https://www.example.com...
+│       │ WEB_STATUS=healthy
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  Parallel step 'check_api' completed successfully
+│  Parallel step 'check_web' completed successfully
+│  Parallel step 'check_admin' completed successfully
+│  Parallel block completed: 3/3 succeeded
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: verify_all_healthy
+│  ┌─ 🔍 ASSERTION: steps.check_api.status === "healthy" && steps.check_web.status === "healthy" && steps.check_admin.status === "healthy"
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "Health Check Summary:"
+echo "  API:   healthy"
+echo "  Web:   healthy"
+echo "  Admin: healthy"
+echo "All services operational!"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Health Check Summary:
+        │   API:   healthy
+        │   Web:   healthy
+        │   Admin: healthy
+        │ All services operational!
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'check-all' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

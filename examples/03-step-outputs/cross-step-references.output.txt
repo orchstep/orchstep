@@ -1,0 +1,48 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: cross-step-references-demo
+│ 📋 Outputs from conditional branches and nested steps
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Deploy with conditional region selection
+│
+├─ ⚡ STEP: deploy_config
+│  ┌─ 💻 COMMAND: echo 'Selected region: us-west-2 (nonproduction)'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Selected region: us-west-2 (nonproduction)
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ┌─ 💻 COMMAND: echo "Configuring cluster in us-west-2"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Configuring cluster in us-west-2
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_application
+│  ┌─ 💻 COMMAND: echo "Deploying to cluster: nonprod-us-west-2"
+echo "Environment: nonproduction"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying to cluster: nonprod-us-west-2
+│       │ Environment: nonproduction
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Deployment Complete ==="
+echo "Environment: nonproduction"
+echo "Target:      nonprod-us-west-2"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Deployment Complete ===
+        │ Environment: nonproduction
+        │ Target:      nonprod-us-west-2
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

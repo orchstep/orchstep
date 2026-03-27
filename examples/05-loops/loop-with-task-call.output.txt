@@ -1,0 +1,118 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: loop-with-task-call-demo
+│ 📋 Call tasks in a loop with per-iteration parameters
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Deploy to all regions
+│
+└─ ⚡ STEP: deploy_all_regions
+   📝 Deploy to every region using a reusable task
+   ↻ Starting loop with 3 iterations for step 'deploy_all_regions'
+     ↻ Iteration 1/3
+   ┌─ 🔄 INVOKING SUBTASK: deploy_region
+
+┌─ 🎯 TASK: deploy_region
+│  💡 Deploy to a single region
+│
+├─ ⚡ STEP: show_config
+│  ┌─ 💻 COMMAND: echo "=== Deploying Region [1/3] ==="
+echo "Region:   us-east-1"
+echo "Host:     east.example.com"
+echo "Replicas: 3"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Deploying Region [1/3] ===
+│       │ Region:   us-east-1
+│       │ Host:     east.example.com
+│       │ Replicas: 3
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: execute_deploy
+   ┌─ 💻 COMMAND: echo "kubectl apply -f deploy.yml \
+  --context=us-east-1 \
+  --replicas=3"
+echo "Status: deployed"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ kubectl apply -f deploy.yml   --context=us-east-1   --replicas=3
+        │ Status: deployed
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_region' COMPLETED
+   └─ ✅ SUBTASK 'deploy_region' COMPLETED
+     ↻ Iteration 2/3
+   ┌─ 🔄 INVOKING SUBTASK: deploy_region
+
+┌─ 🎯 TASK: deploy_region
+│  💡 Deploy to a single region
+│
+├─ ⚡ STEP: show_config
+│  ┌─ 💻 COMMAND: echo "=== Deploying Region [2/3] ==="
+echo "Region:   us-west-2"
+echo "Host:     west.example.com"
+echo "Replicas: 5"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Deploying Region [2/3] ===
+│       │ Region:   us-west-2
+│       │ Host:     west.example.com
+│       │ Replicas: 5
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: execute_deploy
+   ┌─ 💻 COMMAND: echo "kubectl apply -f deploy.yml \
+  --context=us-west-2 \
+  --replicas=5"
+echo "Status: deployed"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ kubectl apply -f deploy.yml   --context=us-west-2   --replicas=5
+        │ Status: deployed
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_region' COMPLETED
+   └─ ✅ SUBTASK 'deploy_region' COMPLETED
+     ↻ Iteration 3/3
+   ┌─ 🔄 INVOKING SUBTASK: deploy_region
+
+┌─ 🎯 TASK: deploy_region
+│  💡 Deploy to a single region
+│
+├─ ⚡ STEP: show_config
+│  ┌─ 💻 COMMAND: echo "=== Deploying Region [3/3] ==="
+echo "Region:   eu-west-1"
+echo "Host:     eu.example.com"
+echo "Replicas: 7"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Deploying Region [3/3] ===
+│       │ Region:   eu-west-1
+│       │ Host:     eu.example.com
+│       │ Replicas: 7
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: execute_deploy
+   ┌─ 💻 COMMAND: echo "kubectl apply -f deploy.yml \
+  --context=eu-west-1 \
+  --replicas=7"
+echo "Status: deployed"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ kubectl apply -f deploy.yml   --context=eu-west-1   --replicas=7
+        │ Status: deployed
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_region' COMPLETED
+   └─ ✅ SUBTASK 'deploy_region' COMPLETED
+   ↻ Completed loop with 3 iterations
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

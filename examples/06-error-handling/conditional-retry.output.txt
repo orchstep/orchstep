@@ -1,0 +1,25 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: conditional-retry-demo
+│ 📋 Retry only when specific conditions are met
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: retry-on-timeout
+│  💡 Retry network calls only when they time out (exit code 124)
+│
+└─ ⚡ STEP: call_external_api
+   ┌─ 💻 COMMAND: echo "Calling payment gateway..."
+# In real usage: curl --max-time 5 https://api.payment.com/charge
+# Exit code 124 = timeout, 0 = success, other = permanent error
+echo "Request completed"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Calling payment gateway...
+        │ Request completed
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'retry-on-timeout' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

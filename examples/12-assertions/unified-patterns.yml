@@ -79,7 +79,7 @@ tasks:
             - condition: "steps.health_check.active_users > 100"
               desc: "More than 100 active users"
 
-            - condition: '{{ steps.health_check.report | contains "Uptime" }}'
+            - condition: '{{ contains "Uptime" steps.health_check.report }}'
               desc: "Report includes uptime information"
 
       # --- Pattern 3: Nested object validation ---

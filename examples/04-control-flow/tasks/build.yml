@@ -1,0 +1,9 @@
+desc: "Build the application"
+steps:
+  - name: compile
+    func: shell
+    do: echo "Compiling application..."
+
+  - name: package
+    func: shell
+    do: echo "Packaging build artifacts..."

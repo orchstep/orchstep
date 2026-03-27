@@ -43,7 +43,7 @@ tasks:
         desc: "Check if a string contains a substring"
         func: assert
         args:
-          condition: '{{ contains vars.message "successful" }}'
+          condition: '{{ contains "successful" vars.message }}'
           desc: "Message must contain 'successful'"
 
       - name: logical_and
@@ -112,7 +112,7 @@ tasks:
     steps:
       - name: run_check
         func: shell
-        do: echo "Status: healthy | Latency: 42ms"
+        do: 'echo "Status: healthy | Latency: 42ms"'
         outputs:
           result: "{{ result.output }}"
 
@@ -120,7 +120,7 @@ tasks:
         desc: "Verify the health check output"
         func: assert
         args:
-          condition: '{{ steps.run_check.result | contains "healthy" }}'
+          condition: '{{ contains "healthy" steps.run_check.result }}'
           desc: "Service must report healthy status"
 
   main:
