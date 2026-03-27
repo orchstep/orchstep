@@ -17,7 +17,7 @@
 name: git-clone-patterns-demo
 desc: "Clone repositories with branches, tags, and options"
 
-vars:
+defaults:
   repo_url: "https://github.com/orchstep/example-repo.git"
   clone_dir: "/tmp/orchstep-clone-demo"
 

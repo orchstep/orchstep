@@ -15,7 +15,7 @@
 name: authenticated-git-demo
 desc: "Clone private repositories with token or SSH auth"
 
-vars:
+defaults:
   work_dir: "/tmp/orchstep-auth-git"
 
 tasks:

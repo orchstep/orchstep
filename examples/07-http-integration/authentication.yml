@@ -14,7 +14,7 @@
 name: authentication-demo
 desc: "Bearer, Basic, and API Key authentication patterns"
 
-vars:
+defaults:
   api_base: "https://httpbin.org"
 
 tasks:

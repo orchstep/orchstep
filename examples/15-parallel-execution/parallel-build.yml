@@ -14,7 +14,7 @@
 name: parallel-build-demo
 desc: "Build frontend and backend in parallel, then deploy"
 
-vars:
+defaults:
   version: "2.0.0"
   environment: staging
 

@@ -12,7 +12,7 @@
 name: parallel-health-checks
 desc: "Check multiple service endpoints in parallel"
 
-vars:
+defaults:
   api_url: "https://api.example.com"
   web_url: "https://www.example.com"
   admin_url: "https://admin.example.com"

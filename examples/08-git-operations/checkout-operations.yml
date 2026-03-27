@@ -12,7 +12,7 @@
 name: git-checkout-demo
 desc: "Checkout branches, tags, and commits"
 
-vars:
+defaults:
   repo_url: "https://github.com/orchstep/example-repo.git"
   work_dir: "/tmp/orchstep-checkout-demo"
 
