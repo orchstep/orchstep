@@ -1,0 +1,32 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: on-error-modes-demo
+│ 📋 Control error behavior per step: fail, ignore, or warn
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: strict-pipeline
+│  💡 Default fail mode - task stops on first error
+│
+├─ ⚡ STEP: critical_step
+│  ┌─ 💻 COMMAND: echo "Running critical validation..."
+# If this fails, the task stops immediately
+echo "Validation passed"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Running critical validation...
+│       │ Validation passed
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: next_step
+   ┌─ 💻 COMMAND: echo "This only runs if the previous step succeeded"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ This only runs if the previous step succeeded
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'strict-pipeline' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

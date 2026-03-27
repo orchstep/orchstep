@@ -1,0 +1,123 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: unified-patterns
+│ 📋 Unified assertion patterns for validation
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Demonstrate unified assertion patterns
+│
+├─ ⚡ STEP: health_check
+│  ┌─ 💻 COMMAND: echo "Service: order-service"
+echo "Status: healthy"
+echo "Uptime: 72h"
+echo "Active connections: 142"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Service: order-service
+│       │ Status: healthy
+│       │ Uptime: 72h
+│       │ Active connections: 142
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: validate_vars
+│  📝 Validate definition variables
+│  ┌─ 🔍 ASSERTION: {{ eq vars.app_name "order-service" }}
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: {{ gt vars.max_retries 3 }}
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: {{ vars.version | upper | eq "3.1.0" }}
+│  └─ ✅ ASSERTION PASSED
+   ✅ All 3 conditions passed
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: validate_outputs
+│  📝 Validate step outputs from previous steps
+│  ┌─ 🔍 ASSERTION: steps.health_check.status === "healthy"
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: steps.health_check.active_users > 100
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: {{ contains "Uptime" steps.health_check.report }}
+│  └─ ✅ ASSERTION PASSED
+   ✅ All 3 conditions passed
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: validate_nested
+│  📝 Validate nested object properties
+│  ┌─ 🔍 ASSERTION: {{ eq vars.config.database.host "db.example.com" }}
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: vars.config.database.pool_size >= 20
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: vars.config.cache.enabled === true
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: vars.config.cache.ttl === 300
+│  └─ ✅ ASSERTION PASSED
+   ✅ All 4 conditions passed
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: validate_arrays
+│  📝 Validate array contents and properties
+│  ┌─ 🔍 ASSERTION: {{ eq (len vars.tags) 3 }}
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: vars.tags[0].name === "api"
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: vars.tags[2].priority === 3
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: steps.health_check.services.length === 3
+│  └─ ✅ ASSERTION PASSED
+   ✅ All 4 conditions passed
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: validate_with_helpers
+│  📝 Use built-in helper functions
+│  ┌─ 🔍 ASSERTION: exists("steps.health_check.status")
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: len(steps.health_check.services) === 3
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: contains(steps.health_check.services, "order-service")
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: matches("^order", vars.app_name)
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: get("vars.config.database.host") === "db.example.com"
+│  └─ ✅ ASSERTION PASSED
+   ✅ All 5 conditions passed
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: validate_complex
+│  📝 Complex multi-condition expressions
+│  ┌─ 🔍 ASSERTION: {{ and (eq vars.config.cache.enabled true) (gt vars.config.database.pool_size 10) }}
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: vars.config.cache.enabled &&
+vars.config.database.pool_size > 10 &&
+vars.app_name.includes("service") &&
+len(vars.tags) >= 3
+
+│  └─ ✅ ASSERTION PASSED
+   ✅ All 2 conditions passed
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Assertion Helper Functions ==="
+echo ""
+echo "  exists('path')            -- value is defined"
+echo "  len(value)                -- array/string length"
+echo "  contains(haystack, needle) -- array/string search"
+echo "  matches(regex, str)        -- regex matching"
+echo "  get('path')               -- safe nested access"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Assertion Helper Functions ===
+        │ 
+        │   exists('path')            -- value is defined
+        │   len(value)                -- array/string length
+        │   contains(haystack, needle) -- array/string search
+        │   matches(regex, str)        -- regex matching
+        │   get('path')               -- safe nested access
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

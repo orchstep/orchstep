@@ -1,0 +1,98 @@
+📦 Loaded module 'greeter' from './modules/greeting'
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: module-variable-scoping
+│ 📋 How variables resolve in modules -- scope isolation
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Demonstrate scope isolation between consumer and module
+│
+├─ ⚡ STEP: consumer_vars
+│  📝 Consumer's own variables
+│  ┌─ 💻 COMMAND: echo "=== Consumer Scope ==="
+echo "app_name = consumer-app"
+echo "region   = us-east-1"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Consumer Scope ===
+│       │ app_name = consumer-app
+│       │ region   = us-east-1
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: module_call
+│  📝 Module sees config values, not consumer vars
+│  ┌─ 🔄 INVOKING SUBTASK: greeter.greet
+   ┌─ 💻 COMMAND: echo "Hello from config, Production Team!"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Hello from config, Production Team!
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'greeter.greet' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: read_outputs
+│  📝 Consumer reads module outputs
+│  ┌─ 💻 COMMAND: echo "=== Module Outputs ==="
+echo "greeting  = Hello from config, Production Team!"
+echo "recipient = Production Team"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Module Outputs ===
+│       │ greeting  = Hello from config, Production Team!
+│       │ recipient = Production Team
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: module_with_override
+│  📝 Use 'with:' to override for this call
+│  ┌─ 🔄 INVOKING SUBTASK: greeter.greet
+   ┌─ 💻 COMMAND: echo "Overridden greeting, Staging Team!"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Overridden greeting, Staging Team!
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'greeter.greet' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: show_override
+│  ┌─ 💻 COMMAND: echo "=== With Override ==="
+echo "greeting = Overridden greeting, Staging Team!"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === With Override ===
+│       │ greeting = Overridden greeting, Staging Team!
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo ""
+echo "=== Variable Scoping Rules ==="
+echo "  1. Module cannot see consumer variables"
+echo "  2. Consumer cannot see module internal variables"
+echo "  3. Data in:  config: and with:"
+echo "  4. Data out: step outputs"
+echo "  5. Same variable name in consumer and module = no collision"
+echo ""
+echo "  Precedence inside module:"
+echo "    with > config > task vars > module defaults"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ 
+        │ === Variable Scoping Rules ===
+        │   1. Module cannot see consumer variables
+        │   2. Consumer cannot see module internal variables
+        │   3. Data in:  config: and with:
+        │   4. Data out: step outputs
+        │   5. Same variable name in consumer and module = no collision
+        │ 
+        │   Precedence inside module:
+        │     with > config > task vars > module defaults
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

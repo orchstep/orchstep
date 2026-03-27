@@ -9,7 +9,7 @@
 # Try:
 #   orchstep run check-all
 
-name: parallel-health-checks
+name: parallel-health_checks
 desc: "Check multiple service endpoints in parallel"
 
 defaults:
@@ -21,10 +21,10 @@ tasks:
   check-all:
     desc: "Verify all services are healthy"
     steps:
-      - name: health-checks
+      - name: health_checks
         desc: "Run all health checks in parallel"
         parallel:
-          - name: check-api
+          - name: check_api
             func: shell
             do: |
               echo "Checking API at {{ vars.api_url }}..."
@@ -32,7 +32,7 @@ tasks:
             outputs:
               status: '{{ result.output | regexFind "API_STATUS=(.+)" }}'
 
-          - name: check-web
+          - name: check_web
             func: shell
             do: |
               echo "Checking web at {{ vars.web_url }}..."
@@ -40,7 +40,7 @@ tasks:
             outputs:
               status: '{{ result.output | regexFind "WEB_STATUS=(.+)" }}'
 
-          - name: check-admin
+          - name: check_admin
             func: shell
             do: |
               echo "Checking admin at {{ vars.admin_url }}..."
@@ -48,17 +48,17 @@ tasks:
             outputs:
               status: '{{ result.output | regexFind "ADMIN_STATUS=(.+)" }}'
 
-      - name: verify-all-healthy
+      - name: verify_all_healthy
         func: assert
         args:
-          condition: '{{ and (eq steps.check-api.status "healthy") (eq steps.check-web.status "healthy") (eq steps.check-admin.status "healthy") }}'
+          condition: 'steps.check_api.status === "healthy" && steps.check_web.status === "healthy" && steps.check_admin.status === "healthy"'
           desc: "All services must be healthy"
 
       - name: summary
         func: shell
         do: |
           echo "Health Check Summary:"
-          echo "  API:   {{ steps.check-api.status }}"
-          echo "  Web:   {{ steps.check-web.status }}"
-          echo "  Admin: {{ steps.check-admin.status }}"
+          echo "  API:   {{ steps.check_api.status }}"
+          echo "  Web:   {{ steps.check_web.status }}"
+          echo "  Admin: {{ steps.check_admin.status }}"
           echo "All services operational!"

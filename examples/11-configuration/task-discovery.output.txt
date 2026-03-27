@@ -1,0 +1,116 @@
+📂 Discovered 4 task file(s) from tasks/ directory
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: task-discovery-demo
+│ 📋 Auto-discovering tasks from the tasks/ directory
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run the full pipeline using discovered tasks
+│
+├─ ⚡ STEP: build_app
+│  📝 Call the auto-discovered build task
+│  ┌─ 🔄 INVOKING SUBTASK: build
+
+┌─ 🎯 TASK: build
+│  💡 Build the application
+│
+├─ ⚡ STEP: compile
+│  ┌─ 💻 COMMAND: echo "Building application..."
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Building application...
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: done
+   ┌─ 💻 COMMAND: echo "Build complete."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Build complete.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'build' COMPLETED
+│  └─ ✅ SUBTASK 'build' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: run_tests
+│  📝 Call the auto-discovered test task
+│  ┌─ 🔄 INVOKING SUBTASK: test
+
+┌─ 🎯 TASK: test
+│  💡 Run tests
+│
+└─ ⚡ STEP: run
+   ┌─ 💻 COMMAND: echo "Running tests... PASSED"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Running tests... PASSED
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'test' COMPLETED
+│  └─ ✅ SUBTASK 'test' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_to_staging
+│  📝 Call tasks/deploy/staging.yml as 'deploy-staging'
+│  ┌─ 🔄 INVOKING SUBTASK: deploy-staging
+
+┌─ 🎯 TASK: deploy-staging
+│  💡 Deploy to staging
+│
+└─ ⚡ STEP: deploy
+   ┌─ 💻 COMMAND: echo "Deploying to staging..."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying to staging...
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy-staging' COMPLETED
+│  └─ ✅ SUBTASK 'deploy-staging' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_to_production
+│  📝 Call tasks/deploy/production.yml as 'deploy-production'
+│  ┌─ 🔄 INVOKING SUBTASK: deploy-production
+
+┌─ 🎯 TASK: deploy-production
+│  💡 Deploy to production
+│
+└─ ⚡ STEP: deploy
+   ┌─ 💻 COMMAND: echo "Deploying to production..."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying to production...
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy-production' COMPLETED
+│  └─ ✅ SUBTASK 'deploy-production' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: done
+   ┌─ 💻 COMMAND: echo "=== Task Discovery ==="
+echo "Tasks are auto-discovered from tasks/ directory:"
+echo "  tasks/build.yml           -> 'build'"
+echo "  tasks/test.yml            -> 'test'"
+echo "  tasks/deploy/staging.yml  -> 'deploy-staging'"
+echo "  tasks/deploy/production.yml -> 'deploy-production'"
+echo ""
+echo "Use 'orchstep list' to see all available tasks."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Task Discovery ===
+        │ Tasks are auto-discovered from tasks/ directory:
+        │   tasks/build.yml           -> 'build'
+        │   tasks/test.yml            -> 'test'
+        │   tasks/deploy/staging.yml  -> 'deploy-staging'
+        │   tasks/deploy/production.yml -> 'deploy-production'
+        │ 
+        │ Use 'orchstep list' to see all available tasks.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

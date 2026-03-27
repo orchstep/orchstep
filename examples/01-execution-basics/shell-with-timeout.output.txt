@@ -1,0 +1,33 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: shell-with-timeout
+│ 📋 Shell commands with additional parameters
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run commands with timeout and other options
+│
+├─ ⚡ STEP: quick_command
+│  📝 A fast command with a generous timeout
+│  ┌─ 💻 COMMAND: echo 'This completes well within 30 seconds'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ This completes well within 30 seconds
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: health_check
+   📝 Simulate a health check with a short timeout
+   ┌─ 💻 COMMAND: echo "Checking service health..."
+echo "Status: healthy"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Checking service health...
+        │ Status: healthy
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

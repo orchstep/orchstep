@@ -1,0 +1,53 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: if-elif-else-demo
+│ 📋 Multi-branch conditional execution
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Grade a score using if/elif/else
+│
+├─ ⚡ STEP: assign_grade
+
+┌─ 🎯 TASK: grade_b
+│
+└─ ⚡ STEP: result
+   ┌─ 💻 COMMAND: echo "Grade B -- Good job!"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Grade B -- Good job!
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'grade_b' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: classify_score
+
+┌─ 🎯 TASK: good
+│
+└─ ⚡ STEP: result
+   ┌─ 💻 COMMAND: echo "Good"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Good
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'good' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: report
+   ┌─ 💻 COMMAND: echo "=== Score Report ==="
+echo "Score: 85"
+echo "Grade: B"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Score Report ===
+        │ Score: 85
+        │ Grade: B
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

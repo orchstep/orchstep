@@ -90,7 +90,7 @@ tasks:
 
       # Check if latency exceeds threshold
       - name: latency_check
-        if: "{{ gt steps.run_diagnostics.p99_latency vars.alert_threshold_ms }}"
+        if: "steps.run_diagnostics.p99_latency > vars.alert_threshold_ms"
         func: shell
         do: |
           echo "WARNING: p99 latency ({{ steps.run_diagnostics.p99_latency }}ms) exceeds threshold ({{ vars.alert_threshold_ms }}ms)"

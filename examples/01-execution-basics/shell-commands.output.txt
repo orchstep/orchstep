@@ -1,0 +1,62 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: shell-commands
+│ 📋 Different ways to execute shell commands
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Demonstrate shell command patterns
+│
+├─ ⚡ STEP: using_do_shorthand
+│  📝 Run a shell command using 'do:' syntax
+│  ┌─ 💻 COMMAND: echo 'This uses the do: shorthand'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ This uses the do: shorthand
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: using_args_cmd
+│  📝 Run a shell command using explicit 'args: cmd:' syntax
+│  ┌─ 💻 COMMAND: echo 'This uses the args:cmd: form'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ This uses the args:cmd: form
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: multi_line_script
+│  📝 Run a multi-line shell script
+│  ┌─ 💻 COMMAND: echo "Step 1: Checking environment..."
+echo "Step 2: Running build..."
+echo "Step 3: Build complete!"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Step 1: Checking environment...
+│       │ Step 2: Running build...
+│       │ Step 3: Build complete!
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: capture_output
+│  📝 Run a command and capture its output
+│  ┌─ 💻 COMMAND: echo "build-artifact-v1.0.0"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ build-artifact-v1.0.0
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: use_captured_output
+   📝 Reference the captured output from a previous step
+   ┌─ 💻 COMMAND: echo "Deploying artifact -- build-artifact-v1.0.0"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying artifact -- build-artifact-v1.0.0
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

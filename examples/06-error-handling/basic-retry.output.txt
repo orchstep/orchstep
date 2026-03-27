@@ -1,0 +1,248 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: basic-retry-demo
+│ 📋 Automatic retry for unreliable operations
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: deploy-with-retry
+│  💡 Deploy service with automatic retry on failure
+│
+├─ ⚡ STEP: deploy_service
+│  ┌─ 💻 COMMAND: echo "Deploying payment-service..."
+# In real usage: kubectl apply -f deployment.yml
+# Simulating a flaky deploy that succeeds on attempt 3
+COUNT_FILE="/tmp/deploy_attempt"
+if [ -f "$COUNT_FILE" ]; then
+  COUNT=$(cat $COUNT_FILE)
+else
+  COUNT=0
+fi
+COUNT=$((COUNT + 1))
+echo $COUNT > $COUNT_FILE
+echo "Attempt: $COUNT"
+if [ $COUNT -lt 3 ]; then
+  echo "Error: connection reset by peer"
+  exit 1
+fi
+echo "Deployment successful"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying payment-service...
+│       │ Attempt: 1
+│       │ Error: connection reset by peer
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+
+│  ╭───────────────────────────────────────────────────────────────────────────────╮
+│  │ ❌ WORKFLOW EXECUTION FAILED                                                  │
+│  ╰───────────────────────────────────────────────────────────────────────────────╯
+│  │
+│  │ 📍 Location:
+│  │    File: /Users/mindbuger/data/git/orchstep/orchstep-public/examples/06-error-handling/basic-retry.yml
+│  │    Workflow: basic-retry-demo
+│  │    Task: deploy-with-retry
+│  │    Step: deploy_service (line 19)
+│  │
+│  │ 🚨 Error: exit status 1
+│  │
+│  │ 💻 Command: [31mecho "Deploying payment-service..."
+# In real usage: kubectl apply -f deployment.yml
+# Simulating a flaky deploy that succeeds on attempt 3
+COUNT_FILE="/tmp/deploy_attempt"
+if [ -f "$COUNT_FILE" ]; then
+  COUNT=$(cat $COUNT_FILE)
+else
+  COUNT=0
+fi
+COUNT=$((COUNT + 1))
+echo $COUNT > $COUNT_FILE
+echo "Attempt: $COUNT"
+if [ $COUNT -lt 3 ]; then
+  echo "Error: connection reset by peer"
+  exit 1
+fi
+echo "Deployment successful"
+[0m
+│  │    Exit Code: 1
+│  │
+│  │ 📤 Error Output:
+│  │    │ Deploying payment-service...
+│  │    │ Attempt: 1
+│  │    │ Error: connection reset by peer
+│  │
+│  │ 💡 Analysis:
+│  │    Type: Command execution failed (exit code 1)
+│  │    Cause: The command ran but returned an error
+│  │    Fix: Check the command's stderr output for specific error messages. Verify command arguments and input data.
+│  │
+│  │    Common Issues:
+│  │    • Invalid command arguments
+│  │    • Missing required files or data
+│  │    • Application-specific error
+│  │
+│  │ 📝 Code Context:
+│  │  ➤   19 |       - name: deploy_service
+│  │      20 |         func: shell
+│  │      21 |         do: |
+│  │      22 |           echo "Deploying payment-service..."
+│  │      23 |           # In real usage: kubectl apply -f deployment.yml
+│  │      24 |           # Simulating a flaky deploy that succeeds on attempt 3
+│  │      25 |           COUNT_FILE="/tmp/deploy_attempt"
+│  │      26 |           if [ -f "$COUNT_FILE" ]; then
+│  │      27 |             COUNT=$(cat $COUNT_FILE)
+│  │      28 |           else
+│  │      29 |             COUNT=0
+│  │      30 |           fi
+│  │      31 |           COUNT=$((COUNT + 1))
+│  │      32 |           echo $COUNT > $COUNT_FILE
+│  │      33 |           echo "Attempt: $COUNT"
+│  │      34 |           if [ $COUNT -lt 3 ]; then
+│  │      35 |             echo "Error: connection reset by peer"
+│  │      36 |             exit 1
+│  │      37 |           fi
+│  │      38 |           echo "Deployment successful"
+│  │      39 |         retry:
+│  │      40 |           max_attempts: 5       # Try up to 5 times
+│  │      41 |           interval: 100ms       # Start with 100ms between attempts
+│  │      42 |           backoff_rate: 1.5     # Each wait = previous * 1.5
+│  │      43 |         outputs:
+│  │      44 |           result: "{{ result.output }}"
+│  │      45 | 
+│  ╰───────────────────────────────────────────────────────────────────────────────╯
+⚠️  Step 'deploy_service' failed (attempt 1/5), retrying in 100ms...
+│  ┌─ 💻 COMMAND: echo "Deploying payment-service..."
+# In real usage: kubectl apply -f deployment.yml
+# Simulating a flaky deploy that succeeds on attempt 3
+COUNT_FILE="/tmp/deploy_attempt"
+if [ -f "$COUNT_FILE" ]; then
+  COUNT=$(cat $COUNT_FILE)
+else
+  COUNT=0
+fi
+COUNT=$((COUNT + 1))
+echo $COUNT > $COUNT_FILE
+echo "Attempt: $COUNT"
+if [ $COUNT -lt 3 ]; then
+  echo "Error: connection reset by peer"
+  exit 1
+fi
+echo "Deployment successful"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying payment-service...
+│       │ Attempt: 2
+│       │ Error: connection reset by peer
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+
+│  ╭───────────────────────────────────────────────────────────────────────────────╮
+│  │ ❌ WORKFLOW EXECUTION FAILED                                                  │
+│  ╰───────────────────────────────────────────────────────────────────────────────╯
+│  │
+│  │ 📍 Location:
+│  │    File: /Users/mindbuger/data/git/orchstep/orchstep-public/examples/06-error-handling/basic-retry.yml
+│  │    Workflow: basic-retry-demo
+│  │    Task: deploy-with-retry
+│  │    Step: deploy_service (line 19)
+│  │
+│  │ 🚨 Error: exit status 1
+│  │
+│  │ 💻 Command: [31mecho "Deploying payment-service..."
+# In real usage: kubectl apply -f deployment.yml
+# Simulating a flaky deploy that succeeds on attempt 3
+COUNT_FILE="/tmp/deploy_attempt"
+if [ -f "$COUNT_FILE" ]; then
+  COUNT=$(cat $COUNT_FILE)
+else
+  COUNT=0
+fi
+COUNT=$((COUNT + 1))
+echo $COUNT > $COUNT_FILE
+echo "Attempt: $COUNT"
+if [ $COUNT -lt 3 ]; then
+  echo "Error: connection reset by peer"
+  exit 1
+fi
+echo "Deployment successful"
+[0m
+│  │    Exit Code: 1
+│  │
+│  │ 📤 Error Output:
+│  │    │ Deploying payment-service...
+│  │    │ Attempt: 2
+│  │    │ Error: connection reset by peer
+│  │
+│  │ 💡 Analysis:
+│  │    Type: Command execution failed (exit code 1)
+│  │    Cause: The command ran but returned an error
+│  │    Fix: Check the command's stderr output for specific error messages. Verify command arguments and input data.
+│  │
+│  │    Common Issues:
+│  │    • Invalid command arguments
+│  │    • Missing required files or data
+│  │    • Application-specific error
+│  │
+│  │ 📝 Code Context:
+│  │  ➤   19 |       - name: deploy_service
+│  │      20 |         func: shell
+│  │      21 |         do: |
+│  │      22 |           echo "Deploying payment-service..."
+│  │      23 |           # In real usage: kubectl apply -f deployment.yml
+│  │      24 |           # Simulating a flaky deploy that succeeds on attempt 3
+│  │      25 |           COUNT_FILE="/tmp/deploy_attempt"
+│  │      26 |           if [ -f "$COUNT_FILE" ]; then
+│  │      27 |             COUNT=$(cat $COUNT_FILE)
+│  │      28 |           else
+│  │      29 |             COUNT=0
+│  │      30 |           fi
+│  │      31 |           COUNT=$((COUNT + 1))
+│  │      32 |           echo $COUNT > $COUNT_FILE
+│  │      33 |           echo "Attempt: $COUNT"
+│  │      34 |           if [ $COUNT -lt 3 ]; then
+│  │      35 |             echo "Error: connection reset by peer"
+│  │      36 |             exit 1
+│  │      37 |           fi
+│  │      38 |           echo "Deployment successful"
+│  │      39 |         retry:
+│  │      40 |           max_attempts: 5       # Try up to 5 times
+│  │      41 |           interval: 100ms       # Start with 100ms between attempts
+│  │      42 |           backoff_rate: 1.5     # Each wait = previous * 1.5
+│  │      43 |         outputs:
+│  │      44 |           result: "{{ result.output }}"
+│  │      45 | 
+│  ╰───────────────────────────────────────────────────────────────────────────────╯
+⚠️  Step 'deploy_service' failed (attempt 2/5), retrying in 150ms...
+│  ┌─ 💻 COMMAND: echo "Deploying payment-service..."
+# In real usage: kubectl apply -f deployment.yml
+# Simulating a flaky deploy that succeeds on attempt 3
+COUNT_FILE="/tmp/deploy_attempt"
+if [ -f "$COUNT_FILE" ]; then
+  COUNT=$(cat $COUNT_FILE)
+else
+  COUNT=0
+fi
+COUNT=$((COUNT + 1))
+echo $COUNT > $COUNT_FILE
+echo "Attempt: $COUNT"
+if [ $COUNT -lt 3 ]; then
+  echo "Error: connection reset by peer"
+  exit 1
+fi
+echo "Deployment successful"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying payment-service...
+│       │ Attempt: 3
+│       │ Deployment successful
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: cleanup
+   ┌─ 💻 COMMAND: rm -f /tmp/deploy_attempt
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy-with-retry' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

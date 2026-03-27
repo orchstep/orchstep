@@ -1,0 +1,52 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: output-extraction-demo
+│ 📋 Extract structured values from shell command output
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Build and deploy pipeline with output extraction
+│
+├─ ⚡ STEP: build_docker_image
+│  📝 Build image and extract tag from output
+│  ┌─ 💻 COMMAND: echo "Building application..."
+echo "Built image: web-api:v1.2.3"
+echo "Build complete."
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Building application...
+│       │ Built image: web-api:v1.2.3
+│       │ Build complete.
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_to_cluster
+│  📝 Deploy using the extracted image tag
+│  ┌─ 💻 COMMAND: echo "Deploying v1.2.3 to production cluster"
+echo "Deployment status: success"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying v1.2.3 to production cluster
+│       │ Deployment status: success
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: report
+   📝 Show deployment results
+   ┌─ 💻 COMMAND: echo "=== Deployment Report ==="
+echo "Image:  v1.2.3"
+echo "Status: success"
+echo "ARN:    arn:aws:ecs:us-east-1:123456789:service/production/web-api"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Deployment Report ===
+        │ Image:  v1.2.3
+        │ Status: success
+        │ ARN:    arn:aws:ecs:us-east-1:123456789:service/production/web-api
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

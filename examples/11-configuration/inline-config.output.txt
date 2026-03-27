@@ -1,0 +1,48 @@
+📂 Discovered 4 task file(s) from tasks/ directory
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: inline-config-demo
+│ 📋 Inline configuration in orchstep.yml -- no external config file needed
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Steps inherit inline config defaults
+│
+├─ ⚡ STEP: hello
+│  📝 Uses shell type from inline config automatically
+│  ┌─ 💻 COMMAND: echo 'Hello with inline config!'
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Hello with inline config!
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: show_config
+   📝 All shell steps get type=shell and timeout=60
+   ┌─ 💻 COMMAND: echo "=== Inline Configuration ==="
+echo ""
+echo "This workflow uses inline config to set:"
+echo "  shell.type    = shell  (instead of default gosh)"
+echo "  shell.timeout = 60s"
+echo "  http.timeout  = 30s"
+echo "  http.method   = GET"
+echo ""
+echo "Every shell step inherits these without repeating them."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Inline Configuration ===
+        │ 
+        │ This workflow uses inline config to set:
+        │   shell.type    = shell  (instead of default gosh)
+        │   shell.timeout = 60s
+        │   http.timeout  = 30s
+        │   http.method   = GET
+        │ 
+        │ Every shell step inherits these without repeating them.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

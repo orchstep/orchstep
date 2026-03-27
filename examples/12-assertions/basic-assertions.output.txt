@@ -1,0 +1,144 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: basic-assertions
+│ 📋 Simple condition checking with the assert function
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run all assertion demos
+│
+├─ ⚡ STEP: run_go_templates
+│  ┌─ 🔄 INVOKING SUBTASK: go_template_assertions
+
+┌─ 🎯 TASK: go_template_assertions
+│  💡 Assertions using Go template syntax
+│
+├─ ⚡ STEP: equality
+│  📝 Check exact equality
+│  ┌─ 🔍 ASSERTION: {{ eq vars.environment "prod" }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: numeric
+│  📝 Numeric comparison
+│  ┌─ 🔍 ASSERTION: {{ gt vars.count 5 }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: string_contains
+│  📝 Check if a string contains a substring
+│  ┌─ 🔍 ASSERTION: {{ contains "successful" vars.message }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: logical_and
+│  📝 Combine conditions with AND
+│  ┌─ 🔍 ASSERTION: {{ and (eq vars.status "ok") (gt vars.count 5) }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: logical_or
+│  📝 Combine conditions with OR
+│  ┌─ 🔍 ASSERTION: {{ or (eq vars.environment "prod") (eq vars.environment "staging") }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: negation
+   📝 Negate a condition
+   ┌─ 🔍 ASSERTION: {{ not (eq vars.environment "dev") }}
+   └─ ✅ ASSERTION PASSED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'go_template_assertions' COMPLETED
+│  └─ ✅ SUBTASK 'go_template_assertions' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: run_javascript
+│  ┌─ 🔄 INVOKING SUBTASK: js_assertions
+
+┌─ 🎯 TASK: js_assertions
+│  💡 Assertions using JavaScript syntax
+│
+├─ ⚡ STEP: equality
+│  📝 Check exact equality
+│  ┌─ 🔍 ASSERTION: vars.environment === "prod"
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: numeric
+│  📝 Numeric comparison
+│  ┌─ 🔍 ASSERTION: vars.count > 5
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: string_contains
+│  📝 Check if a string contains a substring
+│  ┌─ 🔍 ASSERTION: vars.message.includes("successful")
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: logical_and
+│  📝 Combine conditions with &&
+│  ┌─ 🔍 ASSERTION: vars.status === "ok" && vars.count > 5
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: negation
+   📝 Negate a condition
+   ┌─ 🔍 ASSERTION: vars.environment !== "dev"
+   └─ ✅ ASSERTION PASSED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'js_assertions' COMPLETED
+│  └─ ✅ SUBTASK 'js_assertions' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: run_output_check
+│  ┌─ 🔄 INVOKING SUBTASK: validate_outputs
+
+┌─ 🎯 TASK: validate_outputs
+│  💡 Assert against step outputs
+│
+├─ ⚡ STEP: run_check
+│  ┌─ 💻 COMMAND: echo "Status: healthy | Latency: 42ms"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Status: healthy | Latency: 42ms
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: check_healthy
+   📝 Verify the health check output
+   ┌─ 🔍 ASSERTION: {{ contains "healthy" steps.run_check.result }}
+   └─ ✅ ASSERTION PASSED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'validate_outputs' COMPLETED
+│  └─ ✅ SUBTASK 'validate_outputs' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo "=== Assertion Syntax Comparison ==="
+echo ""
+echo "Go Template:          JavaScript:"
+echo "  eq .a .b              a === b"
+echo "  gt .n 5               n > 5"
+echo "  contains .s text      s.includes('text')"
+echo "  and (c1) (c2)         c1 && c2"
+echo "  or (c1) (c2)          c1 || c2"
+echo "  not (c)               !c"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Assertion Syntax Comparison ===
+        │ 
+        │ Go Template:          JavaScript:
+        │   eq .a .b              a === b
+        │   gt .n 5               n > 5
+        │   contains .s text      s.includes('text')
+        │   and (c1) (c2)         c1 && c2
+        │   or (c1) (c2)          c1 || c2
+        │   not (c)               !c
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

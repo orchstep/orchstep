@@ -1,0 +1,30 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: basic-get-request-demo
+│ 📋 HTTP GET requests with variable URLs and response parsing
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: fetch-api-data
+│  💡 Fetch data from a REST API
+│
+├─ ⚡ STEP: get_users
+│  ┌─ 💻 COMMAND: GET http://localhost:8080/get
+│  └─ 📤 OUTPUT: GET request received at /get from [::1]:51795
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: show_result
+   ┌─ 💻 COMMAND: echo "Status: 200"
+echo "URL: http://localhost:8080/get"
+echo "Method: GET"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Status: 200
+        │ URL: http://localhost:8080/get
+        │ Method: GET
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'fetch-api-data' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

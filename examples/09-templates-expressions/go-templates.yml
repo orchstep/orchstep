@@ -112,5 +112,5 @@ tasks:
       - name: check_contains
         func: assert
         args:
-          condition: "{{ contains vars.version \"2.5\" }}"
+          condition: "{{ contains \"2.5\" vars.version }}"
           desc: "Version must include 2.5"

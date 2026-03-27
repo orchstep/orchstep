@@ -1,0 +1,28 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: go-templates-demo
+│ 📋 Go template syntax with Sprig functions
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: template-assertions
+│  💡 Use Go templates in assert conditions
+│
+├─ ⚡ STEP: check_equality
+│  ┌─ 🔍 ASSERTION: {{ eq vars.environment "production" }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: check_comparison
+│  ┌─ 🔍 ASSERTION: {{ and (eq vars.app_name "web-api") (ne vars.environment "dev") }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: check_contains
+   ┌─ 🔍 ASSERTION: {{ contains "2.5" vars.version }}
+   └─ ✅ ASSERTION PASSED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'template-assertions' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

@@ -1,0 +1,45 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: template-files-demo
+│ 📋 External template file inclusion for config generation
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: generate-greeting
+│  💡 Render a simple template file with variables
+│
+├─ ⚡ STEP: render_greeting
+│  ┌─ 💻 COMMAND: mkdir -p output
+cat > output/greeting.txt <<'EOF'
+Hello Alice!
+Welcome to payment-service.
+Environment: PRODUCTION
+
+EOF
+cat output/greeting.txt
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Hello Alice!
+│       │ Welcome to payment-service.
+│       │ Environment: PRODUCTION
+│       │ 
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: show_result
+   ┌─ 💻 COMMAND: echo "Generated greeting:"
+echo "Hello Alice!
+Welcome to payment-service.
+Environment: PRODUCTION"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Generated greeting:
+        │ Hello Alice!
+        │ Welcome to payment-service.
+        │ Environment: PRODUCTION
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'generate-greeting' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

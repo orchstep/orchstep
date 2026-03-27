@@ -22,10 +22,10 @@ tasks:
   build-and-deploy:
     desc: "Parallel build followed by sequential deploy"
     steps:
-      - name: build-all
+      - name: build_all
         desc: "Build both services in parallel"
         parallel:
-          - name: build-frontend
+          - name: build_frontend
             func: shell
             do: |
               echo "Building frontend v{{ vars.version }}..."
@@ -35,7 +35,7 @@ tasks:
             outputs:
               artifact: '{{ result.output | regexFind "FRONTEND_ARTIFACT=(.+)" }}'
 
-          - name: build-backend
+          - name: build_backend
             func: shell
             do: |
               echo "Building backend v{{ vars.version }}..."
@@ -50,6 +50,6 @@ tasks:
         func: shell
         do: |
           echo "Deploying to {{ vars.environment }}..."
-          echo "Frontend: {{ steps.build-frontend.artifact }}"
-          echo "Backend: {{ steps.build-backend.artifact }}"
+          echo "Frontend: {{ steps.build_frontend.artifact }}"
+          echo "Backend: {{ steps.build_backend.artifact }}"
           echo "Deploy complete!"

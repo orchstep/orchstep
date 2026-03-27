@@ -1,0 +1,9 @@
+desc: "Deploy to production environment"
+steps:
+  - name: deploy
+    func: shell
+    do: echo "Deploying to production environment..."
+
+  - name: verify
+    func: shell
+    do: echo "Production deployment verified."

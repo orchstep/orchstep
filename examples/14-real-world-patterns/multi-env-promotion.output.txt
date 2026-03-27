@@ -1,0 +1,170 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: multi-env-promotion
+│ 📋 Promote a release through dev, staging, and production
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run the full promotion pipeline
+│
+├─ ⚡ STEP: announce
+│  ┌─ 💻 COMMAND: echo "=========================================="
+echo "  Release Promotion: checkout-service v3.2.0"
+echo "=========================================="
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ ==========================================
+│       │   Release Promotion: checkout-service v3.2.0
+│       │ ==========================================
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: promote
+│  ┌─ 🔄 INVOKING SUBTASK: promote_through_envs
+
+┌─ 🎯 TASK: promote_through_envs
+│  💡 Deploy to each environment in sequence
+│
+├─ ⚡ STEP: deploy_dev
+│  📝 Deploy to dev
+│  ┌─ 🔄 INVOKING SUBTASK: deploy_to_env
+⚠️  Step 'deploy_dev' calls task 'deploy_to_env' with 'vars:' but no 'with:' - did you mean to use 'with:' to pass parameters to the task?
+   Note: 'vars:' is for local step scope only and will NOT be passed to the task.
+
+┌─ 🎯 TASK: deploy_to_env
+│  💡 Deploy and validate in one environment
+│
+├─ ⚡ STEP: deploy
+│  ┌─ 💻 COMMAND: echo "--- Deploying checkout-service:v3.2.0 to  ---"
+echo "Scaling to 1 replicas"
+echo "Deployment complete"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ --- Deploying checkout-service:v3.2.0 to  ---
+│       │ Scaling to 1 replicas
+│       │ Deployment complete
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: basic_check
+│  ┌─ 💻 COMMAND: echo "Health check for : OK"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Health check for : OK
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: e2e_tests
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: validate
+   ┌─ 🔍 ASSERTION: steps.deploy.status === "deployed"
+   └─ ✅ ASSERTION PASSED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_to_env' COMPLETED
+│  └─ ✅ SUBTASK 'deploy_to_env' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_staging
+│  📝 Deploy to staging with E2E tests
+│  ┌─ 🔄 INVOKING SUBTASK: deploy_to_env
+⚠️  Step 'deploy_staging' calls task 'deploy_to_env' with 'vars:' but no 'with:' - did you mean to use 'with:' to pass parameters to the task?
+   Note: 'vars:' is for local step scope only and will NOT be passed to the task.
+
+┌─ 🎯 TASK: deploy_to_env
+│  💡 Deploy and validate in one environment
+│
+├─ ⚡ STEP: deploy
+│  ┌─ 💻 COMMAND: echo "--- Deploying checkout-service:v3.2.0 to  ---"
+echo "Scaling to 1 replicas"
+echo "Deployment complete"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ --- Deploying checkout-service:v3.2.0 to  ---
+│       │ Scaling to 1 replicas
+│       │ Deployment complete
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: basic_check
+│  ┌─ 💻 COMMAND: echo "Health check for : OK"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Health check for : OK
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: e2e_tests
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: validate
+   ┌─ 🔍 ASSERTION: steps.deploy.status === "deployed"
+   └─ ✅ ASSERTION PASSED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_to_env' COMPLETED
+│  └─ ✅ SUBTASK 'deploy_to_env' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: deploy_prod
+   📝 Deploy to production (skipped if skip_prod=true)
+
+┌─ 🎯 TASK: deploy_to_env
+│  💡 Deploy and validate in one environment
+│
+├─ ⚡ STEP: deploy
+│  ┌─ 💻 COMMAND: echo "--- Deploying checkout-service:v3.2.0 to  ---"
+echo "Scaling to 1 replicas"
+echo "Deployment complete"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ --- Deploying checkout-service:v3.2.0 to  ---
+│       │ Scaling to 1 replicas
+│       │ Deployment complete
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: basic_check
+│  ┌─ 💻 COMMAND: echo "Health check for : OK"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Health check for : OK
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: e2e_tests
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: validate
+   ┌─ 🔍 ASSERTION: steps.deploy.status === "deployed"
+   └─ ✅ ASSERTION PASSED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_to_env' COMPLETED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'promote_through_envs' COMPLETED
+│  └─ ✅ SUBTASK 'promote_through_envs' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: summary
+   ┌─ 💻 COMMAND: echo ""
+echo "=========================================="
+echo "  Promotion Complete"
+echo "=========================================="
+echo "  checkout-service v3.2.0"
+echo "  dev -> staging -> production"
+echo "=========================================="
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ 
+        │ ==========================================
+        │   Promotion Complete
+        │ ==========================================
+        │   checkout-service v3.2.0
+        │   dev -> staging -> production
+        │ ==========================================
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

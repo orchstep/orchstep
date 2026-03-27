@@ -46,10 +46,10 @@ tasks:
             - condition: "{{ eq steps.simulate_deploy.exit_code 0 }}"
               desc: "Deploy command must exit successfully"
 
-            - condition: '{{ steps.simulate_deploy.log | contains "Health: OK" }}'
+            - condition: '{{ contains "Health: OK" steps.simulate_deploy.log }}'
               desc: "Health check must report OK"
 
-            - condition: '{{ steps.simulate_deploy.log | contains "3/3 ready" }}'
+            - condition: '{{ contains "3/3 ready" steps.simulate_deploy.log }}'
               desc: "All replicas must be ready"
 
             - condition: 'steps.simulate_deploy.status === "success"'

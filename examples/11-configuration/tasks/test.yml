@@ -1,0 +1,5 @@
+desc: "Run tests"
+steps:
+  - name: run
+    func: shell
+    do: echo "Running tests... PASSED"

@@ -1,0 +1,124 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: loop-with-conditions-demo
+│ 📋 Filter loop iterations using if conditions
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Deploy infrastructure with conditional filtering
+│
+├─ ⚡ STEP: deploy_all
+   ↻ Starting loop with 4 iterations for step 'deploy_all'
+     ↻ Iteration 1/4
+│  ┌─ 💻 COMMAND: echo "Deploying web-01 (web)"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying web-01 (web)
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 2/4
+│  ┌─ 💻 COMMAND: echo "Deploying web-02 (web)"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying web-02 (web)
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 3/4
+│  ┌─ 💻 COMMAND: echo "Deploying db-01 (database)"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying db-01 (database)
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 4/4
+│  ┌─ 💻 COMMAND: echo "Deploying cache-01 (cache)"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying cache-01 (cache)
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ↻ Completed loop with 4 iterations
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_enabled_only
+   ↻ Starting loop with 4 iterations for step 'deploy_enabled_only'
+     ↻ Iteration 1/4
+│  ┌─ 💻 COMMAND: echo "Deploying enabled server: web-01 on port 8080"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying enabled server: web-01 on port 8080
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 2/4
+     ↻ Iteration 3/4
+│  ┌─ 💻 COMMAND: echo "Deploying enabled server: db-01 on port 5432"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying enabled server: db-01 on port 5432
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 4/4
+│  ┌─ 💻 COMMAND: echo "Deploying enabled server: cache-01 on port 6379"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Deploying enabled server: cache-01 on port 6379
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ↻ Completed loop with 4 iterations
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: deploy_web_servers
+   ↻ Starting loop with 4 iterations for step 'deploy_web_servers'
+     ↻ Iteration 1/4
+│  ┌─ 💻 COMMAND: echo "Web server: web-01 on port 8080"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Web server: web-01 on port 8080
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 2/4
+     ↻ Iteration 3/4
+     ↻ Iteration 4/4
+   ↻ Completed loop with 4 iterations
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: setup_databases
+   ↻ Starting loop with 4 iterations for step 'setup_databases'
+     ↻ Iteration 1/4
+     ↻ Iteration 2/4
+     ↻ Iteration 3/4
+│  ┌─ 💻 COMMAND: echo "Setting up database: db-01 on port 5432"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Setting up database: db-01 on port 5432
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 4/4
+   ↻ Completed loop with 4 iterations
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: enabled_server_report
+   ↻ Starting loop with 4 iterations for step 'enabled_server_report'
+     ↻ Iteration 1/4
+   ┌─ 💻 COMMAND: echo "Server 1/4: web-01"
+echo "  Type: web, Port: 8080"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Server 1/4: web-01
+        │   Type: web, Port: 8080
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 2/4
+     ↻ Iteration 3/4
+   ┌─ 💻 COMMAND: echo "Server 3/4: db-01"
+echo "  Type: database, Port: 5432"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Server 3/4: db-01
+        │   Type: database, Port: 5432
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+     ↻ Iteration 4/4
+   ┌─ 💻 COMMAND: echo "Server 4/4: cache-01"
+echo "  Type: cache, Port: 6379"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Server 4/4: cache-01
+        │   Type: cache, Port: 6379
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ↻ Completed loop with 4 iterations
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

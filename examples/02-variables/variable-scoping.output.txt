@@ -1,0 +1,54 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: variable-scoping-demo
+│ 📋 Demonstrates the variable scoping hierarchy
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Deploy a Lambda function showing variable scoping
+│
+├─ ⚡ STEP: package_function
+│  📝 Package the Lambda function code
+│  ┌─ 💻 COMMAND: echo "Creating package: web-api-production.zip"
+echo "Environment: production"
+echo "Runtime: nodejs18.x"
+echo "Memory: 512"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Creating package: web-api-production.zip
+│       │ Environment: production
+│       │ Runtime: nodejs18.x
+│       │ Memory: 512
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: create_lambda
+│  📝 Create the Lambda function
+│  ┌─ 💻 COMMAND: echo "Creating function: web-api"
+echo "Package: web-api-production.zip"
+echo "Runtime: nodejs18.x"
+echo "Memory: 512MB"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Creating function: web-api
+│       │ Package: web-api-production.zip
+│       │ Runtime: nodejs18.x
+│       │ Memory: 512MB
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: configure_trigger
+   📝 Configure API Gateway trigger
+   ┌─ 💻 COMMAND: echo "API Name: web-api-api"
+echo "Stage: production"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ API Name: web-api-api
+        │ Stage: production
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

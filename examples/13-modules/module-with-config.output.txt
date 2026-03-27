@@ -1,0 +1,68 @@
+📦 Loaded module 'api' from './modules/service'
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: module-with-config-demo
+│ 📋 Module configuration overrides defaults
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Deploy and check the configured service
+│
+├─ ⚡ STEP: deploy_api
+│  ┌─ 🔄 INVOKING SUBTASK: api.deploy
+   ┌─ 💻 COMMAND: echo "=== Deploying Service ==="
+echo "Name:     payments-api"
+echo "Port:     9000"
+echo "Replicas: 5"
+echo "Cache:    true"
+echo "Logging:  debug"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Deploying Service ===
+        │ Name:     payments-api
+        │ Port:     9000
+        │ Replicas: 5
+        │ Cache:    true
+        │ Logging:  debug
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'api.deploy' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: check_api
+│  ┌─ 🔄 INVOKING SUBTASK: api.status
+   ┌─ 💻 COMMAND: echo "payments-api is running on port 9000"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ payments-api is running on port 9000
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'api.status' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: show_result
+   ┌─ 💻 COMMAND: echo "Deployed: payments-api"
+echo "Port:     9000"
+echo "Replicas: 5"
+echo ""
+echo "=== Module Config ==="
+echo "Module defaults:  name=default-service, port=8080, replicas=1"
+echo "Our config:       name=payments-api, port=9000, replicas=5"
+echo ""
+echo "Config overrides defaults at import time."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deployed: payments-api
+        │ Port:     9000
+        │ Replicas: 5
+        │ 
+        │ === Module Config ===
+        │ Module defaults:  name=default-service, port=8080, replicas=1
+        │ Our config:       name=payments-api, port=9000, replicas=5
+        │ 
+        │ Config overrides defaults at import time.
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

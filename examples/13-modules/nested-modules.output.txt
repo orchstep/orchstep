@@ -1,0 +1,93 @@
+📦 Loaded module 'stack' from './modules/app-stack'
+📦 Loaded module 'database' from '../database'
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: nested-modules-demo
+│ 📋 Composing modules that use other modules
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Deploy a full application stack through nested modules
+│
+├─ ⚡ STEP: deploy_stack
+│  ┌─ 🔄 INVOKING SUBTASK: stack.deploy
+│  ┌─ 🔄 INVOKING SUBTASK: database.query
+   ┌─ 💻 COMMAND: echo "Connecting to db-{{ vars.region }}.internal:5432"
+echo "Pool size: 20"
+echo "Timeout:   30s"
+echo "Retries:   3"
+echo "Query executed successfully"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Connecting to db-{{ vars.region }}.internal:5432
+        │ Pool size: 20
+        │ Timeout:   30s
+        │ Retries:   3
+        │ Query executed successfully
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'database.query' COMPLETED
+│  ┌─ 💻 COMMAND: echo "Building order-service:2.1.0"
+echo "Database: db-{{ vars.region }}.internal"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Building order-service:2.1.0
+│       │ Database: db-{{ vars.region }}.internal
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ┌─ 💻 COMMAND: echo "Deploying order-service:2.1.0"
+echo "Region: us-west-2"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying order-service:2.1.0
+        │ Region: us-west-2
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  └─ ✅ SUBTASK 'stack.deploy' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: show_result
+│  ┌─ 💻 COMMAND: echo "=== Deployment Complete ==="
+echo "Deployment ID: deploy-order-service-001"
+echo "App URL:       https://order-service.us-west-2.example.com"
+echo "Status:        deployed"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Deployment Complete ===
+│       │ Deployment ID: deploy-order-service-001
+│       │ App URL:       https://order-service.us-west-2.example.com
+│       │ Status:        deployed
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: explain
+   ┌─ 💻 COMMAND: echo ""
+echo "=== Module Nesting ==="
+echo "Execution chain:"
+echo "  1. Consumer calls app-stack.deploy"
+echo "  2. app-stack calls database.query"
+echo "  3. Each layer is scope-isolated"
+echo ""
+echo "Config flows DOWN through module imports."
+echo "Outputs flow UP through step outputs."
+echo ""
+echo "OrchStep tracks nesting depth and warns if"
+echo "the chain becomes too deep (> 3 levels)."
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ 
+        │ === Module Nesting ===
+        │ Execution chain:
+        │   1. Consumer calls app-stack.deploy
+        │   2. app-stack calls database.query
+        │   3. Each layer is scope-isolated
+        │ 
+        │ Config flows DOWN through module imports.
+        │ Outputs flow UP through step outputs.
+        │ 
+        │ OrchStep tracks nesting depth and warns if
+        │ the chain becomes too deep (> 3 levels).
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

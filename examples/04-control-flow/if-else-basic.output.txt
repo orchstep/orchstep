@@ -1,0 +1,80 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: if-else-basic-demo
+│ 📋 Conditional execution with if/else
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Show different if/else patterns
+│
+├─ ⚡ STEP: check_deploy_flag
+
+┌─ 🎯 TASK: do_deploy
+│
+└─ ⚡ STEP: run
+   ┌─ 💻 COMMAND: echo "Deployment is enabled -- proceeding"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deployment is enabled -- proceeding
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'do_deploy' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: select_environment
+
+┌─ 🎯 TASK: deploy_production
+│
+└─ ⚡ STEP: run
+   ┌─ 💻 COMMAND: echo "Deploying to PRODUCTION environment"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying to PRODUCTION environment
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy_production' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: check_threshold
+
+┌─ 🎯 TASK: threshold_low
+│
+└─ ⚡ STEP: run
+   ┌─ 💻 COMMAND: echo "Threshold is low (<= 50)"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Threshold is low (<= 50)
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'threshold_low' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: check_range
+
+┌─ 🎯 TASK: in_range
+│
+└─ ⚡ STEP: run
+   ┌─ 💻 COMMAND: echo "Value is in range [40, 50)"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Value is in range [40, 50)
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'in_range' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: dev_only_debug
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: finish
+   ┌─ 💻 COMMAND: echo "Workflow completed"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Workflow completed
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

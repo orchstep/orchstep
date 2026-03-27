@@ -1,0 +1,85 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: dual-syntax-demo
+│ 📋 Side-by-side comparison of Go template and JavaScript
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: compare-syntax
+│  💡 Equivalent checks in Go template and JavaScript
+│
+├─ ⚡ STEP: go_equality
+│  📝 Go Template: equality check
+│  ┌─ 🔍 ASSERTION: {{ eq vars.environment "prod" }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: js_equality
+│  📝 JavaScript: equality check
+│  ┌─ 🔍 ASSERTION: vars.environment === 'prod'
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: go_numeric
+│  📝 Go Template: numeric comparison
+│  ┌─ 🔍 ASSERTION: {{ gt vars.count 5 }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: js_numeric
+│  📝 JavaScript: numeric comparison
+│  ┌─ 🔍 ASSERTION: vars.count > 5
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: go_contains
+│  📝 Go Template: string contains
+│  ┌─ 🔍 ASSERTION: {{ contains "successful" vars.message }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: js_contains
+│  📝 JavaScript: string contains
+│  ┌─ 🔍 ASSERTION: vars.message.includes('successful')
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: go_and
+│  📝 Go Template: logical AND
+│  ┌─ 🔍 ASSERTION: {{ and (eq vars.status "ok") (gt vars.count 5) }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: js_and
+│  📝 JavaScript: logical AND
+│  ┌─ 🔍 ASSERTION: vars.status === 'ok' && vars.count > 5
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: go_or
+│  📝 Go Template: logical OR
+│  ┌─ 🔍 ASSERTION: {{ or (eq vars.environment "prod") (eq vars.environment "staging") }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: js_or
+│  📝 JavaScript: logical OR
+│  ┌─ 🔍 ASSERTION: vars.environment === 'prod' || vars.environment === 'staging'
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: go_not
+│  📝 Go Template: NOT
+│  ┌─ 🔍 ASSERTION: {{ not (eq vars.environment "dev") }}
+│  └─ ✅ ASSERTION PASSED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: js_not
+   📝 JavaScript: NOT
+   ┌─ 🔍 ASSERTION: vars.environment !== 'dev'
+   └─ ✅ ASSERTION PASSED
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'compare-syntax' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

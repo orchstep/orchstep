@@ -1,0 +1,27 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: batch-http-requests-demo
+│ 📋 HTTP requests with loops, map_in, and map_out
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: batch-create
+│  💡 Create multiple resources in a batch
+│
+└─ ⚡ STEP: create_resources
+   ↻ Starting loop with 3 iterations for step 'create_resources'
+     ↻ Iteration 1/3
+   ┌─ 💻 COMMAND: POST http://localhost:8080/post
+   └─ 📤 OUTPUT: {"action":"create","args":{},"data":{"action":"create","id":"1","name":"Web Server"},"headers":{"Accept-Encoding":"gzip","Content-Length":"48","Content-Type":"application/json","User-Agent":"Go-http-c... (295 bytes)
+     ↻ Iteration 2/3
+   ┌─ 💻 COMMAND: POST http://localhost:8080/post
+   └─ 📤 OUTPUT: {"action":"create","args":{},"data":{"action":"create","id":"2","name":"Database"},"headers":{"Accept-Encoding":"gzip","Content-Length":"46","Content-Type":"application/json","User-Agent":"Go-http-cli... (291 bytes)
+     ↻ Iteration 3/3
+   ┌─ 💻 COMMAND: POST http://localhost:8080/post
+   └─ 📤 OUTPUT: {"action":"create","args":{},"data":{"action":"create","id":"3","name":"Cache Layer"},"headers":{"Accept-Encoding":"gzip","Content-Length":"49","Content-Type":"application/json","User-Agent":"Go-http-... (297 bytes)
+   ↻ Completed loop with 3 iterations
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'batch-create' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

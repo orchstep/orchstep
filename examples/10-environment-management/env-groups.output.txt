@@ -1,0 +1,33 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: env-groups-demo
+│ 📋 Environment groups for multi-environment configuration
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Display resolved configuration for the selected environment
+│
+└─ ⚡ STEP: show_config
+   ┌─ 💻 COMMAND: echo "=== Resolved Configuration ==="
+echo "app_name           = payments-api"
+echo "db_host            = .example.com"
+echo "api_url            = https://.example.com"
+echo "replicas           = 1"
+echo "log_level          = info"
+echo "monitoring_enabled = false"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ === Resolved Configuration ===
+        │ app_name           = payments-api
+        │ db_host            = .example.com
+        │ api_url            = https://.example.com
+        │ replicas           = 1
+        │ log_level          = info
+        │ monitoring_enabled = false
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯
