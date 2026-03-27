@@ -1,0 +1,165 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: deploy-pipeline
+│ 📋 Production deployment pipeline with health checks and validation
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: main
+│  💡 Run the full deploy pipeline
+│
+├─ ⚡ STEP: run_build
+│  ┌─ 🔄 INVOKING SUBTASK: build
+
+┌─ 🎯 TASK: build
+│  💡 Build the container image
+│
+├─ ⚡ STEP: compile
+│  ┌─ 💻 COMMAND: echo "=== Build Phase ==="
+echo "Building payments-api:v1.0.0"
+echo "Build completed at $(date +%H:%M:%S)"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Build Phase ===
+│       │ Building payments-api:v1.0.0
+│       │ Build completed at 20:27:55
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: run_tests
+│  ┌─ 💻 COMMAND: echo "Running unit tests..."
+echo "42 tests passed, 0 failed"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Running unit tests...
+│       │ 42 tests passed, 0 failed
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: verify_tests
+│  ┌─ 🔍 ASSERTION: steps.run_tests.tests_failed === 0
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: steps.run_tests.tests_passed > 0
+│  └─ ✅ ASSERTION PASSED
+   ✅ All 2 conditions passed
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: push_image
+   ┌─ 💻 COMMAND: echo "Pushing registry.example.com/payments-api:v1.0.0"
+echo "Image pushed successfully"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Pushing registry.example.com/payments-api:v1.0.0
+        │ Image pushed successfully
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'build' COMPLETED
+│  └─ ✅ SUBTASK 'build' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: run_deploy
+│  ┌─ 🔄 INVOKING SUBTASK: deploy
+
+┌─ 🎯 TASK: deploy
+│  💡 Deploy to the target environment
+│
+├─ ⚡ STEP: pre_deploy_check
+│  ┌─ 💻 COMMAND: echo "=== Deploy Phase ==="
+echo "Environment: production"
+echo "Replicas:    3"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ === Deploy Phase ===
+│       │ Environment: production
+│       │ Replicas:    3
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: rolling_deploy
+   ┌─ 💻 COMMAND: echo "Starting rolling deployment..."
+echo "Scaling payments-api to 3 replicas"
+echo "Deployment ID: deploy-production-$(date +%s)"
+echo "All replicas healthy"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Starting rolling deployment...
+        │ Scaling payments-api to 3 replicas
+        │ Deployment ID: deploy-production-1774603676
+        │ All replicas healthy
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy' COMPLETED
+│  └─ ✅ SUBTASK 'deploy' COMPLETED
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: run_verify
+│  ┌─ 🔄 INVOKING SUBTASK: verify
+
+┌─ 🎯 TASK: verify
+│  💡 Health check and validation
+│
+├─ ⚡ STEP: health_check
+│  📝 Check service health (retries on failure)
+│  ┌─ 💻 COMMAND: echo "Checking health at https://payments-api.example.com/health"
+echo "Status: 200 OK"
+echo "Response: {\"status\":\"healthy\",\"version\":\"v1.0.0\"}"
+│  └─ 📤 OUTPUT:
+│       ╭─────────────────────────────────────────────────────────────────────────────────╮
+│       │ Checking health at https://payments-api.example.com/health
+│       │ Status: 200 OK
+│       │ Response: {"status":"healthy","version":"v1.0.0"}
+│       ╰─────────────────────────────────────────────────────────────────────────────────╯
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: validate_health
+│  ┌─ 🔍 ASSERTION: steps.health_check.http_status === 200
+│  └─ ✅ ASSERTION PASSED
+│  ┌─ 🔍 ASSERTION: {{ contains "healthy" steps.health_check.response }}
+│  └─ ✅ ASSERTION PASSED
+   ✅ All 2 conditions passed
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: smoke_test
+   ┌─ 💻 COMMAND: echo "Running smoke tests against production..."
+echo "POST /api/payments -- 201 Created"
+echo "GET  /api/payments/1 -- 200 OK"
+echo "All smoke tests passed"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Running smoke tests against production...
+        │ POST /api/payments -- 201 Created
+        │ GET  /api/payments/1 -- 200 OK
+        │ All smoke tests passed
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'verify' COMPLETED
+│  └─ ✅ SUBTASK 'verify' COMPLETED
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: report
+   ┌─ 💻 COMMAND: echo ""
+echo "=========================================="
+echo "  Deployment Complete"
+echo "=========================================="
+echo "  App:         payments-api"
+echo "  Version:     v1.0.0"
+echo "  Environment: production"
+echo "  Replicas:    3"
+echo "=========================================="
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ 
+        │ ==========================================
+        │   Deployment Complete
+        │ ==========================================
+        │   App:         payments-api
+        │   Version:     v1.0.0
+        │   Environment: production
+        │   Replicas:    3
+        │ ==========================================
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'main' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

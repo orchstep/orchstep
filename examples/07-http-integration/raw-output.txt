@@ -1,0 +1,37 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: basic-get-request-demo
+│ 📋 HTTP GET requests with variable URLs and response parsing
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: fetch-api-data
+│  💡 Fetch data from a REST API
+│
+├─ ⚡ STEP: get_users
+│  ┌─ 💻 COMMAND: GET https://httpbin.org/get
+│  └─ 📤 OUTPUT: {
+  "args": {}, 
+  "headers": {
+    "Accept-Encoding": "gzip", 
+    "Host": "httpbin.org", 
+    "User-Agent": "Go-http-client/2.0", 
+    "X-Amzn-Trace-Id": "Root=1-69c64d9a-4d2e17e95d92a13d26d82a62"
+ ... (274 bytes)
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: show_result
+   ┌─ 💻 COMMAND: echo "Status: 200"
+echo "URL: https://httpbin.org/get"
+echo "Method: GET"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Status: 200
+        │ URL: https://httpbin.org/get
+        │ Method: GET
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'fetch-api-data' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

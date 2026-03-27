@@ -1,0 +1,19 @@
+type: workflow
+tests:
+  - name: test_parallel_build
+    task: build-and-deploy
+    expect:
+      success: true
+      output_contains:
+        - "Building frontend v2.0.0..."
+        - "Compiling TypeScript..."
+        - "Bundling assets..."
+        - "FRONTEND_ARTIFACT=frontend-2.0.0.js"
+        - "Building backend v2.0.0..."
+        - "Compiling Go..."
+        - "Running unit tests..."
+        - "BACKEND_ARTIFACT=backend-2.0.0"
+        - "Deploying to staging..."
+        - "Frontend: frontend-2.0.0.js"
+        - "Backend: backend-2.0.0"
+        - "Deploy complete!"

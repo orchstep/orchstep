@@ -1,0 +1,24 @@
+type: workflow
+tests:
+  - name: test_deploy_pipeline
+    task: main
+    expect:
+      success: true
+      output_contains:
+        - "=== Build Phase ==="
+        - "Building payments-api:v1.0.0"
+        - "Running unit tests..."
+        - "42 tests passed, 0 failed"
+        - "ASSERTION PASSED"
+        - "Pushing registry.example.com/payments-api:v1.0.0"
+        - "Image pushed successfully"
+        - "=== Deploy Phase ==="
+        - "Environment: production"
+        - "Replicas:    3"
+        - "Starting rolling deployment..."
+        - "Scaling payments-api to 3 replicas"
+        - "All replicas healthy"
+        - "Checking health at https://payments-api.example.com/health"
+        - "Status: 200 OK"
+        - "All smoke tests passed"
+        - "Deployment Complete"

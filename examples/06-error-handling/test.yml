@@ -1,0 +1,26 @@
+type: workflow
+tests:
+  - name: test_resilient_deploy
+    task: resilient-deploy
+    expect:
+      success: true
+      output_contains:
+        - "Deploying application to cluster..."
+        - "Deployment successful"
+
+  - name: test_api_with_backoff
+    task: api-with-backoff
+    expect:
+      success: true
+      output_contains:
+        - "Calling rate-limited API..."
+        - "Response received"
+
+  - name: test_parallel_service_calls
+    task: parallel-service-calls
+    expect:
+      success: true
+      output_contains:
+        - "Authenticating with auth service..."
+        - "Fetching data from data service..."
+        - "Aggregating service responses..."

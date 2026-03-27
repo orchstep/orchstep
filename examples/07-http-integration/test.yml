@@ -1,0 +1,9 @@
+type: workflow
+tests:
+  - name: test_fetch_api_data
+    task: fetch-api-data
+    expect:
+      success: true
+      output_contains:
+        - "Status: 200"
+        - "Method: GET"
