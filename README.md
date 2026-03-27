@@ -94,6 +94,14 @@ OrchStep is designed for AI agent integration:
 - **MCP Server:** `orchstep mcp serve` for native tool_call integration
 - **Skills:** Install skill documents from `skills/` to teach agents OrchStep patterns
 
+## Cross-Platform
+
+OrchStep runs on Linux, macOS, and Windows:
+
+- **Default shell:** POSIX `sh` — works on Alpine, distroless, all Linux/macOS
+- **Go-native shell:** Set `type: "gosh"` for Windows support without bash
+- **Explicit shells:** `bash`, `zsh`, `pwsh` available as opt-in
+
 ## Editions
 
 | Edition | Price | Features |
