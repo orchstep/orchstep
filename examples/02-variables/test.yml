@@ -1,0 +1,20 @@
+type: workflow
+tests:
+  - name: test_variable_precedence
+    task: main
+    expect:
+      success: true
+      output_contains:
+        - "environment = global-default"
+        - "region      = us-east-1"
+        - "replicas    = 1"
+        - "environment = task-staging"
+        - "replicas    = 3"
+        - "task_only   = only-visible-in-this-task"
+        - "environment = step-production"
+        - "replicas    = 10"
+        - "environment = task-qa"
+        - "replicas    = 5"
+        - "Base URL:    https://api.example.com"
+        - "Full URL:    https://api.example.com/v2/users"
+        - "Variable Precedence (highest to lowest)"

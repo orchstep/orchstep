@@ -1,0 +1,24 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: retry-with-jitter-demo
+│ 📋 Resilient retry with jitter to prevent thundering herd
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: resilient-deploy
+│  💡 Deploy with jitter to avoid retry storms
+│
+└─ ⚡ STEP: deploy_to_cluster
+   ┌─ 💻 COMMAND: echo "Deploying application to cluster..."
+# In real usage: kubectl apply -f deployment.yml
+echo "Deployment successful"
+   └─ 📤 OUTPUT:
+        ╭─────────────────────────────────────────────────────────────────────────────────╮
+        │ Deploying application to cluster...
+        │ Deployment successful
+        ╰─────────────────────────────────────────────────────────────────────────────────╯
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'resilient-deploy' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯
