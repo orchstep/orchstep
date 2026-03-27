@@ -15,7 +15,7 @@ A workflow is defined in `orchstep.yml`:
 name: my-workflow
 desc: "What this workflow does"
 
-vars:
+defaults:
   env: staging
   version: "1.0.0"
 
