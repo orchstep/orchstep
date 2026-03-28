@@ -1,0 +1,9 @@
+type: workflow
+tests:
+  - name: test_prompt_deploy_non_interactive
+    desc: "Non-interactive mode skips prompts, confirm defaults to false so deploy is safely skipped"
+    task: deploy
+    env:
+      ORCHSTEP_NON_INTERACTIVE: "true"
+    expect:
+      success: true

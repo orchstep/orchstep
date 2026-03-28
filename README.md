@@ -57,6 +57,7 @@ Every release is gated by the full regression suite. The test infrastructure inc
 - **Error handling** — retry with exponential backoff + jitter, try/catch/finally, timeouts, on-error modes
 - **HTTP integration** — GET/POST/PUT/DELETE, authentication (bearer/basic/API key), JSON parsing, batch requests
 - **Git operations** — clone, checkout, push, fetch, branches, tags, submodules, authenticated operations
+- **User prompts** — text, password, select, confirm, multiselect with non-interactive mode for CI/agents
 - **Module system** — config schemas, exports, versioning, dependencies, nesting, remote git modules, lockfiles
 - **Templates** — Go templates, Sprig functions, JavaScript expressions, regex extraction
 - **Environment** — .env file loading, inheritance modes, groups, hierarchical configs
@@ -93,6 +94,7 @@ OrchStep is designed for AI agent integration:
 - **CLI:** `orchstep run task --format json` for structured output
 - **MCP Server:** `orchstep mcp serve` for native tool_call integration
 - **Skills:** Install skill documents from `skills/` to teach agents OrchStep patterns
+- **Prompts:** Interactive input for humans, auto-skipped for CI/agents with `ORCHSTEP_NON_INTERACTIVE=true`
 
 ## Cross-Platform
 
