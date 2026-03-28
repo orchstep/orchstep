@@ -7,6 +7,8 @@ const https = require("https");
 
 const REPO = "orchstep/orchstep";
 const BIN_DIR = path.join(__dirname, "bin");
+// Use package.json version — binary version must match
+const PKG_VERSION = require("./package.json").version;
 
 function getPlatform() {
   const platform = process.platform;
@@ -50,13 +52,8 @@ function getLatestVersion() {
 async function install() {
   const { os, arch } = getPlatform();
 
-  let version;
-  try {
-    version = await getLatestVersion();
-  } catch (e) {
-    console.error("Failed to fetch latest version:", e.message);
-    process.exit(1);
-  }
+  // Use package version, not latest — ensures binary matches package
+  const version = PKG_VERSION;
 
   const ext = os === "windows" ? "zip" : "tar.gz";
   const filename = `orchstep_${version}_${os}_${arch}.${ext}`;
