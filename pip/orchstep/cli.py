@@ -11,6 +11,8 @@ import json
 
 REPO = "orchstep/orchstep"
 BIN_NAME = "orchstep"
+# Package version — binary version must match this
+PKG_VERSION = "0.2.1"
 
 
 def get_bin_path():
@@ -18,6 +20,11 @@ def get_bin_path():
     bin_dir = os.path.join(os.path.dirname(__file__), "bin")
     name = BIN_NAME + (".exe" if platform.system() == "Windows" else "")
     return os.path.join(bin_dir, name)
+
+
+def get_version_file():
+    """Get the path to the version marker file."""
+    return os.path.join(os.path.dirname(__file__), "bin", ".version")
 
 
 def get_platform():
@@ -45,9 +52,9 @@ def get_latest_version():
 
 
 def install_binary():
-    """Download and install the binary for this platform."""
+    """Download and install the binary matching the package version."""
     os_name, arch_name = get_platform()
-    version = get_latest_version()
+    version = PKG_VERSION
 
     ext = "zip" if os_name == "windows" else "tar.gz"
     filename = f"orchstep_{version}_{os_name}_{arch_name}.{ext}"
@@ -74,14 +81,40 @@ def install_binary():
     if os_name != "windows":
         os.chmod(bin_path, 0o755)
 
+    # Write version marker
+    with open(get_version_file(), "w") as f:
+        f.write(version)
+
     print(f"OrchStep v{version} installed.")
+
+
+def needs_install():
+    """Check if binary needs to be (re)installed."""
+    bin_path = get_bin_path()
+    version_file = get_version_file()
+
+    # No binary at all
+    if not os.path.exists(bin_path):
+        return True
+
+    # Binary exists but version doesn't match package
+    if os.path.exists(version_file):
+        with open(version_file) as f:
+            installed_version = f.read().strip()
+        if installed_version != PKG_VERSION:
+            return True
+    else:
+        # No version marker — re-download to be safe
+        return True
+
+    return False
 
 
 def main():
     """Run the orchstep binary, installing if needed."""
     bin_path = get_bin_path()
 
-    if not os.path.exists(bin_path):
+    if needs_install():
         install_binary()
 
     result = subprocess.run([bin_path] + sys.argv[1:])
