@@ -12,7 +12,7 @@ import json
 REPO = "orchstep/orchstep"
 BIN_NAME = "orchstep"
 # Package version — binary version must match this
-PKG_VERSION = "0.2.1"
+PKG_VERSION = "0.2.2"
 
 
 def get_bin_path():
