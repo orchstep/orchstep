@@ -1,0 +1,32 @@
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ 🚀 WORKFLOW: interactive-deploy
+│ 📋 Deployment workflow with user confirmation
+╰─────────────────────────────────────────────────────────────────────────────────╯
+
+┌─ 🎯 TASK: deploy
+│  💡 Interactive deployment with prompts
+│
+├─ ⚡ STEP: environment
+│  📝 Choose target environment
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: version
+│  📝 Enter version to deploy
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: features
+│  📝 Select features to enable
+│  ✅ STEP COMPLETED
+│
+├─ ⚡ STEP: confirm
+│  📝 Confirm deployment
+│  ✅ STEP COMPLETED
+│
+└─ ⚡ STEP: execute
+   ✅ STEP COMPLETED
+└─ ✅ TASK 'deploy' COMPLETED
+
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ✅ WORKFLOW COMPLETED SUCCESSFULLY                                              │
+╰─────────────────────────────────────────────────────────────────────────────────╯

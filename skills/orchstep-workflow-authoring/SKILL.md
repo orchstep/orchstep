@@ -62,6 +62,7 @@ orchstep run deploy --format json            # Structured output for agents
 | `transform` | JavaScript data transform | `do: "return { key: value };"` |
 | `render` | Template rendering | `args: { template: "..." }` |
 | `wait` | Delay execution | `args: { duration: 5s }` |
+| `prompt` | Interactive user input | `args: { message: "...", type: select, options: [...] }` |
 | `task` | Call another task | `task: other-task` |
 
 ## Variable Scoping
@@ -224,6 +225,32 @@ tasks:
         args:
           condition: '{{ eq steps.health-check.status_code 200 }}'
           desc: "Health check must return 200"
+```
+
+### User Prompts (Interactive + CI)
+```yaml
+tasks:
+  deploy:
+    steps:
+      - name: environment
+        func: prompt
+        args:
+          message: "Target environment"
+          type: select
+          options: [dev, staging, production]
+          default: dev
+
+      - name: confirm
+        func: prompt
+        args:
+          message: "Deploy to {{ steps.environment.value }}?"
+          type: confirm
+          default: false
+
+      - name: execute
+        if: '{{ eq steps.confirm.value "true" }}'
+        func: shell
+        do: echo "Deploying to {{ steps.environment.value }}"
 ```
 
 ### Multi-Environment Promotion

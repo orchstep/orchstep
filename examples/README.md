@@ -31,6 +31,7 @@ orchstep list           # List all available tasks
 | 13 | [Modules](13-modules/) | 6 | Reusable components, config, overrides, nesting |
 | 14 | [Real-World Patterns](14-real-world-patterns/) | 4 | Deploy pipeline, promotion, incident response, releases |
 | 15 | [Parallel Execution](15-parallel-execution/) | 2 | Concurrent steps, fan-out/fan-in, parallel health checks |
+| 16 | [User Prompts](16-user-prompts/) | 1 | Interactive input, select/confirm/text/password/multiselect, non-interactive mode |
 
 ---
 
@@ -188,6 +189,14 @@ Run steps concurrently to speed up workflows.
 |------|---------------|
 | [parallel-build.yml](15-parallel-execution/parallel-build.yml) | Build frontend and backend in parallel, merge outputs for deploy |
 | [parallel-health-checks.yml](15-parallel-execution/parallel-health-checks.yml) | Check multiple services simultaneously, assert all healthy |
+
+## 16 - User Prompts
+
+Collect interactive input from users with automatic non-interactive fallback for CI/CD and LLM agents.
+
+| File | What it shows |
+|------|---------------|
+| [interactive-deploy.yml](16-user-prompts/interactive-deploy.yml) | All 5 prompt types (text, select, multiselect, confirm, password) in a deployment workflow |
 
 ---
 
