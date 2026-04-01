@@ -1,0 +1,100 @@
+# Showcase: Multi-Cloud Deployment (AWS / GCP)
+#
+# Demonstrates OrchStep's interface equivalence — the same workflow provisions
+# infrastructure on AWS or GCP by switching on a single variable.
+# Both cloud modules expose the same output shape, so downstream steps
+# work regardless of which provider ran.
+#
+# Module chains (2 layers each):
+#   This workflow -> demo-aws-infra -> demo-aws-networking
+#   This workflow -> demo-gcp-infra -> demo-gcp-networking
+#
+# Scoped variable flow:
+#   cloud_provider selects which module runs via switch/case
+#   region_aws / region_gcp routed to the appropriate module config
+#
+# Try: orchstep run
+# Try: orchstep run --var cloud_provider=gcp
+# Try: orchstep run --var cloud_provider=aws --var region_aws=us-east-1
+
+name: multi-cloud-deployment
+desc: "Deploy infrastructure on AWS or GCP with a single workflow"
+
+defaults:
+  vars:
+    cloud_provider: "aws"
+    region_aws: "ap-southeast-2"
+    region_gcp: "australia-southeast1"
+    app_name: "multi-cloud-app"
+    environment: "production"
+
+modules:
+  - name: aws
+    source: "../../modules/@orchstep/demo-aws-infra"
+    config:
+      region: "{{ vars.region_aws }}"
+      vpc_cidr: "10.0.0.0/16"
+      az_count: "2"
+      instance_type: "t3.medium"
+      db_engine: "postgres"
+      db_instance_class: "db.t3.medium"
+
+  - name: gcp
+    source: "../../modules/@orchstep/demo-gcp-infra"
+    config:
+      region: "{{ vars.region_gcp }}"
+      project_id: "demo-project"
+      network_cidr: "10.0.0.0/16"
+
+  - name: healthcheck
+    source: "../../modules/@orchstep/health-check"
+    config:
+      timeout: "15"
+
+tasks:
+  main:
+    desc: "Provision infrastructure on the selected cloud provider"
+    steps:
+      - name: announce
+        func: shell
+        do: |
+          echo "=========================================="
+          echo "  Multi-Cloud Deployment"
+          echo "=========================================="
+          echo ""
+          echo "  Provider:    {{ vars.cloud_provider }}"
+          echo "  App:         {{ vars.app_name }}"
+          echo "  Environment: {{ vars.environment }}"
+          echo ""
+
+      - name: provision_cloud
+        desc: "Provision infrastructure on the selected cloud"
+        switch: "{{ vars.cloud_provider }}"
+        cases:
+          aws:
+            - name: provision_aws
+              desc: "Provision AWS infrastructure (VPC, subnets, compute, database)"
+              module: aws
+              task: provision
+              with:
+                app_name: "{{ vars.app_name }}"
+          gcp:
+            - name: provision_gcp
+              desc: "Provision GCP infrastructure (VPC, subnets, firewall, instances)"
+              module: gcp
+              task: provision
+              with:
+                app_name: "{{ vars.app_name }}"
+
+      - name: deployment_summary
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  Multi-Cloud Deployment Complete"
+          echo "=========================================="
+          echo ""
+          echo "  Provider:    {{ vars.cloud_provider }}"
+          echo "  App:         {{ vars.app_name }}"
+          echo "  Environment: {{ vars.environment }}"
+          echo "=========================================="

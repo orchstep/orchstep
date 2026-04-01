@@ -1,0 +1,139 @@
+# Showcase: Developer Machine Provisioning
+#
+# Demonstrates OrchStep as a desired-state convergence engine for developer
+# workstations. Role-based package selection via switch/case, OS abstraction
+# through the package manager module, and validation via env-check.
+#
+# Module chain (2 layers):
+#   This workflow -> demo-machine-setup -> demo-package-manager
+#
+# Scoped variable flow:
+#   role selects package list via switch/case
+#   -> packages passed to demo-machine-setup as vars
+#   -> demo-machine-setup passes to demo-package-manager config
+#
+# Try: orchstep run
+# Try: orchstep run --var role=frontend
+# Try: orchstep run --var role=backend --var shell_type=fish
+
+name: machine-provisioning
+desc: "Provision a developer workstation with role-based tooling"
+
+defaults:
+  vars:
+    role: "fullstack"
+    email: "developer@example.com"
+    shell_type: "zsh"
+
+tasks:
+  main:
+    desc: "Provision developer machine with role-based tools, shell config, and SSH setup"
+    vars:
+      common_packages: "git,curl,jq,docker,kubectl"
+      frontend_packages: "node,npm,yarn,typescript,eslint"
+      backend_packages: "go,python3,pip,postgres-client,redis-cli"
+      fullstack_packages: "node,npm,go,python3,docker-compose,terraform"
+    steps:
+      - name: announce
+        func: shell
+        do: |
+          echo "=========================================="
+          echo "  Developer Machine Provisioning"
+          echo "=========================================="
+          echo ""
+          echo "  Role:    {{ vars.role }}"
+          echo "  Email:   {{ vars.email }}"
+          echo "  Shell:   {{ vars.shell_type }}"
+          echo ""
+
+      - name: select_packages
+        desc: "Select package list based on developer role"
+        func: shell
+        switch: "{{ vars.role }}"
+        cases:
+          frontend:
+            - name: set_frontend
+              func: shell
+              do: |
+                echo "packages={{ task.vars.common_packages }},{{ task.vars.frontend_packages }}"
+              outputs:
+                packages: '{{ result.output | regexFind "packages=(.*)" }}'
+          backend:
+            - name: set_backend
+              func: shell
+              do: |
+                echo "packages={{ task.vars.common_packages }},{{ task.vars.backend_packages }}"
+              outputs:
+                packages: '{{ result.output | regexFind "packages=(.*)" }}'
+          fullstack:
+            - name: set_fullstack
+              func: shell
+              do: |
+                echo "packages={{ task.vars.common_packages }},{{ task.vars.fullstack_packages }}"
+              outputs:
+                packages: '{{ result.output | regexFind "packages=(.*)" }}'
+
+      - name: install_tools
+        desc: "Install selected packages via OS-aware package manager"
+        module: setup
+        task: install_tools
+        with:
+          packages: "{{ steps.select_packages.packages }}"
+
+      - name: configure_shell
+        desc: "Configure shell environment and dotfiles"
+        module: setup
+        task: configure_shell
+        with:
+          shell: "{{ vars.shell_type }}"
+          email: "{{ vars.email }}"
+
+      - name: setup_ssh
+        desc: "Generate SSH key and configure Git"
+        module: setup
+        task: setup_ssh
+        with:
+          email: "{{ vars.email }}"
+
+      - name: validate_state
+        desc: "Verify all tools are installed and configured"
+        module: setup
+        task: validate_state
+        with:
+          packages: "{{ steps.select_packages.packages }}"
+
+      - name: validate_env
+        desc: "Run environment checks for required tools"
+        module: envcheck
+        task: tools
+        with:
+          tools: "{{ steps.select_packages.packages }}"
+
+      - name: provisioning_summary
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  Machine Provisioning Complete"
+          echo "=========================================="
+          echo ""
+          echo "  Role:      {{ vars.role }}"
+          echo "  Shell:     {{ vars.shell_type }}"
+          echo "  Email:     {{ vars.email }}"
+          echo ""
+          echo "  Packages:  {{ steps.select_packages.packages }}"
+          echo "  SSH Key:   generated"
+          echo "  Git:       configured"
+          echo ""
+          echo "  Validation: {{ steps.validate_state.status }}"
+          echo "  Env Check:  {{ steps.validate_env.status }}"
+          echo "=========================================="
+
+modules:
+  - name: setup
+    source: "../../modules/@orchstep/demo-machine-setup"
+    config:
+      os_type: "auto"
+
+  - name: envcheck
+    source: "../../modules/@orchstep/env-check"

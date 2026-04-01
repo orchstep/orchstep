@@ -1,0 +1,101 @@
+# Showcase: Kubernetes + Helm Microservice Deployment
+#
+# Demonstrates OrchStep composing K8s namespace provisioning with Helm chart
+# installation and post-deploy health verification.
+#
+# Module chain (2 layers):
+#   This workflow -> demo-k8s-deploy -> demo-k8s-namespace
+#
+# Scoped variable flow:
+#   namespace, app_name defined here -> passed to demo-k8s-deploy config
+#   -> demo-k8s-deploy passes namespace down to demo-k8s-namespace config
+#   -> outputs flow back up through step outputs
+#
+# Try: orchstep run
+# Try: orchstep run --var app_name=cart-service --var replicas=5
+# Try: orchstep run --var image_tag=v2.0.0 --var namespace=staging
+
+name: k8s-helm-deployment
+desc: "Deploy a microservice to Kubernetes with Helm and health verification"
+
+defaults:
+  vars:
+    app_name: "order-service"
+    namespace: "production"
+    image: "myregistry.io/order-service"
+    image_tag: "v1.5.0"
+    chart: "oci://myregistry.io/charts/microservice"
+    replicas: "3"
+
+modules:
+  - name: k8s
+    source: "../../modules/@orchstep/demo-k8s-deploy"
+    config:
+      namespace: "{{ vars.namespace }}"
+      app_name: "{{ vars.app_name }}"
+      image: "{{ vars.image }}"
+      replicas: "{{ vars.replicas }}"
+
+  - name: helm
+    source: "../../modules/@orchstep/demo-helm"
+    config:
+      release_name: "{{ vars.app_name }}"
+      chart: "{{ vars.chart }}"
+      namespace: "{{ vars.namespace }}"
+
+  - name: healthcheck
+    source: "../../modules/@orchstep/health-check"
+    config:
+      timeout: "30"
+
+tasks:
+  main:
+    desc: "Deploy microservice via K8s + Helm with health check and conditional rollback"
+    steps:
+      - name: deploy_app
+        desc: "Deploy application with namespace setup and RBAC"
+        module: k8s
+        task: deploy
+        with:
+          tag: "{{ vars.image_tag }}"
+
+      - name: install_chart
+        desc: "Install Helm chart for the microservice"
+        module: helm
+        task: install_chart
+
+      - name: check_health
+        desc: "Verify the deployed service is healthy"
+        module: healthcheck
+        task: check
+        with:
+          url: "http://{{ vars.app_name }}.{{ vars.namespace }}.svc.cluster.local/health"
+          expected_status: "200"
+
+      - name: rollback_if_unhealthy
+        desc: "Rollback deployment if health check failed"
+        if: "{{ steps.check_health.healthy == 'false' }}"
+        module: k8s
+        task: rollback
+        with:
+          deployment: "{{ vars.app_name }}"
+
+      - name: deployment_summary
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  K8s + Helm Deployment Complete"
+          echo "=========================================="
+          echo ""
+          echo "  Application: {{ vars.app_name }}"
+          echo "  Namespace:   {{ vars.namespace }}"
+          echo "  Image:       {{ vars.image }}:{{ vars.image_tag }}"
+          echo "  Replicas:    {{ vars.replicas }}"
+          echo ""
+          echo "  Helm:"
+          echo "    Release:   {{ steps.install_chart.release }}"
+          echo "    Chart:     {{ vars.chart }}"
+          echo ""
+          echo "  Health:      {{ steps.check_health.healthy }}"
+          echo "=========================================="
