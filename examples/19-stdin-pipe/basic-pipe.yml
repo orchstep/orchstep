@@ -1,0 +1,44 @@
+# Example: Basic Stdin Pipe
+# Pipe data from any command into an OrchStep workflow.
+# OrchStep auto-detects the format:
+#   - JSON -> parsed object (access fields with {{ stdin.field }})
+#   - YAML -> parsed object (same dot access)
+#   - Plain text -> string (access with {{ stdin }})
+#
+# Try: echo "hello world" | orchstep run
+# Try: echo '{"status":"healthy","version":"2.1.0"}' | orchstep run process-json
+# Try: curl -s https://httpbin.org/get | orchstep run process-json
+
+name: basic-stdin-pipe
+desc: "Pipe data into workflows with automatic format detection"
+
+tasks:
+  main:
+    desc: "Show piped text input"
+    steps:
+      - name: show_input
+        func: shell
+        do: |
+          echo "=== Stdin Pipe ==="
+          echo "Received: {{ stdin }}"
+          echo ""
+          echo "Usage: echo 'your data' | orchstep run"
+
+  process-json:
+    desc: "Process piped JSON with structured access"
+    steps:
+      - name: show_fields
+        func: shell
+        do: |
+          echo "=== JSON from Stdin ==="
+          echo "Full input: {{ stdin }}"
+          echo ""
+          echo "Accessing fields:"
+          echo "  status:  {{ stdin.status }}"
+          echo "  version: {{ stdin.version }}"
+
+      - name: check_health
+        func: assert
+        args:
+          condition: '{{ eq stdin.status "healthy" }}'
+          message: "Service should be healthy"
