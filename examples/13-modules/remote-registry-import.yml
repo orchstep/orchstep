@@ -1,0 +1,55 @@
+# Example: Remote Module from Git Registry
+# Import modules directly from a Git repository.
+# Format: git:<repo-url>#<module-name>/<version>
+#
+# OrchStep resolves the module from the remote repository,
+# caches it locally, and makes its tasks available.
+#
+# Note: This example shows the syntax but requires a real
+# Git registry to run. See basic-module.yml for a runnable
+# local module example.
+#
+# Try: orchstep run
+
+name: remote-registry-import-demo
+desc: "Import and use modules from a remote Git registry"
+
+# Import modules from a Git repository
+modules:
+  - name: deploy
+    source: "git:https://github.com/orchstep/modules.git#deploy/v1.2.0"
+
+  - name: notify
+    source: "git:https://github.com/orchstep/modules.git#notify/v2.0.0"
+
+  # You can also use SSH URLs
+  # - name: internal-tools
+  #   source: "git:git@github.com:myorg/private-modules.git#tools/v1.0.0"
+
+tasks:
+  main:
+    desc: "Use remote modules in a deployment workflow"
+    steps:
+      # Call a task from the remote deploy module
+      - name: run_deploy
+        module: deploy
+        task: rolling-update
+
+      # Call a task from the remote notify module
+      - name: send_notification
+        module: notify
+        task: slack-message
+
+      - name: explain
+        func: shell
+        do: |
+          echo ""
+          echo "=== Remote Module Import ==="
+          echo "Source format: git:<repo-url>#<module-name>/<version>"
+          echo ""
+          echo "Examples:"
+          echo "  git:https://github.com/org/modules.git#deploy/v1.0.0"
+          echo "  git:git@github.com:org/modules.git#auth/v2.1.0"
+          echo ""
+          echo "Modules are cached locally after first download."
+          echo "Use version constraints to control updates."

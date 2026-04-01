@@ -1,0 +1,59 @@
+# Example: Monorepo Module Scope
+# Import specific modules from a monorepo using scope.
+#
+# When a Git repository contains multiple modules, use the scope
+# field to specify which sub-module to import. This is common in
+# monorepos where one repository hosts many reusable modules.
+#
+# Try: orchstep run
+
+name: monorepo-scope-demo
+desc: "Import scoped modules from a monorepo"
+
+modules:
+  # Import from an organization's monorepo using scope
+  - name: auth
+    source: "git:https://github.com/acme-corp/platform-modules.git"
+    scope: "@acme/auth"
+    version: "^1.0.0"
+
+  - name: billing
+    source: "git:https://github.com/acme-corp/platform-modules.git"
+    scope: "@acme/billing"
+    version: "^2.1.0"
+
+  - name: notifications
+    source: "git:https://github.com/acme-corp/platform-modules.git"
+    scope: "@acme/notifications"
+    version: "~1.5.0"
+
+tasks:
+  main:
+    desc: "Show how scoped module imports work"
+    steps:
+      - name: explain_scope
+        func: shell
+        do: |
+          echo "=== Monorepo Module Scope ==="
+          echo ""
+          echo "A single Git repository can host multiple modules."
+          echo "Use 'scope' to select which module to import."
+          echo ""
+          echo "Repository layout:"
+          echo "  platform-modules/"
+          echo "    @acme/auth/"
+          echo "      orchstep.yml"
+          echo "    @acme/billing/"
+          echo "      orchstep.yml"
+          echo "    @acme/notifications/"
+          echo "      orchstep.yml"
+          echo ""
+          echo "Import syntax:"
+          echo "  modules:"
+          echo "    - name: auth"
+          echo "      source: git:https://github.com/org/repo.git"
+          echo "      scope: \"@acme/auth\""
+          echo "      version: \"^1.0.0\""
+          echo ""
+          echo "All three modules share one source repository but"
+          echo "are versioned and imported independently."

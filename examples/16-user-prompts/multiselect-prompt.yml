@@ -1,0 +1,57 @@
+# Example: Multiselect Prompt
+# Let users select multiple items from a list.
+#
+# The multiselect prompt shows checkboxes for each option.
+# Users can toggle items on/off and submit their selection.
+# In non-interactive mode, the default array is used.
+#
+# Try: orchstep run
+# Try: orchstep run --non-interactive
+
+name: multiselect-prompt-demo
+desc: "Multiple selection from a list of options"
+
+tasks:
+  main:
+    desc: "Configure feature flags for deployment"
+    steps:
+      - name: select_features
+        desc: "Choose which features to enable"
+        func: prompt
+        args:
+          message: "Select features to enable"
+          type: multiselect
+          options:
+            - logging
+            - monitoring
+            - caching
+            - cdn
+            - rate-limiting
+            - auto-scaling
+          default:
+            - logging
+            - monitoring
+
+      - name: select_notifications
+        desc: "Choose notification channels"
+        func: prompt
+        args:
+          message: "Where should deploy notifications go?"
+          type: multiselect
+          options:
+            - slack
+            - email
+            - pagerduty
+            - webhook
+          default:
+            - slack
+
+      - name: show_selections
+        desc: "Display all selected options"
+        func: shell
+        do: |
+          echo "=== Deployment Configuration ==="
+          echo "Features:      {{ steps.select_features.value }}"
+          echo "Notifications: {{ steps.select_notifications.value }}"
+          echo ""
+          echo "Interactive: {{ steps.select_features.interactive }}"

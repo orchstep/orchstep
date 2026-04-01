@@ -1,0 +1,60 @@
+# Example: Loop + Conditional + Retry Composition
+# Shows features working together: iterate over services,
+# conditionally check each, retry on transient failures.
+#
+# Real-world pattern: health-check a fleet of microservices
+# with retry for network blips and on_error: warn so one
+# failure doesn't abort the entire check.
+#
+# Try: orchstep run
+
+name: loop-retry-composition-demo
+desc: "Combine loops, conditionals, and retry in one workflow"
+
+defaults:
+  services:
+    - name: "auth-api"
+      port: "8080"
+      critical: "true"
+    - name: "billing-api"
+      port: "8081"
+      critical: "true"
+    - name: "notification-api"
+      port: "8082"
+      critical: "false"
+    - name: "analytics-api"
+      port: "8083"
+      critical: "false"
+
+tasks:
+  main:
+    desc: "Health-check all services with retry and error handling"
+    steps:
+      # Loop over services, retry each health check, warn on failure
+      - name: health_checks
+        desc: "Check each service endpoint"
+        loop: "{{ vars.services }}"
+        func: shell
+        do: |
+          echo "Checking {{ loop.item.name }} on port {{ loop.item.port }}..."
+          echo "  Critical: {{ loop.item.critical }}"
+          echo "  Status: healthy"
+        retry:
+          max_attempts: 3
+          interval: 1s
+          backoff_rate: 2.0
+          jitter: 0.3
+        on_error: warn
+        outputs:
+          service: "{{ loop.item.name }}"
+          status: "healthy"
+
+      # Summarize results
+      - name: report
+        desc: "Print health check summary"
+        func: shell
+        do: |
+          echo ""
+          echo "=== Health Check Complete ==="
+          echo "Services checked: {{ steps.health_checks | len }}"
+          echo "All services responded within retry window"

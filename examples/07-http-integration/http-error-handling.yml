@@ -1,0 +1,110 @@
+# Example: HTTP Error Handling
+# Handle HTTP failures with retry, on_error, and catch blocks.
+#
+# Patterns covered:
+#   - Retry with exponential backoff for transient errors
+#   - on_error: continue with fallback logic
+#   - try/catch/finally for structured error recovery
+#
+# Try: orchstep run api-with-retry
+# Try: orchstep run fallback-on-failure
+# Try: orchstep run structured-recovery
+
+name: http-error-handling-demo
+desc: "Handle HTTP failures with retry, fallback, and recovery"
+
+defaults:
+  api_base: "https://httpbin.org"
+
+tasks:
+  # -- Retry with exponential backoff --
+  api-with-retry:
+    desc: "Retry API calls on transient failures"
+    steps:
+      - name: fetch_data
+        desc: "Call API with automatic retry on failure"
+        func: http
+        args:
+          url: "{{ vars.api_base }}/get"
+          method: GET
+          timeout: 5s
+        retry:
+          max_attempts: 5
+          interval: 500ms
+          backoff_rate: 2.0     # 500ms, 1s, 2s, 4s
+          max_delay: 5s         # Cap at 5 seconds
+          jitter: 0.3           # Prevent thundering herd
+        outputs:
+          status: "{{ result.status_code }}"
+
+      - name: show_result
+        func: shell
+        do: |
+          echo "API response status: {{ steps.fetch_data.status }}"
+
+  # -- Fallback on failure --
+  fallback-on-failure:
+    desc: "Use on_error: continue to try a fallback endpoint"
+    steps:
+      - name: try_primary
+        desc: "Try the primary API endpoint"
+        func: http
+        args:
+          url: "{{ vars.api_base }}/status/500"
+          method: GET
+          timeout: 3s
+        on_error: continue
+        outputs:
+          status: "{{ result.status_code }}"
+
+      - name: try_fallback
+        desc: "Fall back to secondary endpoint if primary failed"
+        if: '{{ ne steps.try_primary.status "200" }}'
+        func: http
+        args:
+          url: "{{ vars.api_base }}/get"
+          method: GET
+          timeout: 3s
+        outputs:
+          status: "{{ result.status_code }}"
+
+      - name: report
+        func: shell
+        do: |
+          echo "Primary status: {{ steps.try_primary.status }}"
+          echo "Used fallback: {{ ne steps.try_primary.status "200" }}"
+
+  # -- Structured recovery with catch/finally --
+  structured-recovery:
+    desc: "Use catch and finally for clean error recovery"
+    steps:
+      - name: call_api
+        desc: "API call that may fail"
+        func: http
+        args:
+          url: "{{ vars.api_base }}/get"
+          method: GET
+          timeout: 5s
+        outputs:
+          status: "{{ result.status_code }}"
+
+      - name: process_response
+        desc: "Process the API response"
+        func: shell
+        do: |
+          echo "Processing response with status {{ steps.call_api.status }}..."
+          echo "Data processed successfully"
+
+    catch:
+      - name: handle_error
+        func: shell
+        do: |
+          echo "API call failed -- activating recovery"
+          echo "Logging error for investigation"
+
+    finally:
+      - name: cleanup
+        func: shell
+        do: |
+          echo "Releasing HTTP connection pool"
+          echo "Recording metrics"

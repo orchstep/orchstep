@@ -1,0 +1,49 @@
+# Example: Select Prompt
+# Present a list of options for single selection.
+#
+# The select prompt shows a navigable list and returns one value.
+# In non-interactive mode, the default is used automatically.
+#
+# Try: orchstep run
+# Try: orchstep run --non-interactive
+
+name: select-prompt-demo
+desc: "Single selection from a list of options"
+
+tasks:
+  main:
+    desc: "Choose a deployment environment"
+    steps:
+      - name: choose_environment
+        desc: "Select the target environment"
+        func: prompt
+        args:
+          message: "Which environment do you want to deploy to?"
+          type: select
+          options:
+            - development
+            - staging
+            - production
+          default: development
+
+      - name: choose_region
+        desc: "Select the target region"
+        func: prompt
+        args:
+          message: "Which region?"
+          type: select
+          options:
+            - us-east-1
+            - us-west-2
+            - eu-west-1
+            - ap-southeast-1
+          default: us-east-1
+
+      - name: show_selection
+        desc: "Display the selected values"
+        func: shell
+        do: |
+          echo "Environment: {{ steps.choose_environment.value }}"
+          echo "Region:      {{ steps.choose_region.value }}"
+          echo ""
+          echo "Ready to deploy to {{ steps.choose_environment.value }} in {{ steps.choose_region.value }}"
