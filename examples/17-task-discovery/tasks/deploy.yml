@@ -1,0 +1,11 @@
+name: deploy
+desc: "Deploy the application to the target environment"
+
+steps:
+  - name: push_image
+    func: shell
+    do: echo "Pushing container image to registry..."
+
+  - name: rollout
+    func: shell
+    do: echo "Rolling out new version to cluster..."

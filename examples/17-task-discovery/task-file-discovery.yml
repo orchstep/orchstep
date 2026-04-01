@@ -1,0 +1,35 @@
+# Example: Task File Discovery
+# OrchStep automatically discovers tasks from the tasks/ directory.
+# Each YAML file in tasks/ becomes a callable task, letting you
+# organize large workflows across multiple files.
+#
+# In this example, three task files live under tasks/:
+#   tasks/build.yml   -> callable as "build"
+#   tasks/test.yml    -> callable as "test"
+#   tasks/deploy.yml  -> callable as "deploy"
+#
+# Try: orchstep run
+# Try: orchstep list   (shows discovered tasks)
+
+name: task-file-discovery
+desc: "Auto-discover and run tasks from the tasks/ directory"
+
+tasks:
+  main:
+    desc: "Run the full build, test, deploy pipeline"
+    steps:
+      - name: build_app
+        desc: "Run the discovered build task"
+        task: build
+
+      - name: test_app
+        desc: "Run the discovered test task"
+        task: test
+
+      - name: deploy_app
+        desc: "Run the discovered deploy task"
+        task: deploy
+
+      - name: summary
+        func: shell
+        do: echo "Pipeline complete -- all stages passed"

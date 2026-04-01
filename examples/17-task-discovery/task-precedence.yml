@@ -1,0 +1,34 @@
+# Example: Task Precedence
+# When a task is defined both inline and in the tasks/ directory,
+# the inline definition takes precedence over the discovered file.
+#
+# This is useful for overriding a shared task with workflow-specific
+# behavior without removing the original file.
+#
+# In this example, tasks/build.yml exists on disk, but the inline
+# "build" task below wins.
+#
+# Try: orchstep run
+
+name: task-precedence
+desc: "Inline tasks override discovered tasks with the same name"
+
+tasks:
+  main:
+    desc: "Demonstrate inline-over-discovered precedence"
+    steps:
+      - name: run_build
+        desc: "This calls the inline build, not tasks/build.yml"
+        task: build
+
+      - name: confirm
+        func: shell
+        do: echo "The inline definition was used"
+
+  # This inline definition wins over tasks/build.yml
+  build:
+    desc: "Inline build -- overrides the discovered task file"
+    steps:
+      - name: custom_build
+        func: shell
+        do: echo "Running INLINE build (not the discovered tasks/build.yml)"

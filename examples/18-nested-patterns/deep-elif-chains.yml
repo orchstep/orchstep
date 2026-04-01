@@ -1,0 +1,65 @@
+# Example: Deep elif Chains
+# Use elif chains for multi-branch routing without deep nesting.
+# Better than nested if/else when checking one variable against many values.
+#
+# Scenario: route incident alerts based on severity level.
+# Each severity maps to a different response action.
+#
+# Try: orchstep run
+# Try: orchstep run --var severity=critical
+# Try: orchstep run --var severity=high
+# Try: orchstep run --var severity=low
+
+name: deep-elif-chains
+desc: "Multi-branch routing with elif for incident severity"
+
+defaults:
+  severity: "medium"
+
+tasks:
+  main:
+    desc: "Route an incident based on its severity"
+    steps:
+      - name: route_severity
+        if: '{{ eq vars.severity "critical" }}'
+        task: page_oncall
+        elif:
+          - if: '{{ eq vars.severity "high" }}'
+            task: create_ticket
+          - if: '{{ eq vars.severity "medium" }}'
+            task: log_warning
+        else: ignore_noise
+
+      - name: done
+        func: shell
+        do: |
+          echo "=== Incident Routed ==="
+          echo "Severity: {{ vars.severity }}"
+
+  page_oncall:
+    desc: "Critical -- wake up the on-call engineer"
+    steps:
+      - name: page
+        func: shell
+        do: echo "CRITICAL -- paging on-call engineer via PagerDuty"
+
+  create_ticket:
+    desc: "High -- create a tracking ticket"
+    steps:
+      - name: ticket
+        func: shell
+        do: echo "HIGH -- creating Jira ticket for investigation"
+
+  log_warning:
+    desc: "Medium -- log a warning for review"
+    steps:
+      - name: warn
+        func: shell
+        do: echo "MEDIUM -- logging warning to monitoring system"
+
+  ignore_noise:
+    desc: "Low -- no action needed"
+    steps:
+      - name: skip
+        func: shell
+        do: echo "LOW -- ignoring noise, no action required"

@@ -1,0 +1,56 @@
+# Example: Nested Conditionals
+# Use if/else inside another if/else block for multi-dimensional decisions.
+# Here we check environment first, then feature flag status.
+#
+# Outer condition: is this production or development?
+# Inner condition: is the feature flag enabled?
+#
+# Note: OrchStep limits nesting to 2 levels to keep workflows readable.
+# For deeper branching, consider switch/case or separate tasks.
+#
+# Try: orchstep run
+# Try: orchstep run --var environment=production --var feature_flag=enabled
+# Try: orchstep run --var environment=development --var feature_flag=disabled
+
+name: nested-conditionals
+desc: "Multi-level conditional decisions for deployment gating"
+
+defaults:
+  environment: "production"
+  feature_flag: "enabled"
+
+tasks:
+  main:
+    desc: "Gate deployment based on environment and feature flag"
+    steps:
+      - name: check_environment
+        if: '{{ eq vars.environment "production" }}'
+        then:
+          - name: check_feature_prod
+            if: '{{ eq vars.feature_flag "enabled" }}'
+            then:
+              - name: deploy_with_feature
+                func: shell
+                do: echo "PRODUCTION -- deploying with new feature enabled"
+            else:
+              - name: deploy_without_feature
+                func: shell
+                do: echo "PRODUCTION -- deploying without new feature (flag disabled)"
+        else:
+          - name: check_feature_dev
+            if: '{{ eq vars.feature_flag "enabled" }}'
+            then:
+              - name: dev_with_feature
+                func: shell
+                do: echo "DEVELOPMENT -- testing new feature locally"
+            else:
+              - name: dev_without_feature
+                func: shell
+                do: echo "DEVELOPMENT -- running baseline (no feature flag)"
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Deployment Gate ==="
+          echo "Environment:  {{ vars.environment }}"
+          echo "Feature Flag: {{ vars.feature_flag }}"
