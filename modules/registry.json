@@ -40,6 +40,150 @@
       "tier": "official",
       "source": "modules/@orchstep/env-check",
       "tags": ["environment", "validation", "onboarding"]
+    },
+    {
+      "name": "@orchstep/demo-aws-networking",
+      "version": "1.0.0",
+      "description": "AWS VPC networking provisioning (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-aws-networking",
+      "tags": ["aws", "networking", "vpc", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-aws-ec2",
+      "version": "1.0.0",
+      "description": "AWS EC2 instance management (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-aws-ec2",
+      "tags": ["aws", "ec2", "compute", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-aws-rds",
+      "version": "1.0.0",
+      "description": "AWS RDS database provisioning (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-aws-rds",
+      "tags": ["aws", "rds", "database", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-aws-asg",
+      "version": "1.0.0",
+      "description": "AWS Auto Scaling Group management (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-aws-asg",
+      "tags": ["aws", "autoscaling", "asg", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-aws-r53",
+      "version": "1.0.0",
+      "description": "AWS Route 53 DNS management (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-aws-r53",
+      "tags": ["aws", "dns", "route53", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-aws-infra",
+      "version": "1.0.0",
+      "description": "AWS infrastructure stack composition (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-aws-infra",
+      "tags": ["aws", "infrastructure", "composition", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-k8s-namespace",
+      "version": "1.0.0",
+      "description": "Kubernetes namespace management (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-k8s-namespace",
+      "tags": ["k8s", "namespace", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-helm",
+      "version": "1.0.0",
+      "description": "Helm chart deployment management (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-helm",
+      "tags": ["k8s", "helm", "deploy", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-gcp-networking",
+      "version": "1.0.0",
+      "description": "GCP VPC networking provisioning (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-gcp-networking",
+      "tags": ["gcp", "networking", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-package-manager",
+      "version": "1.0.0",
+      "description": "OS-aware package management (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-package-manager",
+      "tags": ["provisioning", "packages", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-repo-scaffold",
+      "version": "1.0.0",
+      "description": "Repository scaffolding (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-repo-scaffold",
+      "tags": ["platform", "scaffold", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-ci-pipeline",
+      "version": "1.0.0",
+      "description": "CI/CD pipeline configuration (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-ci-pipeline",
+      "tags": ["ci", "pipeline", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-observability",
+      "version": "1.0.0",
+      "description": "Monitoring and observability setup (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-observability",
+      "tags": ["monitoring", "observability", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-security-scan",
+      "version": "1.0.0",
+      "description": "Security scanning (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-security-scan",
+      "tags": ["security", "compliance", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-approval-gate",
+      "version": "1.0.0",
+      "description": "Approval workflow gate (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-approval-gate",
+      "tags": ["governance", "approval", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-k8s-deploy",
+      "version": "1.0.0",
+      "description": "Kubernetes deployment lifecycle composition (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-k8s-deploy",
+      "tags": ["k8s", "deploy", "composition", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-gcp-infra",
+      "version": "1.0.0",
+      "description": "GCP infrastructure stack composition (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-gcp-infra",
+      "tags": ["gcp", "infrastructure", "composition", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-machine-setup",
+      "version": "1.0.0",
+      "description": "Machine provisioning composition (demo mock)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-machine-setup",
+      "tags": ["provisioning", "machine", "composition", "demo"]
     }
   ]
 }

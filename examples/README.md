@@ -17,21 +17,23 @@ orchstep list           # List all available tasks
 | # | Category | Examples | Key Concepts |
 |---|----------|----------|--------------|
 | 01 | [Execution Basics](01-execution-basics/) | 3 | Shell commands, do: shorthand, timeouts |
-| 02 | [Variables](02-variables/) | 5 | Scoping, precedence, dynamic vars, task params, map_in/map_out |
+| 02 | [Variables](02-variables/) | 7 | Scoping, precedence, dynamic vars, task params, map_in/map_out |
 | 03 | [Step Outputs](03-step-outputs/) | 3 | Output extraction, JSON auto-parsing, cross-step references |
 | 04 | [Control Flow](04-control-flow/) | 4 | if/else, elif chains, switch/case, task calling |
-| 05 | [Loops](05-loops/) | 4 | Iteration, filtering, task delegation, until break |
+| 05 | [Loops](05-loops/) | 5 | Iteration, filtering, task delegation, until break |
 | 06 | [Error Handling](06-error-handling/) | 6 | Retry, catch/finally, timeouts, on-error modes |
-| 07 | [HTTP Integration](07-http-integration/) | 5 | GET/POST, auth, batch requests, response parsing |
-| 08 | [Git Operations](08-git-operations/) | 4 | Clone, checkout, repo info, authenticated git |
+| 07 | [HTTP Integration](07-http-integration/) | 6 | GET/POST, auth, batch requests, response parsing |
+| 08 | [Git Operations](08-git-operations/) | 6 | Clone, checkout, repo info, authenticated git |
 | 09 | [Templates & Expressions](09-templates-expressions/) | 4 | Go templates, Sprig, JavaScript, template files |
 | 10 | [Environment Management](10-environment-management/) | 4 | Env vars, scoping, groups, .env file loading |
 | 11 | [Configuration](11-configuration/) | 3 | Config defaults, inline config, task discovery |
 | 12 | [Assertions](12-assertions/) | 3 | Conditions, multi-assert, helper functions |
-| 13 | [Modules](13-modules/) | 6 | Reusable components, config, overrides, nesting |
+| 13 | [Modules](13-modules/) | 10 | Reusable components, config, overrides, nesting |
 | 14 | [Real-World Patterns](14-real-world-patterns/) | 4 | Deploy pipeline, promotion, incident response, releases |
 | 15 | [Parallel Execution](15-parallel-execution/) | 2 | Concurrent steps, fan-out/fan-in, parallel health checks |
-| 16 | [User Prompts](16-user-prompts/) | 1 | Interactive input, select/confirm/text/password/multiselect, non-interactive mode |
+| 16 | [User Prompts](16-user-prompts/) | 4 | Interactive input, select/confirm/text/password/multiselect, non-interactive mode |
+| 17 | [Task Discovery](17-task-discovery/) | 4 | Auto-discovery, naming, precedence, exclusion |
+| 18 | [Nested Patterns](18-nested-patterns/) | 3 | Nested conditionals, switch-in-loop, deep elif |
 
 ---
 
@@ -52,6 +54,8 @@ orchstep list           # List all available tasks
 | [dynamic-variables.yml](02-variables/dynamic-variables.yml) | Step outputs as dynamic variables, chaining outputs across steps |
 | [vars-between-tasks.yml](02-variables/vars-between-tasks.yml) | Reusable tasks with `with:` parameters, task composition |
 | [structured-data.yml](02-variables/structured-data.yml) | `map_in` / `map_out` JavaScript transforms, `utils` helpers |
+| [env-groups.yml](02-variables/env-groups.yml) | Multi-environment config with env_groups, group inheritance |
+| [step-to-task-vars.yml](02-variables/step-to-task-vars.yml) | Reusable tasks with `with:` parameters, output extraction |
 
 ## 03 - Step Outputs
 
@@ -78,6 +82,7 @@ orchstep list           # List all available tasks
 | [loop-with-conditions.yml](05-loops/loop-with-conditions.yml) | Gate pattern (if before loop) vs filter pattern (if per iteration) |
 | [loop-with-task-call.yml](05-loops/loop-with-task-call.yml) | Call tasks in a loop with per-iteration `with:` parameters |
 | [loop-until.yml](05-loops/loop-until.yml) | Break conditions, polling/retry patterns, JavaScript until |
+| [loop-retry-composition.yml](05-loops/loop-retry-composition.yml) | Loop + conditional + retry combined for resilient service checks |
 
 ## 06 - Error Handling
 
@@ -99,6 +104,7 @@ orchstep list           # List all available tasks
 | [authentication.yml](07-http-integration/authentication.yml) | Bearer tokens, basic auth, API keys |
 | [batch-requests.yml](07-http-integration/batch-requests.yml) | Multiple requests in sequence |
 | [advanced-patterns.yml](07-http-integration/advanced-patterns.yml) | Headers, error handling, response parsing |
+| [http-error-handling.yml](07-http-integration/http-error-handling.yml) | Retry with backoff, fallback on failure, catch/finally recovery |
 
 ## 08 - Git Operations
 
@@ -108,6 +114,8 @@ orchstep list           # List all available tasks
 | [checkout-operations.yml](08-git-operations/checkout-operations.yml) | Branch and tag checkout |
 | [repository-info.yml](08-git-operations/repository-info.yml) | Read repo status and metadata |
 | [authenticated-git.yml](08-git-operations/authenticated-git.yml) | Git operations with authentication |
+| [push-operations.yml](08-git-operations/push-operations.yml) | Branch push, tag push, force-with-lease safety |
+| [advanced-clone.yml](08-git-operations/advanced-clone.yml) | Shallow clone, branch-specific, sparse checkout |
 
 ## 09 - Templates & Expressions
 
@@ -153,6 +161,10 @@ orchstep list           # List all available tasks
 | [module-variable-scoping.yml](13-modules/module-variable-scoping.yml) | Scope isolation: consumer vs module variables |
 | [self-contained-module.yml](13-modules/self-contained-module.yml) | Single-file module with metadata, schema, and exports |
 | [nested-modules.yml](13-modules/nested-modules.yml) | Modules that import other modules (dependency chains) |
+| [remote-registry-import.yml](13-modules/remote-registry-import.yml) | Import modules from a Git registry with tag versioning |
+| [versioned-modules.yml](13-modules/versioned-modules.yml) | Semantic version constraints: ^, ~, >=, exact, wildcard |
+| [module-lockfile.yml](13-modules/module-lockfile.yml) | Reproducible builds with orchstep-lock.yml version pinning |
+| [monorepo-scope.yml](13-modules/monorepo-scope.yml) | Import scoped modules from monorepos |
 
 Module directory structure:
 ```
@@ -197,6 +209,30 @@ Collect interactive input from users with automatic non-interactive fallback for
 | File | What it shows |
 |------|---------------|
 | [interactive-deploy.yml](16-user-prompts/interactive-deploy.yml) | All 5 prompt types (text, select, multiselect, confirm, password) in a deployment workflow |
+| [text-prompt.yml](16-user-prompts/text-prompt.yml) | Text input with defaults, non-interactive fallback |
+| [select-prompt.yml](16-user-prompts/select-prompt.yml) | Single-choice selection from options list |
+| [multiselect-prompt.yml](16-user-prompts/multiselect-prompt.yml) | Multiple-choice selection from options list |
+
+## 17 - Task Discovery
+
+Organize large workflows by splitting tasks across files.
+
+| File | What it shows |
+|------|---------------|
+| [task-file-discovery.yml](17-task-discovery/task-file-discovery.yml) | Auto-discover tasks from `tasks/` directory |
+| [task-naming.yml](17-task-discovery/task-naming.yml) | File-to-task-name mapping, directory nesting |
+| [task-precedence.yml](17-task-discovery/task-precedence.yml) | Inline tasks override discovered tasks |
+| [exclusion-patterns.yml](17-task-discovery/exclusion-patterns.yml) | Exclude task files with underscore prefix |
+
+## 18 - Nested Patterns
+
+Combine control flow structures for complex decision logic.
+
+| File | What it shows |
+|------|---------------|
+| [nested-conditionals.yml](18-nested-patterns/nested-conditionals.yml) | if/else inside if/else for multi-dimensional decisions |
+| [switch-in-loop.yml](18-nested-patterns/switch-in-loop.yml) | Loop with switch/case for per-item routing |
+| [deep-elif-chains.yml](18-nested-patterns/deep-elif-chains.yml) | Multi-branch elif for severity-based routing |
 
 ---
 
