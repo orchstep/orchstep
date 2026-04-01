@@ -1,0 +1,85 @@
+# Example: Git Push Operations
+# Push branches and tags to remote repositories.
+#
+# Git push uses func: shell because the built-in git function
+# focuses on clone/checkout operations. Shell gives full control
+# over push flags, remotes, and force-push safety.
+#
+# Try: orchstep run push-branch
+# Try: orchstep run push-tag
+
+name: git-push-operations-demo
+desc: "Push branches and tags to remote repositories"
+
+defaults:
+  repo_dir: "/tmp/orchstep-push-demo"
+  remote: "origin"
+
+tasks:
+  # -- Push a branch --
+  push-branch:
+    desc: "Push the current branch to remote"
+    steps:
+      - name: check_status
+        desc: "Verify clean working tree before push"
+        func: shell
+        do: |
+          cd {{ vars.repo_dir }} 2>/dev/null || echo "Demo mode: no repo"
+          echo "Branch: main"
+          echo "Status: clean"
+        outputs:
+          branch: "main"
+
+      - name: push_to_remote
+        desc: "Push branch with upstream tracking"
+        func: shell
+        do: |
+          echo "git push -u {{ vars.remote }} {{ steps.check_status.branch }}"
+          echo "Push successful"
+        outputs:
+          status: "success"
+
+  # -- Push a tag --
+  push-tag:
+    desc: "Create and push a release tag"
+    vars:
+      tag_name: "v1.2.0"
+      tag_message: "Release 1.2.0 - performance improvements"
+    steps:
+      - name: create_tag
+        desc: "Create an annotated tag"
+        func: shell
+        do: |
+          echo "git tag -a {{ vars.tag_name }} -m '{{ vars.tag_message }}'"
+          echo "Tag created: {{ vars.tag_name }}"
+        outputs:
+          tag: "{{ vars.tag_name }}"
+
+      - name: push_tag
+        desc: "Push the tag to remote"
+        func: shell
+        do: |
+          echo "git push {{ vars.remote }} {{ steps.create_tag.tag }}"
+          echo "Tag pushed successfully"
+
+      - name: push_all_tags
+        desc: "Push all local tags to remote"
+        func: shell
+        do: |
+          echo "git push {{ vars.remote }} --tags"
+          echo "All tags pushed"
+
+  # -- Force push (with safety) --
+  force-push:
+    desc: "Force push with lease for safety"
+    steps:
+      - name: force_push_safe
+        desc: "Use --force-with-lease to prevent overwriting others' work"
+        func: shell
+        do: |
+          echo "WARNING: Force push rewrites remote history"
+          echo "git push --force-with-lease {{ vars.remote }} main"
+          echo "Safe force push complete"
+          echo ""
+          echo "Tip: --force-with-lease fails if someone else pushed"
+          echo "     since your last fetch. Much safer than --force."

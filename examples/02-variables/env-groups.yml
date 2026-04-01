@@ -1,0 +1,93 @@
+# Example: Environment Groups
+# Define variable sets per environment (dev/staging/prod) with
+# inheritance from groups. Run with --env to select.
+#
+# Precedence (lowest to highest):
+#   defaults < env_group < environment < task vars < step vars < --var
+#
+# Groups let you share config across related environments (e.g.,
+# nonprod vs prod) while still allowing per-environment overrides.
+#
+# Try: orchstep run --env dev
+# Try: orchstep run --env staging
+# Try: orchstep run --env production
+# Try: orchstep run --env production --var log_level=debug
+
+name: env-groups-demo
+desc: "Multi-environment config with env groups and overrides"
+
+# Lowest priority: definition defaults
+defaults:
+  app_name: "payment-api"
+  base_domain: "example.com"
+  log_level: "info"
+  replicas: 1
+  db_host: "localhost"
+  api_host: "localhost"
+  monitoring_enabled: false
+
+# Shared variable sets for groups of environments
+env_groups:
+  nonprod:
+    vars:
+      replicas: 2
+      log_level: "debug"
+      api_host: "api-nonprod"
+      monitoring_enabled: false
+
+  prod:
+    vars:
+      replicas: 10
+      log_level: "error"
+      api_host: "api"
+      monitoring_enabled: true
+
+# Individual environments inherit from a group, then override
+environments:
+  dev:
+    group: nonprod
+    vars:
+      db_host: "dev-db"
+
+  staging:
+    group: nonprod
+    vars:
+      db_host: "staging-db"
+      replicas: 5            # Override the nonprod group default
+
+  production:
+    group: prod
+    vars:
+      db_host: "prod-db"
+
+tasks:
+  main:
+    desc: "Show resolved configuration for the active environment"
+    steps:
+      - name: show_config
+        desc: "Display all resolved variables"
+        func: shell
+        do: |
+          echo "=== {{ vars.app_name }} Configuration ==="
+          echo ""
+          echo "Database:    {{ vars.db_host }}.{{ vars.base_domain }}"
+          echo "API:         https://{{ vars.api_host }}.{{ vars.base_domain }}"
+          echo "Replicas:    {{ vars.replicas }}"
+          echo "Log Level:   {{ vars.log_level }}"
+          echo "Monitoring:  {{ vars.monitoring_enabled }}"
+        outputs:
+          db_host: "{{ vars.db_host }}"
+          replicas: "{{ vars.replicas }}"
+          log_level: "{{ vars.log_level }}"
+
+      - name: explain_precedence
+        desc: "Show how variable precedence works"
+        func: shell
+        do: |
+          echo ""
+          echo "=== Variable Precedence ==="
+          echo "1. defaults:     base values for all environments"
+          echo "2. env_groups:   shared overrides (nonprod, prod)"
+          echo "3. environments: per-environment overrides"
+          echo "4. task/step:    workflow-level overrides"
+          echo "5. --var:        CLI overrides (highest priority)"

@@ -1,0 +1,49 @@
+# Example: Text Prompt
+# Collect text input from users. Falls back to defaults in
+# non-interactive mode (CI/CD, LLM agents).
+#
+# Key concepts:
+#   - func: prompt with type: text for free-form input
+#   - default: value used in non-interactive mode
+#   - Access response via steps.<name>.value
+#   - steps.<name>.interactive shows if user was prompted
+#
+# Try: orchstep run
+# Try: orchstep run --non-interactive
+# Try: orchstep run --var greeting="Hey"
+
+name: text-prompt-demo
+desc: "Collect text input from users"
+
+defaults:
+  greeting: "Hello"
+
+tasks:
+  main:
+    desc: "Prompt for a name and greet the user"
+    steps:
+      - name: get_name
+        desc: "Ask for the user's name"
+        func: prompt
+        args:
+          message: "What is your name?"
+          type: text
+          default: "World"
+
+      - name: get_team
+        desc: "Ask for the user's team"
+        func: prompt
+        args:
+          message: "Which team are you on?"
+          type: text
+          default: "Engineering"
+
+      - name: greet
+        desc: "Display the personalized greeting"
+        func: shell
+        do: |
+          echo "{{ vars.greeting }}, {{ steps.get_name.value }}!"
+          echo "Team: {{ steps.get_team.value }}"
+          echo ""
+          echo "Interactive mode: {{ steps.get_name.interactive }}"
+          echo "Prompt type: {{ steps.get_name.type }}"

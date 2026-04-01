@@ -1,0 +1,107 @@
+# Example: Advanced Git Clone
+# Clone with depth limits, specific branches, and sparse checkout.
+#
+# Patterns for CI/CD pipelines where you need fast checkouts
+# with minimal data transfer.
+#
+# Try: orchstep run shallow-clone
+# Try: orchstep run branch-clone
+# Try: orchstep run sparse-checkout
+
+name: advanced-clone-demo
+desc: "Shallow clone, branch-specific clone, and sparse checkout"
+
+defaults:
+  repo_url: "https://github.com/orchstep/example-repo.git"
+  clone_dir: "/tmp/orchstep-advanced-clone"
+
+tasks:
+  # -- Shallow clone: fastest possible checkout --
+  shallow-clone:
+    desc: "Clone only the latest commit (ideal for CI/CD)"
+    steps:
+      - name: prepare
+        func: shell
+        do: |
+          rm -rf {{ vars.clone_dir }}/shallow
+          mkdir -p {{ vars.clone_dir }}
+
+      - name: clone_shallow
+        desc: "Depth 1 clone -- single commit, no history"
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.clone_dir }}/shallow"
+          depth: 1
+        outputs:
+          path: "{{ result.dest }}"
+          success: "{{ result.success }}"
+
+      - name: verify
+        func: shell
+        do: |
+          echo "Cloned to: {{ steps.clone_shallow.path }}"
+          echo "Success: {{ steps.clone_shallow.success }}"
+          echo ""
+          echo "Shallow clones save bandwidth and disk space."
+          echo "Perfect for build pipelines that don't need history."
+
+  # -- Branch-specific clone --
+  branch-clone:
+    desc: "Clone a single branch without fetching others"
+    vars:
+      target_branch: "develop"
+    steps:
+      - name: prepare
+        func: shell
+        do: rm -rf {{ vars.clone_dir }}/branch
+
+      - name: clone_branch
+        desc: "Clone only the target branch"
+        func: git
+        args:
+          operation: clone
+          url: "{{ vars.repo_url }}"
+          dest: "{{ vars.clone_dir }}/branch"
+          branch: "{{ vars.target_branch }}"
+          depth: 1
+        outputs:
+          success: "{{ result.success }}"
+
+      - name: show_branch
+        func: shell
+        do: |
+          echo "Cloned branch: {{ vars.target_branch }}"
+          echo "Only this branch was fetched -- other branches excluded."
+
+  # -- Sparse checkout: only specific directories --
+  sparse-checkout:
+    desc: "Clone a large repo but only check out specific paths"
+    steps:
+      - name: prepare
+        func: shell
+        do: rm -rf {{ vars.clone_dir }}/sparse
+
+      - name: init_sparse
+        desc: "Initialize sparse checkout with selected directories"
+        func: shell
+        do: |
+          echo "git clone --filter=blob:none --sparse {{ vars.repo_url }} {{ vars.clone_dir }}/sparse"
+          echo "cd {{ vars.clone_dir }}/sparse"
+          echo "git sparse-checkout set src/core src/api docs/"
+          echo ""
+          echo "Sparse checkout downloads only the directories you need."
+          echo "The rest of the repo exists in history but isn't on disk."
+          echo ""
+          echo "Ideal for monorepos where you only work on a few services."
+
+  # -- Cleanup --
+  cleanup:
+    desc: "Remove all cloned repositories"
+    steps:
+      - name: remove_all
+        func: shell
+        do: |
+          rm -rf {{ vars.clone_dir }}
+          echo "Cleanup complete"
