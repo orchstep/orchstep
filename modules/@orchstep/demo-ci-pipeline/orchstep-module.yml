@@ -1,0 +1,76 @@
+metadata:
+  name: demo-ci-pipeline
+  version: "1.0.0"
+  description: "CI/CD pipeline setup for GitHub Actions or GitLab CI (demo mock)"
+  author: "orchstep"
+  tags: ["ci", "cd", "pipeline", "github-actions", "gitlab-ci", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      provider:
+        type: string
+        required: true
+        desc: "CI provider (github or gitlab)"
+      stages:
+        type: string
+        required: false
+        desc: "Comma-separated pipeline stages (e.g. lint,test,build,deploy)"
+
+exports:
+  setup_pipeline:
+    desc: "Create the base CI pipeline configuration"
+    params:
+      - name: provider
+        type: string
+        required: false
+        desc: "Override CI provider (defaults to config)"
+    returns:
+      type: object
+      properties:
+        pipeline_url:
+          type: string
+        config_file:
+          type: string
+        provider:
+          type: string
+
+  add_checks:
+    desc: "Add quality checks (lint, test, security) to the pipeline"
+    params:
+      - name: checks
+        type: string
+        required: false
+        desc: "Comma-separated checks to add (defaults to lint,test,security)"
+    returns:
+      type: object
+      properties:
+        checks_added:
+          type: string
+        check_count:
+          type: string
+        provider:
+          type: string
+
+  configure_deploy:
+    desc: "Configure deployment stage in the pipeline"
+    params:
+      - name: environment
+        type: string
+        required: false
+        desc: "Target environment (staging, production)"
+    returns:
+      type: object
+      properties:
+        deploy_configured:
+          type: string
+        environment:
+          type: string
+        strategy:
+          type: string

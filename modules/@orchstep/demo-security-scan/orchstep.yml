@@ -1,0 +1,122 @@
+name: demo-security-scan
+desc: "Security scanning with SAST, dependency analysis, and reporting (demo: uses simulated responses)"
+
+tasks:
+  run_sast:
+    desc: "Run static application security testing"
+    steps:
+      - name: sast_scan
+        func: shell
+        do: |
+          SCAN_PATH="{{ vars.scan_path | default config.scan_path }}"
+          SEVERITY="{{ config.severity_threshold | default "medium" }}"
+
+          # DEMO: Simulate semgrep SAST scan
+          # In production, replace with:
+          # semgrep scan --config=auto --severity=${SEVERITY} ${SCAN_PATH} --json
+          echo "Running SAST scan on ${SCAN_PATH}..."
+          echo "  Tool:      semgrep"
+          echo "  Severity:  >= ${SEVERITY}"
+          echo "  Rules:     owasp-top-ten, cwe-top-25"
+
+          # Simulate findings based on severity threshold
+          case "${SEVERITY}" in
+            critical)  FINDINGS=0 ;;
+            high)      FINDINGS=2 ;;
+            medium)    FINDINGS=5 ;;
+            *)         FINDINGS=8 ;;
+          esac
+
+          if [ "${FINDINGS}" -eq 0 ]; then
+            STATUS="pass"
+          else
+            STATUS="findings"
+          fi
+
+          echo "SAST scan complete: ${FINDINGS} findings"
+          echo "status=${STATUS}"
+          echo "findings_count=${FINDINGS}"
+          echo "tool=semgrep"
+        outputs:
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+          findings_count: '{{ result.output | regexFind "findings_count=(.*)" }}'
+          tool: '{{ result.output | regexFind "tool=(.*)" }}'
+
+  run_dependency_scan:
+    desc: "Scan dependencies for known vulnerabilities"
+    steps:
+      - name: dep_scan
+        func: shell
+        do: |
+          SCAN_PATH="{{ vars.scan_path | default config.scan_path }}"
+          SEVERITY="{{ config.severity_threshold | default "medium" }}"
+
+          # DEMO: Simulate trivy dependency scan
+          # In production, replace with:
+          # trivy fs --severity ${SEVERITY} --format json ${SCAN_PATH}
+          echo "Running dependency scan on ${SCAN_PATH}..."
+          echo "  Tool:      trivy"
+          echo "  Severity:  >= ${SEVERITY}"
+          echo "  Scanning:  package-lock.json, go.sum, requirements.txt"
+
+          # Simulate findings
+          case "${SEVERITY}" in
+            critical)  FINDINGS=1 ;;
+            high)      FINDINGS=3 ;;
+            medium)    FINDINGS=7 ;;
+            *)         FINDINGS=12 ;;
+          esac
+
+          if [ "${FINDINGS}" -eq 0 ]; then
+            STATUS="pass"
+          else
+            STATUS="findings"
+          fi
+
+          echo "Dependency scan complete: ${FINDINGS} vulnerabilities"
+          echo "status=${STATUS}"
+          echo "findings_count=${FINDINGS}"
+          echo "tool=trivy"
+        outputs:
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+          findings_count: '{{ result.output | regexFind "findings_count=(.*)" }}'
+          tool: '{{ result.output | regexFind "tool=(.*)" }}'
+
+  generate_report:
+    desc: "Generate consolidated security report"
+    steps:
+      - name: create_report
+        func: shell
+        do: |
+          SAST_FINDINGS="{{ vars.sast_findings | default "0" }}"
+          DEP_FINDINGS="{{ vars.dep_findings | default "0" }}"
+          SEVERITY="{{ config.severity_threshold | default "medium" }}"
+
+          # DEMO: Simulate security report generation
+          # In production, replace with:
+          # Generate HTML/PDF report from scan results
+          TOTAL=$((SAST_FINDINGS + DEP_FINDINGS))
+          REPORT_PATH="./reports/security-report-$(date +%Y%m%d).html"
+
+          echo "Generating security report..."
+          echo "  SAST findings:       ${SAST_FINDINGS}"
+          echo "  Dependency findings: ${DEP_FINDINGS}"
+          echo "  Total findings:      ${TOTAL}"
+          echo "  Threshold:           ${SEVERITY}"
+
+          if [ "${TOTAL}" -eq 0 ]; then
+            STATUS="pass"
+            echo "  Result: PASS - no findings above threshold"
+          else
+            STATUS="fail"
+            echo "  Result: FAIL - ${TOTAL} findings require attention"
+          fi
+
+          echo "Report generated at ${REPORT_PATH}"
+          echo "status=${STATUS}"
+          echo "findings_count=${TOTAL}"
+          echo "report_path=${REPORT_PATH}"
+        outputs:
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+          findings_count: '{{ result.output | regexFind "findings_count=(.*)" }}'
+          report_path: '{{ result.output | regexFind "report_path=(.*)" }}'

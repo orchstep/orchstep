@@ -1,0 +1,82 @@
+name: demo-k8s-namespace
+desc: "Kubernetes namespace provisioning with quotas and RBAC (demo: uses simulated responses)"
+
+tasks:
+  ensure_namespace:
+    desc: "Create a Kubernetes namespace if it does not exist"
+    steps:
+      - name: create_namespace
+        func: shell
+        do: |
+          NAMESPACE="{{ vars.namespace | default config.namespace }}"
+
+          # DEMO: Simulate kubectl create namespace
+          # In production, replace with:
+          # kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+          echo "Creating namespace ${NAMESPACE}..."
+          echo "namespace/${NAMESPACE} created"
+          echo "namespace=${NAMESPACE}"
+          echo "status=active"
+        outputs:
+          namespace: '{{ result.output | regexFind "namespace=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+
+  apply_quotas:
+    desc: "Apply ResourceQuota to the namespace"
+    steps:
+      - name: apply_resource_quota
+        func: shell
+        do: |
+          NAMESPACE="{{ vars.namespace }}"
+          CPU_LIMIT="{{ config.cpu_limit | default "4" }}"
+          MEMORY_LIMIT="{{ config.memory_limit | default "8Gi" }}"
+
+          # DEMO: Simulate kubectl apply ResourceQuota
+          # In production, replace with:
+          # kubectl apply -f - <<EOF
+          # apiVersion: v1
+          # kind: ResourceQuota
+          # metadata:
+          #   name: ${NAMESPACE}-quota
+          #   namespace: ${NAMESPACE}
+          # spec:
+          #   hard:
+          #     requests.cpu: "${CPU_LIMIT}"
+          #     requests.memory: "${MEMORY_LIMIT}"
+          # EOF
+          echo "Applying ResourceQuota to ${NAMESPACE}..."
+          echo "  CPU limit:    ${CPU_LIMIT}"
+          echo "  Memory limit: ${MEMORY_LIMIT}"
+          echo "resourcequota/${NAMESPACE}-quota created"
+          echo "quota_name=${NAMESPACE}-quota"
+          echo "cpu_limit=${CPU_LIMIT}"
+          echo "memory_limit=${MEMORY_LIMIT}"
+        outputs:
+          quota_name: '{{ result.output | regexFind "quota_name=(.*)" }}'
+          cpu_limit: '{{ result.output | regexFind "cpu_limit=(.*)" }}'
+          memory_limit: '{{ result.output | regexFind "memory_limit=(.*)" }}'
+
+  setup_rbac:
+    desc: "Create ServiceAccount and RoleBinding for the namespace"
+    steps:
+      - name: create_rbac
+        func: shell
+        do: |
+          NAMESPACE="{{ vars.namespace }}"
+
+          # DEMO: Simulate kubectl create ServiceAccount + RoleBinding
+          # In production, replace with:
+          # kubectl create serviceaccount ${NAMESPACE}-sa -n ${NAMESPACE}
+          # kubectl create rolebinding ${NAMESPACE}-binding --role=edit --serviceaccount=${NAMESPACE}:${NAMESPACE}-sa -n ${NAMESPACE}
+          echo "Creating RBAC resources in ${NAMESPACE}..."
+          echo "  ServiceAccount: ${NAMESPACE}-sa"
+          echo "  Role:           edit"
+          echo "  RoleBinding:    ${NAMESPACE}-binding"
+          echo "RBAC configured successfully"
+          echo "service_account=${NAMESPACE}-sa"
+          echo "role_binding=${NAMESPACE}-binding"
+          echo "role=edit"
+        outputs:
+          service_account: '{{ result.output | regexFind "service_account=(.*)" }}'
+          role_binding: '{{ result.output | regexFind "role_binding=(.*)" }}'
+          role: '{{ result.output | regexFind "role=(.*)" }}'

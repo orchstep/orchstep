@@ -1,0 +1,98 @@
+name: demo-ci-pipeline
+desc: "CI/CD pipeline setup for GitHub Actions or GitLab CI (demo: uses simulated responses)"
+
+tasks:
+  setup_pipeline:
+    desc: "Create the base CI pipeline configuration"
+    steps:
+      - name: create_pipeline
+        func: shell
+        do: |
+          PROVIDER="{{ vars.provider | default config.provider }}"
+          STAGES="{{ config.stages | default "lint,test,build,deploy" }}"
+
+          # DEMO: Simulate writing CI pipeline config
+          # In production, replace with:
+          # For github: mkdir -p .github/workflows && cat > .github/workflows/ci.yml
+          # For gitlab: cat > .gitlab-ci.yml
+          echo "Setting up ${PROVIDER} CI pipeline..."
+          echo "  Stages: ${STAGES}"
+
+          case "${PROVIDER}" in
+            github)
+              CONFIG_FILE=".github/workflows/ci.yml"
+              PIPELINE_URL="https://github.com/demo-org/demo-repo/actions"
+              echo "  Config: ${CONFIG_FILE}"
+              ;;
+            gitlab)
+              CONFIG_FILE=".gitlab-ci.yml"
+              PIPELINE_URL="https://gitlab.com/demo-org/demo-repo/-/pipelines"
+              echo "  Config: ${CONFIG_FILE}"
+              ;;
+            *)
+              CONFIG_FILE="ci-config.yml"
+              PIPELINE_URL="https://ci.example.com/pipelines"
+              echo "  Config: ${CONFIG_FILE} (generic)"
+              ;;
+          esac
+
+          echo "Pipeline created successfully"
+          echo "pipeline_url=${PIPELINE_URL}"
+          echo "config_file=${CONFIG_FILE}"
+          echo "provider=${PROVIDER}"
+        outputs:
+          pipeline_url: '{{ result.output | regexFind "pipeline_url=(.*)" }}'
+          config_file: '{{ result.output | regexFind "config_file=(.*)" }}'
+          provider: '{{ result.output | regexFind "provider=(.*)" }}'
+
+  add_checks:
+    desc: "Add quality checks to the pipeline"
+    steps:
+      - name: add_quality_checks
+        func: shell
+        do: |
+          PROVIDER="{{ config.provider }}"
+          CHECKS="{{ vars.checks | default "lint,test,security" }}"
+
+          # DEMO: Simulate adding checks to pipeline
+          # In production, replace with actual config file modifications
+          echo "Adding checks to ${PROVIDER} pipeline..."
+          COUNT=0
+          for CHECK in $(echo "${CHECKS}" | tr ',' ' '); do
+            echo "  + ${CHECK} check added"
+            COUNT=$((COUNT + 1))
+          done
+
+          echo "All checks configured"
+          echo "checks_added=${CHECKS}"
+          echo "check_count=${COUNT}"
+          echo "provider=${PROVIDER}"
+        outputs:
+          checks_added: '{{ result.output | regexFind "checks_added=(.*)" }}'
+          check_count: '{{ result.output | regexFind "check_count=(.*)" }}'
+          provider: '{{ result.output | regexFind "provider=(.*)" }}'
+
+  configure_deploy:
+    desc: "Configure deployment stage in the pipeline"
+    steps:
+      - name: setup_deploy
+        func: shell
+        do: |
+          PROVIDER="{{ config.provider }}"
+          ENVIRONMENT="{{ vars.environment | default "staging" }}"
+
+          # DEMO: Simulate deployment configuration
+          # In production, replace with:
+          # Add deploy stage to CI config with environment-specific settings
+          echo "Configuring deployment for ${PROVIDER}..."
+          echo "  Environment: ${ENVIRONMENT}"
+          echo "  Strategy:    rolling-update"
+          echo "  Approval:    ${ENVIRONMENT} requires manual approval"
+          echo "Deploy stage configured"
+          echo "deploy_configured=true"
+          echo "environment=${ENVIRONMENT}"
+          echo "strategy=rolling-update"
+        outputs:
+          deploy_configured: '{{ result.output | regexFind "deploy_configured=(.*)" }}'
+          environment: '{{ result.output | regexFind "environment=(.*)" }}'
+          strategy: '{{ result.output | regexFind "strategy=(.*)" }}'

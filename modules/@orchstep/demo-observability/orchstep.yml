@@ -1,0 +1,117 @@
+name: demo-observability
+desc: "Observability stack setup with monitoring, alerts, and dashboards (demo: uses simulated responses)"
+
+tasks:
+  setup_monitoring:
+    desc: "Configure monitoring for a service"
+    steps:
+      - name: configure_monitoring
+        func: shell
+        do: |
+          SERVICE="{{ vars.service_name | default config.service_name }}"
+          TIER="{{ config.tier }}"
+
+          # DEMO: Simulate Datadog/Prometheus monitoring setup
+          # In production, replace with:
+          # datadog-agent configure --service=${SERVICE} --tier=${TIER}
+          # or: kubectl apply -f prometheus-servicemonitor.yml
+          echo "Setting up monitoring for ${SERVICE} (tier: ${TIER})..."
+
+          case "${TIER}" in
+            critical)
+              echo "  Scrape interval: 10s"
+              echo "  Retention:       90d"
+              echo "  Replicas:        3"
+              ;;
+            standard)
+              echo "  Scrape interval: 30s"
+              echo "  Retention:       30d"
+              echo "  Replicas:        2"
+              ;;
+            *)
+              echo "  Scrape interval: 60s"
+              echo "  Retention:       7d"
+              echo "  Replicas:        1"
+              ;;
+          esac
+
+          echo "Monitoring configured successfully"
+          echo "monitoring_active=true"
+          echo "service_name=${SERVICE}"
+          echo "tier=${TIER}"
+        outputs:
+          monitoring_active: '{{ result.output | regexFind "monitoring_active=(.*)" }}'
+          service_name: '{{ result.output | regexFind "service_name=(.*)" }}'
+          tier: '{{ result.output | regexFind "tier=(.*)" }}'
+
+  configure_alerts:
+    desc: "Set up alerting rules based on service tier"
+    steps:
+      - name: setup_alerts
+        func: shell
+        do: |
+          SERVICE="{{ vars.service_name }}"
+          TIER="{{ config.tier }}"
+          CHANNELS="{{ config.alert_channels | default "slack" }}"
+
+          # DEMO: Simulate alert rule creation
+          # In production, replace with:
+          # datadog monitor create --type metric --query "avg:system.cpu{service:${SERVICE}} > 80"
+          echo "Configuring alerts for ${SERVICE} (tier: ${TIER})..."
+          COUNT=0
+
+          case "${TIER}" in
+            critical)
+              echo "  + High CPU alert (>70%, P1)"
+              echo "  + High memory alert (>80%, P1)"
+              echo "  + Error rate alert (>0.1%, P1)"
+              echo "  + Latency p99 alert (>500ms, P2)"
+              COUNT=4
+              ;;
+            standard)
+              echo "  + High CPU alert (>80%, P2)"
+              echo "  + Error rate alert (>1%, P2)"
+              COUNT=2
+              ;;
+            *)
+              echo "  + Error rate alert (>5%, P3)"
+              COUNT=1
+              ;;
+          esac
+
+          echo "  Channels: ${CHANNELS}"
+          echo "Alerts configured successfully"
+          echo "alerts_configured=true"
+          echo "alert_count=${COUNT}"
+          echo "channels=${CHANNELS}"
+        outputs:
+          alerts_configured: '{{ result.output | regexFind "alerts_configured=(.*)" }}'
+          alert_count: '{{ result.output | regexFind "alert_count=(.*)" }}'
+          channels: '{{ result.output | regexFind "channels=(.*)" }}'
+
+  add_dashboards:
+    desc: "Create monitoring dashboards for the service"
+    steps:
+      - name: create_dashboards
+        func: shell
+        do: |
+          SERVICE="{{ vars.service_name }}"
+          TIER="{{ config.tier }}"
+
+          # DEMO: Simulate Grafana dashboard creation
+          # In production, replace with:
+          # grafana-cli dashboard import --json dashboard-template.json --overwrite
+          DASHBOARD_NAME="${SERVICE}-overview"
+          DASHBOARD_URL="https://grafana.demo.local/d/${SERVICE}-demo"
+          echo "Creating dashboards for ${SERVICE}..."
+          echo "  Dashboard: ${DASHBOARD_NAME}"
+          echo "  Panels:    requests, latency, errors, cpu, memory, pods"
+          echo "  URL:       ${DASHBOARD_URL}"
+          echo "Dashboard created successfully"
+          echo "dashboard_url=${DASHBOARD_URL}"
+          echo "panels=requests,latency,errors,cpu,memory,pods"
+          echo "dashboard_name=${DASHBOARD_NAME}"
+        outputs:
+          dashboard_url: '{{ result.output | regexFind "dashboard_url=(.*)" }}'
+          panels: '{{ result.output | regexFind "panels=(.*)" }}'
+          dashboard_name: '{{ result.output | regexFind "dashboard_name=(.*)" }}'

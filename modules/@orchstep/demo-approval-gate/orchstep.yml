@@ -1,0 +1,100 @@
+name: demo-approval-gate
+desc: "Approval gate workflow with policy enforcement (demo: uses simulated responses)"
+
+tasks:
+  request_approval:
+    desc: "Submit an approval request to designated approvers"
+    steps:
+      - name: submit_request
+        func: shell
+        do: |
+          APPROVERS="{{ config.approvers }}"
+          POLICY="{{ config.policy }}"
+          TIMEOUT="{{ config.timeout | default "60" }}"
+          DESCRIPTION="{{ vars.change_description }}"
+
+          # DEMO: Simulate approval request submission
+          # In production, replace with:
+          # curl -X POST https://approval-api.internal/requests -d '{"approvers": [...], "description": "..."}'
+          REQUEST_ID="approval-$(date +%s | tail -c 8)"
+          echo "Submitting approval request..."
+          echo "  Request ID:  ${REQUEST_ID}"
+          echo "  Description: ${DESCRIPTION}"
+          echo "  Approvers:   ${APPROVERS}"
+          echo "  Policy:      ${POLICY}"
+          echo "  Timeout:     ${TIMEOUT}m"
+          echo "Request submitted successfully"
+          echo "request_id=${REQUEST_ID}"
+          echo "status=pending"
+          echo "approvers=${APPROVERS}"
+        outputs:
+          request_id: '{{ result.output | regexFind "request_id=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+          approvers: '{{ result.output | regexFind "approvers=(.*)" }}'
+
+  check_status:
+    desc: "Check the status of an approval request"
+    steps:
+      - name: poll_status
+        func: shell
+        do: |
+          REQUEST_ID="{{ vars.request_id }}"
+          APPROVERS="{{ config.approvers }}"
+
+          # DEMO: Simulate checking approval status
+          # In production, replace with:
+          # curl -s https://approval-api.internal/requests/${REQUEST_ID}/status
+          FIRST_APPROVER=$(echo "${APPROVERS}" | cut -d',' -f1)
+          echo "Checking approval status for ${REQUEST_ID}..."
+          echo "  Status:   approved (simulated)"
+          echo "  Approved by: ${FIRST_APPROVER}"
+          echo "approved=true"
+          echo "approver=${FIRST_APPROVER}"
+          echo "status=approved"
+        outputs:
+          approved: '{{ result.output | regexFind "approved=(.*)" }}'
+          approver: '{{ result.output | regexFind "approver=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+
+  enforce_policy:
+    desc: "Enforce the approval policy and return final decision"
+    steps:
+      - name: evaluate_policy
+        func: shell
+        do: |
+          REQUEST_ID="{{ vars.request_id }}"
+          POLICY="{{ config.policy }}"
+          APPROVERS="{{ config.approvers }}"
+
+          # DEMO: Simulate policy enforcement
+          # In production, replace with:
+          # Evaluate approval count against policy (any/all/majority)
+          APPROVER_COUNT=$(echo "${APPROVERS}" | tr ',' '\n' | wc -l | tr -d ' ')
+          echo "Enforcing policy for ${REQUEST_ID}..."
+          echo "  Policy:     ${POLICY}"
+          echo "  Approvers:  ${APPROVER_COUNT} total"
+
+          case "${POLICY}" in
+            any)
+              echo "  Required:   1 of ${APPROVER_COUNT}"
+              echo "  Result:     PASS (1 approval received)"
+              ;;
+            all)
+              echo "  Required:   ${APPROVER_COUNT} of ${APPROVER_COUNT}"
+              echo "  Result:     PASS (all approvals received, simulated)"
+              ;;
+            majority)
+              REQUIRED=$(( (APPROVER_COUNT / 2) + 1 ))
+              echo "  Required:   ${REQUIRED} of ${APPROVER_COUNT}"
+              echo "  Result:     PASS (majority reached, simulated)"
+              ;;
+          esac
+
+          echo "Policy enforcement complete"
+          echo "policy_result=pass"
+          echo "policy=${POLICY}"
+          echo "approved=true"
+        outputs:
+          policy_result: '{{ result.output | regexFind "policy_result=(.*)" }}'
+          policy: '{{ result.output | regexFind "policy=(.*)" }}'
+          approved: '{{ result.output | regexFind "approved=(.*)" }}'

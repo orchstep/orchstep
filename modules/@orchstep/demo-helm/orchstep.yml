@@ -1,0 +1,85 @@
+name: demo-helm
+desc: "Helm chart lifecycle management (demo: uses simulated responses)"
+
+tasks:
+  install_chart:
+    desc: "Install a Helm chart"
+    steps:
+      - name: helm_install
+        func: shell
+        do: |
+          RELEASE="{{ vars.release_name | default config.release_name }}"
+          CHART="{{ config.chart }}"
+          NAMESPACE="{{ config.namespace }}"
+          VALUES="{{ config.values | default "" }}"
+
+          # DEMO: Simulate helm install
+          # In production, replace with:
+          # helm install ${RELEASE} ${CHART} -n ${NAMESPACE} ${VALUES:+--values ${VALUES}}
+          echo "Installing Helm chart..."
+          echo "  Release:   ${RELEASE}"
+          echo "  Chart:     ${CHART}"
+          echo "  Namespace: ${NAMESPACE}"
+          [ -n "${VALUES}" ] && echo "  Values:    ${VALUES}"
+          echo "STATUS: deployed"
+          echo "REVISION: 1"
+          echo "release=${RELEASE}"
+          echo "status=deployed"
+          echo "revision=1"
+        outputs:
+          release: '{{ result.output | regexFind "release=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+          revision: '{{ result.output | regexFind "revision=(.*)" }}'
+
+  upgrade_chart:
+    desc: "Upgrade an existing Helm release"
+    steps:
+      - name: helm_upgrade
+        func: shell
+        do: |
+          RELEASE="{{ vars.release_name | default config.release_name }}"
+          CHART="{{ config.chart }}"
+          NAMESPACE="{{ config.namespace }}"
+          VALUES="{{ config.values | default "" }}"
+
+          # DEMO: Simulate helm upgrade
+          # In production, replace with:
+          # helm upgrade ${RELEASE} ${CHART} -n ${NAMESPACE} ${VALUES:+--values ${VALUES}}
+          echo "Upgrading Helm release..."
+          echo "  Release:   ${RELEASE}"
+          echo "  Chart:     ${CHART}"
+          echo "  Namespace: ${NAMESPACE}"
+          echo "STATUS: deployed"
+          echo "REVISION: 2"
+          echo "release=${RELEASE}"
+          echo "status=deployed"
+          echo "revision=2"
+        outputs:
+          release: '{{ result.output | regexFind "release=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+          revision: '{{ result.output | regexFind "revision=(.*)" }}'
+
+  rollback:
+    desc: "Rollback a Helm release to a previous revision"
+    steps:
+      - name: helm_rollback
+        func: shell
+        do: |
+          RELEASE="{{ vars.release_name | default config.release_name }}"
+          NAMESPACE="{{ config.namespace }}"
+          REVISION="{{ vars.revision | default "1" }}"
+
+          # DEMO: Simulate helm rollback
+          # In production, replace with:
+          # helm rollback ${RELEASE} ${REVISION} -n ${NAMESPACE}
+          echo "Rolling back Helm release..."
+          echo "  Release:  ${RELEASE}"
+          echo "  Revision: ${REVISION}"
+          echo "Rollback was a success!"
+          echo "release=${RELEASE}"
+          echo "status=rolled-back"
+          echo "revision=${REVISION}"
+        outputs:
+          release: '{{ result.output | regexFind "release=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+          revision: '{{ result.output | regexFind "revision=(.*)" }}'

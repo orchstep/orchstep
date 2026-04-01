@@ -1,0 +1,80 @@
+metadata:
+  name: demo-repo-scaffold
+  version: "1.0.0"
+  description: "Repository scaffolding with structure and CI configuration (demo mock)"
+  author: "orchstep"
+  tags: ["repo", "scaffold", "github", "ci", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      repo_name:
+        type: string
+        required: true
+        desc: "Name of the repository to create"
+      language:
+        type: string
+        required: true
+        desc: "Primary language (go, python, node, rust)"
+      template:
+        type: string
+        required: false
+        desc: "Template to use for scaffolding"
+
+exports:
+  create_repo:
+    desc: "Create a new GitHub repository"
+    params:
+      - name: repo_name
+        type: string
+        required: false
+        desc: "Override repo name (defaults to config)"
+    returns:
+      type: object
+      properties:
+        repo_url:
+          type: string
+        repo_name:
+          type: string
+        visibility:
+          type: string
+
+  init_structure:
+    desc: "Initialize project directory structure"
+    params:
+      - name: repo_name
+        type: string
+        required: true
+        desc: "Repository name for structure init"
+    returns:
+      type: object
+      properties:
+        structure_created:
+          type: string
+        directories:
+          type: string
+        files:
+          type: string
+
+  configure_ci:
+    desc: "Configure CI pipeline for the repository"
+    params:
+      - name: repo_name
+        type: string
+        required: true
+        desc: "Repository name for CI configuration"
+    returns:
+      type: object
+      properties:
+        ci_configured:
+          type: string
+        ci_file:
+          type: string
+        provider:
+          type: string

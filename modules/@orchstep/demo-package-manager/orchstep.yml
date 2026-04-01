@@ -1,0 +1,100 @@
+name: demo-package-manager
+desc: "Cross-platform package installation and verification (demo: uses simulated responses)"
+
+tasks:
+  install:
+    desc: "Detect OS and simulate package installation"
+    steps:
+      - name: install_packages
+        func: shell
+        do: |
+          PACKAGES="{{ vars.packages }}"
+          OS_TYPE="{{ config.os_type | default "auto" }}"
+
+          # Detect OS if auto
+          if [ "${OS_TYPE}" = "auto" ]; then
+            case "$(uname -s)" in
+              Darwin)
+                OS_TYPE="macos"
+                ;;
+              Linux)
+                if [ -f /etc/debian_version ]; then
+                  OS_TYPE="debian"
+                elif [ -f /etc/fedora-release ]; then
+                  OS_TYPE="fedora"
+                else
+                  OS_TYPE="linux"
+                fi
+                ;;
+              *)
+                OS_TYPE="unknown"
+                ;;
+            esac
+          fi
+
+          echo "Detected OS: ${OS_TYPE}"
+
+          # DEMO: Simulate package installation per OS
+          # In production, replace with actual package manager commands
+          COUNT=0
+          for PKG in ${PACKAGES}; do
+            case "${OS_TYPE}" in
+              macos)
+                # In production: brew install ${PKG}
+                echo "  brew install ${PKG} ... done (simulated)"
+                ;;
+              debian)
+                # In production: sudo apt-get install -y ${PKG}
+                echo "  apt-get install -y ${PKG} ... done (simulated)"
+                ;;
+              fedora)
+                # In production: sudo dnf install -y ${PKG}
+                echo "  dnf install -y ${PKG} ... done (simulated)"
+                ;;
+              *)
+                echo "  [unknown manager] install ${PKG} ... done (simulated)"
+                ;;
+            esac
+            COUNT=$((COUNT + 1))
+          done
+
+          echo "All packages installed successfully"
+          echo "installed=true"
+          echo "package_manager=${OS_TYPE}"
+          echo "count=${COUNT}"
+        outputs:
+          installed: '{{ result.output | regexFind "installed=(.*)" }}'
+          package_manager: '{{ result.output | regexFind "package_manager=(.*)" }}'
+          count: '{{ result.output | regexFind "count=(.*)" }}'
+
+  verify:
+    desc: "Verify installed packages are available on PATH"
+    steps:
+      - name: verify_packages
+        func: shell
+        do: |
+          PACKAGES="{{ vars.packages }}"
+
+          # DEMO: Check if commands exist with command -v
+          INSTALLED=""
+          MISSING=""
+          COUNT=0
+          for PKG in ${PACKAGES}; do
+            if command -v "${PKG}" >/dev/null 2>&1; then
+              echo "  ${PKG}: found at $(command -v ${PKG})"
+              INSTALLED="${INSTALLED}${PKG} "
+              COUNT=$((COUNT + 1))
+            else
+              echo "  ${PKG}: NOT found"
+              MISSING="${MISSING}${PKG} "
+            fi
+          done
+
+          echo "Verification complete"
+          echo "installed=${INSTALLED:-none}"
+          echo "missing=${MISSING:-none}"
+          echo "count=${COUNT}"
+        outputs:
+          installed: '{{ result.output | regexFind "installed=(.*)" }}'
+          missing: '{{ result.output | regexFind "missing=(.*)" }}'
+          count: '{{ result.output | regexFind "count=(.*)" }}'

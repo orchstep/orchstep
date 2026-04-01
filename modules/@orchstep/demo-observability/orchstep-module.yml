@@ -1,0 +1,80 @@
+metadata:
+  name: demo-observability
+  version: "1.0.0"
+  description: "Observability stack setup with monitoring, alerts, and dashboards (demo mock)"
+  author: "orchstep"
+  tags: ["observability", "monitoring", "alerts", "dashboards", "datadog", "prometheus", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      service_name:
+        type: string
+        required: true
+        desc: "Name of the service to monitor"
+      tier:
+        type: string
+        required: true
+        desc: "Service tier (critical, standard, best-effort)"
+      alert_channels:
+        type: string
+        required: false
+        desc: "Comma-separated alert channels (slack, pagerduty, email)"
+
+exports:
+  setup_monitoring:
+    desc: "Configure monitoring for a service"
+    params:
+      - name: service_name
+        type: string
+        required: false
+        desc: "Override service name (defaults to config)"
+    returns:
+      type: object
+      properties:
+        monitoring_active:
+          type: string
+        service_name:
+          type: string
+        tier:
+          type: string
+
+  configure_alerts:
+    desc: "Set up alerting rules based on service tier"
+    params:
+      - name: service_name
+        type: string
+        required: true
+        desc: "Service to configure alerts for"
+    returns:
+      type: object
+      properties:
+        alerts_configured:
+          type: string
+        alert_count:
+          type: string
+        channels:
+          type: string
+
+  add_dashboards:
+    desc: "Create monitoring dashboards for the service"
+    params:
+      - name: service_name
+        type: string
+        required: true
+        desc: "Service to create dashboards for"
+    returns:
+      type: object
+      properties:
+        dashboard_url:
+          type: string
+        panels:
+          type: string
+        dashboard_name:
+          type: string

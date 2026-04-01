@@ -1,0 +1,88 @@
+metadata:
+  name: demo-helm
+  version: "1.0.0"
+  description: "Helm chart lifecycle management (demo mock)"
+  author: "orchstep"
+  tags: ["helm", "kubernetes", "charts", "deploy", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      release_name:
+        type: string
+        required: true
+        desc: "Helm release name"
+      chart:
+        type: string
+        required: true
+        desc: "Helm chart reference (e.g. bitnami/nginx)"
+      namespace:
+        type: string
+        required: true
+        desc: "Kubernetes namespace for the release"
+      values:
+        type: string
+        required: false
+        desc: "Path to values file or inline YAML overrides"
+
+exports:
+  install_chart:
+    desc: "Install a Helm chart"
+    params:
+      - name: release_name
+        type: string
+        required: false
+        desc: "Override release name (defaults to config)"
+    returns:
+      type: object
+      properties:
+        release:
+          type: string
+        status:
+          type: string
+        revision:
+          type: string
+
+  upgrade_chart:
+    desc: "Upgrade an existing Helm release"
+    params:
+      - name: release_name
+        type: string
+        required: false
+        desc: "Override release name (defaults to config)"
+    returns:
+      type: object
+      properties:
+        release:
+          type: string
+        status:
+          type: string
+        revision:
+          type: string
+
+  rollback:
+    desc: "Rollback a Helm release to a previous revision"
+    params:
+      - name: release_name
+        type: string
+        required: false
+        desc: "Override release name (defaults to config)"
+      - name: revision
+        type: string
+        required: false
+        desc: "Revision to rollback to (defaults to previous)"
+    returns:
+      type: object
+      properties:
+        release:
+          type: string
+        status:
+          type: string
+        revision:
+          type: string

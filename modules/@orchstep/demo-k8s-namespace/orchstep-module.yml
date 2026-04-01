@@ -1,0 +1,80 @@
+metadata:
+  name: demo-k8s-namespace
+  version: "1.0.0"
+  description: "Kubernetes namespace provisioning with quotas and RBAC (demo mock)"
+  author: "orchstep"
+  tags: ["kubernetes", "k8s", "namespace", "rbac", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      namespace:
+        type: string
+        required: true
+        desc: "Kubernetes namespace to create"
+      cpu_limit:
+        type: string
+        required: false
+        default: "4"
+        desc: "CPU limit for the namespace ResourceQuota"
+      memory_limit:
+        type: string
+        required: false
+        default: "8Gi"
+        desc: "Memory limit for the namespace ResourceQuota"
+
+exports:
+  ensure_namespace:
+    desc: "Create a Kubernetes namespace if it does not exist"
+    params:
+      - name: namespace
+        type: string
+        required: false
+        desc: "Override namespace (defaults to config)"
+    returns:
+      type: object
+      properties:
+        namespace:
+          type: string
+        status:
+          type: string
+
+  apply_quotas:
+    desc: "Apply ResourceQuota to the namespace"
+    params:
+      - name: namespace
+        type: string
+        required: true
+        desc: "Namespace to apply quotas to"
+    returns:
+      type: object
+      properties:
+        quota_name:
+          type: string
+        cpu_limit:
+          type: string
+        memory_limit:
+          type: string
+
+  setup_rbac:
+    desc: "Create ServiceAccount and RoleBinding for the namespace"
+    params:
+      - name: namespace
+        type: string
+        required: true
+        desc: "Namespace to configure RBAC for"
+    returns:
+      type: object
+      properties:
+        service_account:
+          type: string
+        role_binding:
+          type: string
+        role:
+          type: string
