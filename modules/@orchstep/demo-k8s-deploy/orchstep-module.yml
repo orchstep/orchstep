@@ -1,0 +1,64 @@
+metadata:
+  name: demo-k8s-deploy
+  version: "1.0.0"
+  description: "Kubernetes application deployment — composes namespace provisioning with app deployment (demo mock)"
+  author: "orchstep"
+  tags: ["k8s", "kubernetes", "deploy", "composition", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      namespace:
+        type: string
+        required: true
+        desc: "Kubernetes namespace for the deployment"
+      app_name:
+        type: string
+        required: true
+        desc: "Application name for the deployment"
+      image:
+        type: string
+        required: true
+        desc: "Container image to deploy"
+      replicas:
+        type: string
+        required: false
+        default: "3"
+        desc: "Number of replicas for the deployment"
+
+exports:
+  deploy:
+    desc: "Deploy application with namespace setup, quotas, RBAC, and deployment apply"
+    params:
+      - name: tag
+        type: string
+        required: true
+        desc: "Image tag to deploy"
+    returns:
+      type: object
+      properties:
+        deployment:
+          type: string
+        namespace:
+          type: string
+        replicas:
+          type: string
+        status:
+          type: string
+
+  rollback:
+    desc: "Rollback the deployment to the previous revision"
+    params: []
+    returns:
+      type: object
+      properties:
+        deployment:
+          type: string
+        status:
+          type: string

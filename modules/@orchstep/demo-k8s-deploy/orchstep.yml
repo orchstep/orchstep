@@ -1,0 +1,93 @@
+name: demo-k8s-deploy
+desc: "Kubernetes application deployment — composes namespace provisioning with app deployment (demo)"
+
+# --- THIS MODULE IMPORTS OTHER MODULES ---
+# This demonstrates 2nd-layer composition:
+# Consumer -> demo-k8s-deploy -> demo-k8s-namespace (3 layers total)
+modules:
+  - name: ns
+    source: "../demo-k8s-namespace"
+    config:
+      namespace: "{{ config.namespace }}"
+
+tasks:
+  deploy:
+    desc: "Deploy application with namespace setup, quotas, RBAC, and deployment apply"
+    steps:
+      # Layer 2: Ensure namespace exists
+      - name: setup_namespace
+        module: ns
+        task: ensure_namespace
+
+      # Layer 2: Apply resource quotas
+      - name: setup_quotas
+        module: ns
+        task: apply_quotas
+
+      # Layer 2: Setup RBAC with app-specific service account
+      - name: setup_rbac
+        module: ns
+        task: setup_rbac
+        with:
+          service_account: "{{ config.app_name }}-sa"
+
+      # Apply the deployment
+      - name: apply_deployment
+        func: shell
+        do: |
+          NAMESPACE="{{ config.namespace }}"
+          APP_NAME="{{ config.app_name }}"
+          IMAGE="{{ config.image }}"
+          TAG="{{ vars.tag }}"
+          REPLICAS="{{ config.replicas | default "3" }}"
+
+          # DEMO: Simulate kubectl apply deployment
+          # In production, replace with:
+          # kubectl apply -f - <<EOF
+          # apiVersion: apps/v1
+          # kind: Deployment
+          # metadata:
+          #   name: ${APP_NAME}
+          #   namespace: ${NAMESPACE}
+          # spec:
+          #   replicas: ${REPLICAS}
+          #   template:
+          #     spec:
+          #       containers:
+          #       - name: ${APP_NAME}
+          #         image: ${IMAGE}:${TAG}
+          # EOF
+          echo "Applying deployment ${APP_NAME} to ${NAMESPACE}..."
+          echo "  Image:    ${IMAGE}:${TAG}"
+          echo "  Replicas: ${REPLICAS}"
+          echo "  SA:       {{ steps.setup_rbac.service_account }}"
+          echo "deployment.apps/${APP_NAME} configured"
+          echo "deployment=${APP_NAME}"
+          echo "namespace=${NAMESPACE}"
+          echo "replicas=${REPLICAS}"
+          echo "status=deployed"
+        outputs:
+          deployment: '{{ result.output | regexFind "deployment=(.*)" }}'
+          namespace: '{{ result.output | regexFind "namespace=(.*)" }}'
+          replicas: '{{ result.output | regexFind "replicas=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+
+  rollback:
+    desc: "Rollback the deployment to the previous revision"
+    steps:
+      - name: rollback_deployment
+        func: shell
+        do: |
+          APP_NAME="{{ config.app_name }}"
+          NAMESPACE="{{ config.namespace }}"
+
+          # DEMO: Simulate kubectl rollout undo
+          # In production, replace with:
+          # kubectl rollout undo deployment/${APP_NAME} -n ${NAMESPACE}
+          echo "Rolling back deployment ${APP_NAME} in ${NAMESPACE}..."
+          echo "deployment.apps/${APP_NAME} rolled back"
+          echo "deployment=${APP_NAME}"
+          echo "status=rolled-back"
+        outputs:
+          deployment: '{{ result.output | regexFind "deployment=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'

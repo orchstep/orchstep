@@ -1,0 +1,128 @@
+name: demo-machine-setup
+desc: "Developer machine onboarding — composes package management with shell and SSH setup (demo)"
+
+# --- THIS MODULE IMPORTS OTHER MODULES ---
+# This demonstrates 2nd-layer composition:
+# Consumer -> demo-machine-setup -> demo-package-manager (3 layers total)
+modules:
+  - name: pkg
+    source: "../demo-package-manager"
+    config:
+      os_type: "{{ config.os_type }}"
+
+tasks:
+  install_tools:
+    desc: "Install and verify developer tools via package manager"
+    steps:
+      # Layer 2: Install packages
+      - name: install
+        module: pkg
+        task: install
+        with:
+          packages: "{{ vars.packages }}"
+
+      # Layer 2: Verify packages
+      - name: verify
+        module: pkg
+        task: verify
+        with:
+          packages: "{{ vars.packages }}"
+
+      # Report summary
+      - name: report
+        func: shell
+        do: |
+          echo "=== Tool Installation Report ==="
+          echo "Installed: {{ steps.install.installed }}"
+          echo "Count:     {{ steps.install.count }}"
+          echo "Verified:  {{ steps.verify.installed }}"
+          echo "Missing:   {{ steps.verify.missing }}"
+          echo "================================"
+          echo "installed={{ steps.install.installed }}"
+          echo "count={{ steps.install.count }}"
+        outputs:
+          installed: '{{ steps.install.installed }}'
+          count: '{{ steps.install.count }}'
+
+  configure_shell:
+    desc: "Configure shell environment (zsh, oh-my-zsh, plugins)"
+    steps:
+      - name: setup_shell
+        func: shell
+        do: |
+          SHELL_TYPE="{{ vars.shell_type }}"
+          PLUGINS="{{ vars.plugins }}"
+
+          # DEMO: Simulate shell configuration
+          # In production, replace with actual shell setup commands:
+          # sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+          echo "Configuring ${SHELL_TYPE} environment..."
+          echo "  Installing oh-my-${SHELL_TYPE}... done (simulated)"
+          for PLUGIN in ${PLUGINS}; do
+            echo "  Installing plugin: ${PLUGIN}... done (simulated)"
+          done
+          echo "Shell configuration complete"
+          echo "shell=${SHELL_TYPE}"
+          echo "configured=true"
+        outputs:
+          shell: '{{ result.output | regexFind "shell=(.*)" }}'
+          configured: '{{ result.output | regexFind "configured=(.*)" }}'
+
+  setup_ssh:
+    desc: "Generate SSH key pair for Git and remote access"
+    steps:
+      - name: generate_ssh_key
+        func: shell
+        do: |
+          EMAIL="{{ vars.email }}"
+
+          # DEMO: Simulate ssh-keygen
+          # In production, replace with:
+          # ssh-keygen -t ed25519 -C "${EMAIL}" -f ~/.ssh/id_ed25519 -N ""
+          KEY_PATH="~/.ssh/id_ed25519"
+          PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo+SimulatedKey+NotReal ${EMAIL}"
+          echo "Generating SSH key pair..."
+          echo "  Type:  ed25519"
+          echo "  Email: ${EMAIL}"
+          echo "  Path:  ${KEY_PATH}"
+          echo "SSH key generated successfully (simulated)"
+          echo "key_path=${KEY_PATH}"
+          echo "public_key=${PUBLIC_KEY}"
+        outputs:
+          key_path: '{{ result.output | regexFind "key_path=(.*)" }}'
+          public_key: '{{ result.output | regexFind "public_key=(.*)" }}'
+
+  validate_state:
+    desc: "Validate that required tools are available on PATH"
+    steps:
+      - name: check_requirements
+        func: shell
+        do: |
+          REQUIREMENTS="{{ vars.requirements }}"
+
+          # Check if each required command is available
+          ALL_MET="true"
+          REPORT=""
+          for CMD in ${REQUIREMENTS}; do
+            if command -v "${CMD}" >/dev/null 2>&1; then
+              REPORT="${REPORT}${CMD}:ok "
+            else
+              REPORT="${REPORT}${CMD}:missing "
+              ALL_MET="false"
+            fi
+          done
+
+          echo "=== Validation Report ==="
+          for CMD in ${REQUIREMENTS}; do
+            if command -v "${CMD}" >/dev/null 2>&1; then
+              echo "  ${CMD}: found at $(command -v ${CMD})"
+            else
+              echo "  ${CMD}: NOT found"
+            fi
+          done
+          echo "========================="
+          echo "all_met=${ALL_MET}"
+          echo "report=${REPORT}"
+        outputs:
+          all_met: '{{ result.output | regexFind "all_met=(.*)" }}'
+          report: '{{ result.output | regexFind "report=(.*)" }}'

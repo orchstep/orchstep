@@ -1,0 +1,86 @@
+metadata:
+  name: demo-machine-setup
+  version: "1.0.0"
+  description: "Developer machine onboarding — composes package management with shell and SSH setup (demo mock)"
+  author: "orchstep"
+  tags: ["provisioning", "machine", "onboarding", "composition", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      os_type:
+        type: string
+        required: false
+        default: "auto"
+        desc: "OS type override (auto, macos, debian, fedora)"
+
+exports:
+  install_tools:
+    desc: "Install and verify developer tools via package manager"
+    params:
+      - name: packages
+        type: string
+        required: true
+        desc: "Space-separated list of packages to install"
+    returns:
+      type: object
+      properties:
+        installed:
+          type: string
+        count:
+          type: string
+
+  configure_shell:
+    desc: "Configure shell environment (zsh, oh-my-zsh, plugins)"
+    params:
+      - name: shell_type
+        type: string
+        required: true
+        desc: "Shell to configure (zsh, bash)"
+      - name: plugins
+        type: string
+        required: true
+        desc: "Space-separated list of plugins to install"
+    returns:
+      type: object
+      properties:
+        shell:
+          type: string
+        configured:
+          type: string
+
+  setup_ssh:
+    desc: "Generate SSH key pair for Git and remote access"
+    params:
+      - name: email
+        type: string
+        required: true
+        desc: "Email address for SSH key comment"
+    returns:
+      type: object
+      properties:
+        key_path:
+          type: string
+        public_key:
+          type: string
+
+  validate_state:
+    desc: "Validate that required tools are available on PATH"
+    params:
+      - name: requirements
+        type: string
+        required: true
+        desc: "Space-separated list of required commands to check"
+    returns:
+      type: object
+      properties:
+        all_met:
+          type: string
+        report:
+          type: string
