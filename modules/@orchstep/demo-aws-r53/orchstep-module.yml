@@ -1,0 +1,76 @@
+metadata:
+  name: demo-aws-r53
+  version: "1.0.0"
+  description: "AWS Route 53 DNS management (demo mock)"
+  author: "orchstep"
+  tags: ["aws", "dns", "route53", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      hosted_zone:
+        type: string
+        required: true
+        desc: "Route 53 hosted zone ID"
+      domain:
+        type: string
+        required: true
+        desc: "Base domain name"
+      ttl:
+        type: string
+        required: false
+        default: "300"
+        desc: "DNS record TTL in seconds"
+
+exports:
+  create_record:
+    desc: "Create a DNS record pointing to a load balancer"
+    params:
+      - name: subdomain
+        type: string
+        required: true
+        desc: "Subdomain prefix"
+      - name: target
+        type: string
+        required: true
+        desc: "Target DNS name or IP"
+      - name: record_type
+        type: string
+        required: false
+        desc: "Record type (A, CNAME, ALIAS)"
+    returns:
+      type: object
+      properties:
+        fqdn:
+          type: string
+        record_type:
+          type: string
+        target:
+          type: string
+
+  create_health_check:
+    desc: "Create a Route 53 health check"
+    params:
+      - name: fqdn
+        type: string
+        required: true
+        desc: "FQDN to check"
+      - name: port
+        type: string
+        required: false
+        desc: "Port to check"
+      - name: health_path
+        type: string
+        required: false
+        desc: "Health check path"
+    returns:
+      type: object
+      properties:
+        health_check_id:
+          type: string

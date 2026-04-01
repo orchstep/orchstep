@@ -1,0 +1,61 @@
+metadata:
+  name: demo-aws-rds
+  version: "1.0.0"
+  description: "AWS RDS database provisioning (demo mock)"
+  author: "orchstep"
+  tags: ["aws", "rds", "database", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      region:
+        type: string
+        required: true
+        desc: "AWS region"
+      engine:
+        type: string
+        required: false
+        default: "postgres"
+        desc: "Database engine (postgres, mysql, aurora)"
+      instance_class:
+        type: string
+        required: false
+        default: "db.t3.medium"
+        desc: "RDS instance class"
+      storage_gb:
+        type: string
+        required: false
+        default: "100"
+        desc: "Storage allocation in GB"
+
+exports:
+  create_db:
+    desc: "Create an RDS database instance"
+    params:
+      - name: db_name
+        type: string
+        required: true
+        desc: "Database name"
+      - name: subnet_ids
+        type: string
+        required: true
+        desc: "Subnet IDs for DB subnet group"
+      - name: security_group_id
+        type: string
+        required: true
+        desc: "Security group for DB access"
+    returns:
+      type: object
+      properties:
+        db_endpoint:
+          type: string
+        db_port:
+          type: string
+        db_identifier:
+          type: string
