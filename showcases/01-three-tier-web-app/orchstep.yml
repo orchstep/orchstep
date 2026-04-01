@@ -1,0 +1,121 @@
+# Showcase: Classic 3-Tier Web Application on AWS
+#
+# Demonstrates OrchStep as a composition engine for real infrastructure.
+# This workflow is the "interface" — it defines WHAT to build.
+# Modules are the "implementations" — they define HOW.
+#
+# Module chain (3 layers):
+#   This workflow -> demo-aws-infra -> demo-aws-networking
+#
+# Scoped variable flow:
+#   region, vpc_cidr defined here -> passed to demo-aws-infra config
+#   -> demo-aws-infra passes them down to demo-aws-networking config
+#   -> outputs flow back up through step outputs
+#
+# Try: orchstep run
+# Try: orchstep run --var region=eu-west-1 --var environment=staging
+
+name: three-tier-web-app
+desc: "Deploy a classic 3-tier web application on AWS"
+
+defaults:
+  vars:
+    region: "ap-southeast-2"
+    environment: "production"
+    app_name: "myapp"
+    vpc_cidr: "10.0.0.0/16"
+    domain: "myapp.example.com"
+
+modules:
+  - name: infra
+    source: "../../modules/@orchstep/demo-aws-infra"
+    config:
+      region: "{{ vars.region }}"
+      vpc_cidr: "{{ vars.vpc_cidr }}"
+      az_count: "2"
+      instance_type: "t3.medium"
+      db_engine: "postgres"
+      db_instance_class: "db.t3.medium"
+
+  - name: scaling
+    source: "../../modules/@orchstep/demo-aws-asg"
+    config:
+      min_instances: "2"
+      max_instances: "10"
+      target_cpu: "70"
+
+  - name: dns
+    source: "../../modules/@orchstep/demo-aws-r53"
+    config:
+      hosted_zone: "Z1234567890"
+      domain: "{{ vars.domain }}"
+      ttl: "300"
+
+  - name: healthcheck
+    source: "../../modules/@orchstep/health-check"
+    config:
+      timeout: "10"
+
+tasks:
+  main:
+    desc: "Deploy the full 3-tier application stack"
+    steps:
+      - name: provision_infra
+        desc: "Provision VPC, subnets, security groups, app server, and database"
+        module: infra
+        task: provision
+        with:
+          app_name: "{{ vars.app_name }}"
+
+      - name: setup_scaling
+        desc: "Create auto-scaling group with load balancer"
+        module: scaling
+        task: create_asg
+        with:
+          name: "{{ vars.app_name }}-{{ vars.environment }}"
+          subnet_ids: "{{ steps.provision_infra.vpc_id }}"
+          instance_type: "t3.medium"
+          ami_id: "ami-demo-al2023"
+
+      - name: setup_dns
+        desc: "Create DNS record for the application"
+        module: dns
+        task: create_record
+        with:
+          subdomain: "{{ vars.app_name }}"
+          target: "{{ steps.setup_scaling.lb_dns }}"
+          record_type: "CNAME"
+
+      - name: verify_health
+        desc: "Verify the application is healthy"
+        module: healthcheck
+        task: check
+        with:
+          url: "http://{{ steps.setup_dns.fqdn }}/health"
+          expected_status: "200"
+
+      - name: deployment_summary
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  3-Tier Web App Deployment Complete"
+          echo "=========================================="
+          echo ""
+          echo "  Environment: {{ vars.environment }}"
+          echo "  Region:      {{ vars.region }}"
+          echo ""
+          echo "  Infrastructure:"
+          echo "    VPC:        {{ steps.provision_infra.vpc_id }}"
+          echo "    App Server: {{ steps.provision_infra.instance_ids }}"
+          echo "    Database:   {{ steps.provision_infra.db_endpoint }}"
+          echo ""
+          echo "  Scaling:"
+          echo "    ASG:        {{ steps.setup_scaling.asg_name }}"
+          echo "    LB:         {{ steps.setup_scaling.lb_dns }}"
+          echo ""
+          echo "  DNS:"
+          echo "    URL:        {{ steps.setup_dns.fqdn }}"
+          echo ""
+          echo "  Health:       {{ steps.verify_health.healthy }}"
+          echo "=========================================="
