@@ -1,0 +1,74 @@
+metadata:
+  name: demo-aws-infra
+  version: "1.0.0"
+  description: "AWS infrastructure stack — composes networking, compute, and database modules (demo mock)"
+  author: "orchstep"
+  tags: ["aws", "infrastructure", "composition", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      region:
+        type: string
+        required: true
+        desc: "AWS region for all resources"
+      vpc_cidr:
+        type: string
+        required: false
+        default: "10.0.0.0/16"
+        desc: "VPC CIDR block"
+      az_count:
+        type: string
+        required: false
+        default: "2"
+        desc: "Number of availability zones"
+      instance_type:
+        type: string
+        required: false
+        default: "t3.medium"
+        desc: "EC2 instance type for app servers"
+      db_engine:
+        type: string
+        required: false
+        default: "postgres"
+        desc: "Database engine"
+      db_instance_class:
+        type: string
+        required: false
+        default: "db.t3.medium"
+        desc: "Database instance class"
+
+exports:
+  provision:
+    desc: "Provision full infrastructure stack (VPC, subnets, SGs, instances, database)"
+    params:
+      - name: app_name
+        type: string
+        required: true
+        desc: "Application name for resource tagging"
+    returns:
+      type: object
+      properties:
+        vpc_id:
+          type: string
+        instance_ids:
+          type: string
+        db_endpoint:
+          type: string
+        app_sg_id:
+          type: string
+
+  status:
+    desc: "Show infrastructure status"
+    params: []
+    returns:
+      type: object
+      properties:
+        status:
+          type: string

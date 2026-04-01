@@ -1,0 +1,102 @@
+name: demo-aws-infra
+desc: "AWS infrastructure stack — composes networking, compute, and database (demo)"
+
+# --- THIS MODULE IMPORTS OTHER MODULES ---
+# This demonstrates 2nd-layer composition:
+# Consumer -> demo-aws-infra -> demo-aws-networking (3 layers total)
+modules:
+  - name: network
+    source: "../demo-aws-networking"
+    config:
+      region: "{{ config.region }}"
+      vpc_cidr: "{{ config.vpc_cidr }}"
+      az_count: "{{ config.az_count }}"
+
+  - name: compute
+    source: "../demo-aws-ec2"
+    config:
+      region: "{{ config.region }}"
+      instance_type: "{{ config.instance_type }}"
+
+  - name: database
+    source: "../demo-aws-rds"
+    config:
+      region: "{{ config.region }}"
+      engine: "{{ config.db_engine }}"
+      instance_class: "{{ config.db_instance_class }}"
+
+tasks:
+  provision:
+    desc: "Provision full infrastructure stack"
+    steps:
+      # Layer 2: Call networking module (which is layer 3 from showcase)
+      - name: create_network
+        module: network
+        task: create_vpc
+
+      - name: create_subnets
+        module: network
+        task: create_subnets
+        with:
+          vpc_id: "{{ steps.create_network.vpc_id }}"
+
+      - name: create_sgs
+        module: network
+        task: create_security_groups
+        with:
+          vpc_id: "{{ steps.create_network.vpc_id }}"
+
+      # Layer 2: Call compute module
+      - name: launch_app_server
+        module: compute
+        task: launch_instance
+        with:
+          subnet_id: "{{ steps.create_subnets.private_subnet_ids }}"
+          security_group_id: "{{ steps.create_sgs.app_sg_id }}"
+          name_tag: "{{ vars.app_name }}-app"
+
+      - name: configure_app_server
+        module: compute
+        task: configure_instance
+        with:
+          instance_id: "{{ steps.launch_app_server.instance_id }}"
+          role: "app"
+
+      # Layer 2: Call database module
+      - name: create_database
+        module: database
+        task: create_db
+        with:
+          db_name: "{{ vars.app_name }}-db"
+          subnet_ids: "{{ steps.create_subnets.private_subnet_ids }}"
+          security_group_id: "{{ steps.create_sgs.db_sg_id }}"
+
+      # Summary
+      - name: summarize
+        func: shell
+        do: |
+          echo "=== Infrastructure Provisioned ==="
+          echo "VPC:        {{ steps.create_network.vpc_id }}"
+          echo "App Server: {{ steps.launch_app_server.instance_id }} ({{ steps.launch_app_server.private_ip }})"
+          echo "Database:   {{ steps.create_database.db_endpoint }}"
+          echo "================================="
+          echo "vpc_id={{ steps.create_network.vpc_id }}"
+          echo "instance_ids={{ steps.launch_app_server.instance_id }}"
+          echo "db_endpoint={{ steps.create_database.db_endpoint }}"
+          echo "app_sg_id={{ steps.create_sgs.app_sg_id }}"
+        outputs:
+          vpc_id: '{{ steps.create_network.vpc_id }}'
+          instance_ids: '{{ steps.launch_app_server.instance_id }}'
+          db_endpoint: '{{ steps.create_database.db_endpoint }}'
+          app_sg_id: '{{ steps.create_sgs.app_sg_id }}'
+
+  status:
+    desc: "Show infrastructure status"
+    steps:
+      - name: show_status
+        func: shell
+        do: |
+          echo "Infrastructure stack status: ACTIVE (demo)"
+          echo "status=active"
+        outputs:
+          status: '{{ result.output | regexFind "status=(.*)" }}'
