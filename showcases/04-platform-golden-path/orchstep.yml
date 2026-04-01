@@ -1,0 +1,131 @@
+# Showcase: Platform Engineering Golden Path
+#
+# Demonstrates OrchStep orchestrating a complete platform golden path —
+# from repo creation through CI setup, observability, and team notification.
+# Each module is a leaf (1-layer), showing multi-module standardization.
+#
+# Module chain (1 layer):
+#   This workflow -> demo-repo-scaffold (leaf)
+#   This workflow -> demo-ci-pipeline (leaf)
+#   This workflow -> demo-observability (leaf)
+#   This workflow -> health-check (leaf, existing)
+#   This workflow -> slack-notify (leaf, existing)
+#
+# Try: orchstep run
+# Try: orchstep run --var service_name=payment-api --var language=python
+# Try: orchstep run --var team=backend --var tier=standard
+
+name: platform-golden-path
+desc: "Scaffold a new service with repo, CI, observability, and team notification"
+
+defaults:
+  vars:
+    service_name: "order-service"
+    team: "platform"
+    language: "go"
+    tier: "critical"
+
+modules:
+  - name: repo
+    source: "../../modules/@orchstep/demo-repo-scaffold"
+    config:
+      repo_name: "{{ vars.service_name }}"
+      language: "{{ vars.language }}"
+
+  - name: ci
+    source: "../../modules/@orchstep/demo-ci-pipeline"
+    config:
+      provider: "github"
+      stages: "lint,test,build,deploy"
+
+  - name: observability
+    source: "../../modules/@orchstep/demo-observability"
+    config:
+      service_name: "{{ vars.service_name }}"
+      tier: "{{ vars.tier }}"
+
+  - name: healthcheck
+    source: "../../modules/@orchstep/health-check"
+    config:
+      timeout: "10"
+
+  - name: slack
+    source: "../../modules/@orchstep/slack-notify"
+    config:
+      channel: "#{{ vars.team }}-notifications"
+
+tasks:
+  main:
+    desc: "Execute the full golden path for a new service"
+    steps:
+      - name: create_repo
+        desc: "Create the GitHub repository"
+        module: repo
+        task: create_repo
+        with:
+          repo_name: "{{ vars.service_name }}"
+
+      - name: init_structure
+        desc: "Initialize project structure with language-specific scaffolding"
+        module: repo
+        task: init_structure
+        with:
+          language: "{{ vars.language }}"
+          repo_name: "{{ vars.service_name }}"
+
+      - name: setup_ci
+        desc: "Create CI pipeline configuration"
+        module: ci
+        task: setup_pipeline
+        with:
+          repo_name: "{{ vars.service_name }}"
+
+      - name: add_checks
+        desc: "Add quality checks to the CI pipeline"
+        module: ci
+        task: add_checks
+        with:
+          repo_name: "{{ vars.service_name }}"
+          checks: "lint,test,security"
+
+      - name: setup_monitoring
+        desc: "Configure monitoring and metrics collection"
+        module: observability
+        task: setup_monitoring
+        with:
+          service_name: "{{ vars.service_name }}"
+
+      - name: configure_alerts
+        desc: "Set up alerting rules based on service tier"
+        module: observability
+        task: configure_alerts
+        with:
+          service_name: "{{ vars.service_name }}"
+          tier: "{{ vars.tier }}"
+
+      - name: notify_team
+        desc: "Notify the team that the new service is ready"
+        module: slack
+        task: send
+        with:
+          message: "New service *{{ vars.service_name }}* is ready! Repo: {{ steps.create_repo.repo_url }} | CI: configured | Monitoring: active"
+
+      - name: golden_path_summary
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  Platform Golden Path Complete"
+          echo "=========================================="
+          echo ""
+          echo "  Service:    {{ vars.service_name }}"
+          echo "  Team:       {{ vars.team }}"
+          echo "  Language:   {{ vars.language }}"
+          echo "  Tier:       {{ vars.tier }}"
+          echo ""
+          echo "  Repository: {{ steps.create_repo.repo_url }}"
+          echo "  CI:         configured (github actions)"
+          echo "  Monitoring: active"
+          echo "  Alerts:     configured ({{ vars.tier }} tier)"
+          echo "  Notified:   #{{ vars.team }}-notifications"
+          echo "=========================================="

@@ -1,0 +1,123 @@
+# Showcase: Compliance-Gated Release Pipeline
+#
+# Demonstrates OrchStep enforcing governance — security scans, compliance
+# reports, and environment-scoped approval gates before release.
+# The approval gate only triggers for production deployments.
+#
+# Module chain (1 layer):
+#   This workflow -> demo-security-scan (leaf)
+#   This workflow -> demo-approval-gate (leaf)
+#   This workflow -> git-release (leaf, existing)
+#   This workflow -> report-gen (leaf, existing)
+#   This workflow -> slack-notify (leaf, existing)
+#
+# Try: orchstep run
+# Try: orchstep run --var target_env=production
+# Try: orchstep run --var version=3.0.0 --var scan_path=./lib
+
+name: compliance-gated-release
+desc: "Release with security scanning, compliance reporting, and environment-scoped approval"
+
+defaults:
+  vars:
+    app_name: "payment-service"
+    version: "2.1.0"
+    target_env: "staging"
+    scan_path: "./src"
+
+modules:
+  - name: security
+    source: "../../modules/@orchstep/demo-security-scan"
+    config:
+      scan_path: "{{ vars.scan_path }}"
+      severity_threshold: "high"
+
+  - name: gate
+    source: "../../modules/@orchstep/demo-approval-gate"
+    config:
+      approvers: "security-team,release-manager"
+      policy: "require-all"
+      timeout: "30"
+
+  - name: release
+    source: "../../modules/@orchstep/git-release"
+
+  - name: report
+    source: "../../modules/@orchstep/report-gen"
+
+  - name: slack
+    source: "../../modules/@orchstep/slack-notify"
+    config:
+      channel: "#releases"
+
+tasks:
+  main:
+    desc: "Run security scans, compliance checks, approval gate, and release"
+    steps:
+      - name: sast_scan
+        desc: "Run static application security testing"
+        module: security
+        task: run_sast
+        with:
+          scan_path: "{{ vars.scan_path }}"
+
+      - name: dependency_scan
+        desc: "Scan dependencies for known vulnerabilities"
+        module: security
+        task: run_dependency_scan
+        with:
+          scan_path: "{{ vars.scan_path }}"
+
+      - name: compliance_report
+        desc: "Generate compliance report from scan results"
+        module: report
+        task: summary
+        with:
+          title: "{{ vars.app_name }} v{{ vars.version }} Compliance Report"
+          sections: "sast,dependencies,policy"
+
+      - name: approval_gate
+        desc: "Request approval (production deployments only)"
+        if: "{{ vars.target_env == 'production' }}"
+        module: gate
+        task: request_approval
+        with:
+          change_description: "Release {{ vars.app_name }} v{{ vars.version }} to {{ vars.target_env }}"
+
+      - name: create_release
+        desc: "Create the Git release tag"
+        module: release
+        task: release
+        with:
+          version: "{{ vars.version }}"
+          name: "{{ vars.app_name }} v{{ vars.version }}"
+
+      - name: notify_release
+        desc: "Notify the team about the release"
+        module: slack
+        task: send
+        with:
+          message: "Released *{{ vars.app_name }}* v{{ vars.version }} to *{{ vars.target_env }}* | SAST: {{ steps.sast_scan.status }} | Deps: {{ steps.dependency_scan.status }}"
+
+      - name: release_summary
+        func: shell
+        do: |
+          echo ""
+          echo "=========================================="
+          echo "  Compliance-Gated Release Complete"
+          echo "=========================================="
+          echo ""
+          echo "  Application: {{ vars.app_name }}"
+          echo "  Version:     {{ vars.version }}"
+          echo "  Environment: {{ vars.target_env }}"
+          echo ""
+          echo "  Security:"
+          echo "    SAST:         {{ steps.sast_scan.status }}"
+          echo "    Dependencies: {{ steps.dependency_scan.status }}"
+          echo ""
+          echo "  Governance:"
+          echo "    Approval:     {{ vars.target_env == 'production' | ternary 'required' 'skipped (non-prod)' }}"
+          echo "    Report:       generated"
+          echo ""
+          echo "  Release:     {{ steps.create_release.tag }}"
+          echo "=========================================="
