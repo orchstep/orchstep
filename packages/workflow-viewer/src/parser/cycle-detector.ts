@@ -8,7 +8,14 @@ export function detectCycles(edges: GraphEdge[]): ParseError[] {
   // Build adjacency list from task-call edges
   // We need to map: source task -> target task
   // Source is like "step:taskA.stepName", target is like "task:taskB"
-  const taskCallEdges = edges.filter((e) => e.type === 'task-call')
+  const taskCallEdges = edges.filter(
+    (e) =>
+      e.type === 'task-call' ||
+      ((e.type === 'conditional-true' ||
+        e.type === 'conditional-false' ||
+        e.type === 'conditional-elif') &&
+        e.target.startsWith('task:'))
+  )
   if (taskCallEdges.length === 0) return []
 
   // Build: task -> [called tasks]
