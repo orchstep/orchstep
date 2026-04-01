@@ -1,0 +1,52 @@
+metadata:
+  name: demo-gcp-infra
+  version: "1.0.0"
+  description: "GCP infrastructure stack — composes networking with compute instances (demo mock)"
+  author: "orchstep"
+  tags: ["gcp", "infrastructure", "composition", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      region:
+        type: string
+        required: true
+        desc: "GCP region for all resources"
+      project_id:
+        type: string
+        required: true
+        desc: "GCP project ID"
+      network_cidr:
+        type: string
+        required: false
+        default: "10.0.0.0/16"
+        desc: "CIDR block for the VPC network"
+      machine_type:
+        type: string
+        required: false
+        default: "e2-medium"
+        desc: "GCE machine type for compute instances"
+
+exports:
+  provision:
+    desc: "Provision full GCP infrastructure (VPC, subnets, firewall, instances)"
+    params:
+      - name: app_name
+        type: string
+        required: true
+        desc: "Application name for resource naming"
+    returns:
+      type: object
+      properties:
+        vpc_id:
+          type: string
+        subnet_ids:
+          type: string
+        instance_ids:
+          type: string

@@ -1,0 +1,85 @@
+name: demo-gcp-infra
+desc: "GCP infrastructure stack — composes networking with compute instances (demo)"
+
+# --- THIS MODULE IMPORTS OTHER MODULES ---
+# This demonstrates 2nd-layer composition:
+# Consumer -> demo-gcp-infra -> demo-gcp-networking (3 layers total)
+modules:
+  - name: network
+    source: "../demo-gcp-networking"
+    config:
+      region: "{{ config.region }}"
+      project_id: "{{ config.project_id }}"
+      network_cidr: "{{ config.network_cidr }}"
+
+tasks:
+  provision:
+    desc: "Provision full GCP infrastructure (VPC, subnets, firewall, instances)"
+    steps:
+      # Layer 2: Create VPC network
+      - name: create_network
+        module: network
+        task: create_network
+
+      # Layer 2: Create subnets in the VPC
+      - name: create_subnets
+        module: network
+        task: create_subnets
+        with:
+          network_name: "{{ steps.create_network.network_name }}"
+
+      # Layer 2: Create firewall rules
+      - name: create_firewall
+        module: network
+        task: create_firewall
+        with:
+          network_name: "{{ steps.create_network.network_name }}"
+
+      # Launch compute instance
+      - name: launch_instance
+        func: shell
+        do: |
+          APP_NAME="{{ vars.app_name }}"
+          REGION="{{ config.region }}"
+          PROJECT_ID="{{ config.project_id }}"
+          MACHINE_TYPE="{{ config.machine_type | default "e2-medium" }}"
+          NETWORK_NAME="{{ steps.create_network.network_name }}"
+          SUBNET_NAME="{{ steps.create_subnets.subnet_name }}"
+
+          # DEMO: Simulate gcloud compute instances create
+          # In production, replace with:
+          # gcloud compute instances create ${APP_NAME}-instance \
+          #   --project=${PROJECT_ID} \
+          #   --zone=${REGION}-a \
+          #   --machine-type=${MACHINE_TYPE} \
+          #   --network=${NETWORK_NAME} \
+          #   --subnet=${SUBNET_NAME}
+          INSTANCE_ID="${APP_NAME}-instance-$(echo ${RANDOM:-42})"
+          echo "Creating compute instance in project ${PROJECT_ID}..."
+          echo "  Instance:     ${INSTANCE_ID}"
+          echo "  Machine type: ${MACHINE_TYPE}"
+          echo "  Network:      ${NETWORK_NAME}"
+          echo "  Subnet:       ${SUBNET_NAME}"
+          echo "  Zone:         ${REGION}-a"
+          echo "Instance created successfully"
+          echo "instance_ids=${INSTANCE_ID}"
+        outputs:
+          instance_ids: '{{ result.output | regexFind "instance_ids=(.*)" }}'
+
+      # Summary with final outputs
+      - name: summarize
+        func: shell
+        do: |
+          echo "=== GCP Infrastructure Provisioned ==="
+          echo "Network:  {{ steps.create_network.network_name }}"
+          echo "Subnet:   {{ steps.create_subnets.subnet_name }}"
+          echo "Firewall: {{ steps.create_firewall.firewall_name }}"
+          echo "Instance: {{ steps.launch_instance.instance_ids }}"
+          echo "======================================="
+          echo "vpc_id={{ steps.create_network.network_name }}"
+          echo "subnet_ids={{ steps.create_subnets.subnet_name }}"
+          echo "instance_ids={{ steps.launch_instance.instance_ids }}"
+        outputs:
+          vpc_id: '{{ steps.create_network.network_name }}'
+          subnet_ids: '{{ steps.create_subnets.subnet_name }}'
+          instance_ids: '{{ steps.launch_instance.instance_ids }}'
