@@ -7,12 +7,16 @@ interface PositionedNode {
   data: GraphNode
   type: string
   parentId?: string
+  extent?: 'parent'
+  expandParent?: boolean
   draggable?: boolean
   style?: Record<string, unknown>
 }
 
 const NODE_WIDTH = 240
 const NODE_HEIGHT = 60
+const TASK_PADDING = 24
+const TASK_HEADER = 40
 
 export function computeLayout(
   nodes: GraphNode[],
@@ -21,8 +25,7 @@ export function computeLayout(
 ): PositionedNode[] {
   if (nodes.length === 0) return []
 
-  // Use flat layout (no compound/setParent) to avoid dagre crash
-  // when edges cross compound group boundaries
+  // Step 1: Layout only non-task nodes using dagre (flat graph)
   const g = new dagre.graphlib.Graph()
   g.setGraph({
     rankdir: direction,
@@ -33,14 +36,12 @@ export function computeLayout(
   })
   g.setDefaultEdgeLabel(() => ({}))
 
-  // Only add non-task nodes to dagre (tasks are rendered as visual containers)
   for (const node of nodes) {
     if (node.type === 'task') continue
     const height = node.type === 'merge-dot' ? 10 : NODE_HEIGHT
     g.setNode(node.id, { width: NODE_WIDTH, height, label: node.label })
   }
 
-  // Add edges (skip self-loops and edges to/from missing nodes)
   for (const edge of edges) {
     if (edge.source === edge.target) continue
     if (g.hasNode(edge.source) && g.hasNode(edge.target)) {
@@ -50,73 +51,99 @@ export function computeLayout(
 
   dagre.layout(g)
 
-  // Build positioned nodes for non-task nodes
-  const positioned: PositionedNode[] = []
-  const nodePositions = new Map<string, { x: number; y: number; w: number; h: number }>()
-
+  // Step 2: Collect absolute positions from dagre
+  const absPositions = new Map<string, { x: number; y: number; w: number; h: number }>()
   for (const node of nodes) {
     if (node.type === 'task') continue
-    const dagreNode = g.node(node.id)
-    if (!dagreNode) continue
-
-    const w = dagreNode.width || NODE_WIDTH
-    const h = dagreNode.height || NODE_HEIGHT
-    const pos = {
-      x: dagreNode.x - w / 2,
-      y: dagreNode.y - h / 2,
-    }
-    nodePositions.set(node.id, { ...pos, w, h })
-
-    positioned.push({
-      id: node.id,
-      position: pos,
-      data: node,
-      type: node.type === 'merge-dot' ? 'mergeDot' : node.type,
+    const dn = g.node(node.id)
+    if (!dn) continue
+    const w = dn.width || NODE_WIDTH
+    const h = dn.height || NODE_HEIGHT
+    absPositions.set(node.id, {
+      x: dn.x - w / 2,
+      y: dn.y - h / 2,
+      w,
+      h,
     })
   }
 
-  // Create task group nodes as visual containers positioned around their children
+  // Step 3: Compute task container bounds from their children
+  const taskBounds = new Map<string, { x: number; y: number; w: number; h: number }>()
   for (const node of nodes) {
     if (node.type !== 'task') continue
 
-    // Find all children (steps, conditions, loops, error handlers, merge dots)
     const children = nodes.filter(n => n.parentId === node.id)
     const childBounds = children
-      .map(c => nodePositions.get(c.id))
+      .map(c => absPositions.get(c.id))
       .filter((p): p is { x: number; y: number; w: number; h: number } => p != null)
 
     if (childBounds.length === 0) {
-      // Task with no positioned children — give it a default position
-      positioned.push({
-        id: node.id,
-        position: { x: 0, y: 0 },
-        data: node,
-        type: 'task',
-        draggable: true,
-        style: { width: NODE_WIDTH + 40, height: 80 },
-      })
+      taskBounds.set(node.id, { x: 0, y: 0, w: NODE_WIDTH + TASK_PADDING * 2, h: 80 })
       continue
     }
 
-    const padding = 24
-    const headerHeight = 40
-    const minX = Math.min(...childBounds.map(p => p.x)) - padding
-    const minY = Math.min(...childBounds.map(p => p.y)) - padding - headerHeight
-    const maxX = Math.max(...childBounds.map(p => p.x + p.w)) + padding
-    const maxY = Math.max(...childBounds.map(p => p.y + p.h)) + padding
+    const minX = Math.min(...childBounds.map(p => p.x)) - TASK_PADDING
+    const minY = Math.min(...childBounds.map(p => p.y)) - TASK_PADDING - TASK_HEADER
+    const maxX = Math.max(...childBounds.map(p => p.x + p.w)) + TASK_PADDING
+    const maxY = Math.max(...childBounds.map(p => p.y + p.h)) + TASK_PADDING
 
+    taskBounds.set(node.id, { x: minX, y: minY, w: maxX - minX, h: maxY - minY })
+  }
+
+  // Step 4: Build positioned nodes
+  // Task nodes come first (React Flow requires parents before children)
+  const positioned: PositionedNode[] = []
+
+  for (const node of nodes) {
+    if (node.type !== 'task') continue
+    const bounds = taskBounds.get(node.id)!
     positioned.push({
       id: node.id,
-      position: { x: minX, y: minY },
+      position: { x: bounds.x, y: bounds.y },
       data: node,
       type: 'task',
       draggable: true,
       style: {
-        width: maxX - minX,
-        height: maxY - minY,
+        width: bounds.w,
+        height: bounds.h,
         zIndex: -1,
       },
     })
+  }
+
+  // Child nodes: position relative to parent task, constrained within it
+  for (const node of nodes) {
+    if (node.type === 'task') continue
+    const abs = absPositions.get(node.id)
+    if (!abs) continue
+
+    const parentBounds = node.parentId ? taskBounds.get(node.parentId) : null
+
+    if (parentBounds) {
+      // Position relative to parent
+      positioned.push({
+        id: node.id,
+        position: {
+          x: abs.x - parentBounds.x,
+          y: abs.y - parentBounds.y,
+        },
+        data: node,
+        type: node.type === 'merge-dot' ? 'mergeDot' : node.type,
+        parentId: node.parentId,
+        extent: 'parent',
+        expandParent: true,
+        draggable: true,
+      })
+    } else {
+      // No parent — absolute position
+      positioned.push({
+        id: node.id,
+        position: { x: abs.x, y: abs.y },
+        data: node,
+        type: node.type === 'merge-dot' ? 'mergeDot' : node.type,
+        draggable: true,
+      })
+    }
   }
 
   return positioned
