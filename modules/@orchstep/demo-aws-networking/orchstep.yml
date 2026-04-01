@@ -1,0 +1,84 @@
+name: demo-aws-networking
+desc: "AWS VPC networking provisioning (demo: uses simulated responses)"
+
+tasks:
+  create_vpc:
+    desc: "Create a VPC"
+    steps:
+      - name: provision_vpc
+        func: shell
+        do: |
+          REGION="{{ config.region }}"
+          VPC_CIDR="{{ vars.vpc_cidr | default config.vpc_cidr }}"
+
+          # DEMO: Simulate VPC creation
+          # In production, replace with:
+          # aws ec2 create-vpc --cidr-block ${VPC_CIDR} --region ${REGION} --output json
+          echo "Creating VPC in ${REGION} with CIDR ${VPC_CIDR}..."
+          VPC_ID="vpc-demo-$(echo ${REGION} | tr '-' '')-$(date +%s | tail -c 6)"
+          echo "VPC created successfully"
+          echo "vpc_id=${VPC_ID}"
+          echo "cidr=${VPC_CIDR}"
+          echo "region=${REGION}"
+        outputs:
+          vpc_id: '{{ result.output | regexFind "vpc_id=(.*)" }}'
+          cidr: '{{ result.output | regexFind "cidr=(.*)" }}'
+          region: '{{ result.output | regexFind "region=(.*)" }}'
+
+  create_subnets:
+    desc: "Create public and private subnets across AZs"
+    steps:
+      - name: provision_subnets
+        func: shell
+        do: |
+          VPC_ID="{{ vars.vpc_id }}"
+          REGION="{{ config.region }}"
+          AZ_COUNT="{{ config.az_count | default "2" }}"
+
+          # DEMO: Simulate subnet creation
+          # In production, replace with:
+          # aws ec2 create-subnet --vpc-id ${VPC_ID} --cidr-block ... --availability-zone ...
+          echo "Creating ${AZ_COUNT} public + ${AZ_COUNT} private subnets in ${VPC_ID}..."
+
+          PUB_IDS=""
+          PRIV_IDS=""
+          AZ_LIST=""
+          for i in $(seq 1 ${AZ_COUNT}); do
+            AZ="${REGION}$(echo $i | tr '12345' 'abcde')"
+            PUB_IDS="${PUB_IDS}subnet-pub-${i}-demo "
+            PRIV_IDS="${PRIV_IDS}subnet-priv-${i}-demo "
+            AZ_LIST="${AZ_LIST}${AZ} "
+          done
+
+          echo "Subnets created successfully"
+          echo "public_subnet_ids=${PUB_IDS}"
+          echo "private_subnet_ids=${PRIV_IDS}"
+          echo "az_list=${AZ_LIST}"
+        outputs:
+          public_subnet_ids: '{{ result.output | regexFind "public_subnet_ids=(.*)" }}'
+          private_subnet_ids: '{{ result.output | regexFind "private_subnet_ids=(.*)" }}'
+          az_list: '{{ result.output | regexFind "az_list=(.*)" }}'
+
+  create_security_groups:
+    desc: "Create security groups for web, app, and database tiers"
+    steps:
+      - name: provision_sgs
+        func: shell
+        do: |
+          VPC_ID="{{ vars.vpc_id }}"
+
+          # DEMO: Simulate security group creation
+          # In production, replace with:
+          # aws ec2 create-security-group --group-name web-sg --vpc-id ${VPC_ID} ...
+          echo "Creating security groups in ${VPC_ID}..."
+          echo "  Web tier:  port 80/443 from 0.0.0.0/0"
+          echo "  App tier:  port 8080 from web-sg"
+          echo "  DB tier:   port 5432 from app-sg"
+          echo "Security groups created"
+          echo "web_sg_id=sg-web-demo"
+          echo "app_sg_id=sg-app-demo"
+          echo "db_sg_id=sg-db-demo"
+        outputs:
+          web_sg_id: '{{ result.output | regexFind "web_sg_id=(.*)" }}'
+          app_sg_id: '{{ result.output | regexFind "app_sg_id=(.*)" }}'
+          db_sg_id: '{{ result.output | regexFind "db_sg_id=(.*)" }}'

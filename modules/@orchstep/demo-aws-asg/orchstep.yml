@@ -1,0 +1,61 @@
+name: demo-aws-asg
+desc: "AWS Auto Scaling Group management (demo: uses simulated responses)"
+
+tasks:
+  create_asg:
+    desc: "Create an ASG with load balancer"
+    steps:
+      - name: create_launch_template
+        func: shell
+        do: |
+          NAME="{{ vars.name }}"
+          INSTANCE_TYPE="{{ vars.instance_type | default "t3.medium" }}"
+          AMI="{{ vars.ami_id | default "ami-demo-al2023" }}"
+
+          # DEMO: Simulate launch template creation
+          # In production: aws ec2 create-launch-template ...
+          echo "Creating launch template for ${NAME}..."
+          echo "  Instance type: ${INSTANCE_TYPE}"
+          echo "  AMI: ${AMI}"
+          echo "Launch template created: lt-${NAME}-demo"
+          echo "launch_template_id=lt-${NAME}-demo"
+        outputs:
+          launch_template_id: '{{ result.output | regexFind "launch_template_id=(.*)" }}'
+
+      - name: create_lb
+        func: shell
+        do: |
+          NAME="{{ vars.name }}"
+          SUBNET_IDS="{{ vars.subnet_ids }}"
+
+          # DEMO: Simulate ALB creation
+          # In production: aws elbv2 create-load-balancer ...
+          echo "Creating Application Load Balancer for ${NAME}..."
+          echo "  Subnets: ${SUBNET_IDS}"
+          echo "ALB created"
+          echo "lb_dns=${NAME}-demo-lb.elb.amazonaws.com"
+          echo "target_group_arn=arn:aws:elasticloadbalancing:demo:tg/${NAME}"
+        outputs:
+          lb_dns: '{{ result.output | regexFind "lb_dns=(.*)" }}'
+          target_group_arn: '{{ result.output | regexFind "target_group_arn=(.*)" }}'
+
+      - name: create_scaling_group
+        func: shell
+        do: |
+          NAME="{{ vars.name }}"
+          MIN="{{ config.min_instances }}"
+          MAX="{{ config.max_instances }}"
+          TARGET_CPU="{{ config.target_cpu }}"
+
+          # DEMO: Simulate ASG creation
+          # In production: aws autoscaling create-auto-scaling-group ...
+          echo "Creating Auto Scaling Group: ${NAME}"
+          echo "  Min: ${MIN}, Max: ${MAX}, Target CPU: ${TARGET_CPU}%"
+          echo "  Launch template: {{ steps.create_launch_template.launch_template_id }}"
+          echo "  Target group: {{ steps.create_lb.target_group_arn }}"
+          echo "ASG created successfully"
+          echo "asg_name=${NAME}-asg-demo"
+        outputs:
+          asg_name: '{{ result.output | regexFind "asg_name=(.*)" }}'
+          lb_dns: '{{ steps.create_lb.lb_dns }}'
+          target_group_arn: '{{ steps.create_lb.target_group_arn }}'

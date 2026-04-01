@@ -1,0 +1,49 @@
+name: demo-aws-r53
+desc: "AWS Route 53 DNS management (demo: uses simulated responses)"
+
+tasks:
+  create_record:
+    desc: "Create a DNS record"
+    steps:
+      - name: upsert_record
+        func: shell
+        do: |
+          ZONE="{{ config.hosted_zone }}"
+          DOMAIN="{{ config.domain }}"
+          SUBDOMAIN="{{ vars.subdomain }}"
+          TARGET="{{ vars.target }}"
+          TYPE="{{ vars.record_type | default "CNAME" }}"
+          TTL="{{ config.ttl }}"
+          FQDN="${SUBDOMAIN}.${DOMAIN}"
+
+          # DEMO: Simulate Route 53 record creation
+          # In production: aws route53 change-resource-record-sets ...
+          echo "Creating ${TYPE} record in zone ${ZONE}..."
+          echo "  ${FQDN} -> ${TARGET}"
+          echo "  TTL: ${TTL}s"
+          echo "DNS record created successfully"
+          echo "fqdn=${FQDN}"
+          echo "record_type=${TYPE}"
+          echo "target=${TARGET}"
+        outputs:
+          fqdn: '{{ result.output | regexFind "fqdn=(.*)" }}'
+          record_type: '{{ result.output | regexFind "record_type=(.*)" }}'
+          target: '{{ result.output | regexFind "target=(.*)" }}'
+
+  create_health_check:
+    desc: "Create a Route 53 health check for an endpoint"
+    steps:
+      - name: create_check
+        func: shell
+        do: |
+          FQDN="{{ vars.fqdn }}"
+          PORT="{{ vars.port | default "443" }}"
+          PATH="{{ vars.health_path | default "/health" }}"
+
+          # DEMO: Simulate health check creation
+          # In production: aws route53 create-health-check ...
+          echo "Creating health check for ${FQDN}:${PORT}${PATH}..."
+          echo "Health check created: hc-demo-${FQDN}"
+          echo "health_check_id=hc-demo-${FQDN}"
+        outputs:
+          health_check_id: '{{ result.output | regexFind "health_check_id=(.*)" }}'

@@ -1,0 +1,57 @@
+name: demo-aws-ec2
+desc: "AWS EC2 instance management (demo: uses simulated responses)"
+
+tasks:
+  launch_instance:
+    desc: "Launch an EC2 instance in the specified subnet"
+    steps:
+      - name: launch
+        func: shell
+        do: |
+          REGION="{{ config.region }}"
+          INSTANCE_TYPE="{{ config.instance_type }}"
+          AMI="{{ config.ami_id }}"
+          SUBNET="{{ vars.subnet_id }}"
+          SG="{{ vars.security_group_id }}"
+          NAME="{{ vars.name_tag | default "orchstep-instance" }}"
+
+          # DEMO: Simulate EC2 instance launch
+          # In production, replace with:
+          # aws ec2 run-instances --image-id ${AMI} --instance-type ${INSTANCE_TYPE} \
+          #   --subnet-id ${SUBNET} --security-group-ids ${SG} --key-name ... \
+          #   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${NAME}}]"
+          echo "Launching ${INSTANCE_TYPE} in ${SUBNET} (${REGION})..."
+          echo "  AMI: ${AMI}"
+          echo "  Security Group: ${SG}"
+          INSTANCE_ID="i-demo-$(date +%s | tail -c 8)"
+          PRIVATE_IP="10.0.1.$(( RANDOM % 254 + 1 ))"
+          echo "Instance launched: ${INSTANCE_ID}"
+          echo "instance_id=${INSTANCE_ID}"
+          echo "private_ip=${PRIVATE_IP}"
+          echo "status=running"
+        outputs:
+          instance_id: '{{ result.output | regexFind "instance_id=(.*)" }}'
+          private_ip: '{{ result.output | regexFind "private_ip=(.*)" }}'
+          status: '{{ result.output | regexFind "status=(.*)" }}'
+
+  configure_instance:
+    desc: "Configure an instance with role-specific settings"
+    steps:
+      - name: configure
+        func: shell
+        do: |
+          INSTANCE="{{ vars.instance_id }}"
+          ROLE="{{ vars.role }}"
+
+          # DEMO: Simulate instance configuration
+          # In production, replace with SSM run-command or user-data script
+          echo "Configuring ${INSTANCE} as ${ROLE} server..."
+          echo "  Installing ${ROLE} packages..."
+          echo "  Applying ${ROLE} configuration..."
+          echo "  Starting ${ROLE} services..."
+          echo "Configuration complete"
+          echo "configured=true"
+          echo "role=${ROLE}"
+        outputs:
+          configured: '{{ result.output | regexFind "configured=(.*)" }}'
+          role: '{{ result.output | regexFind "role=(.*)" }}'

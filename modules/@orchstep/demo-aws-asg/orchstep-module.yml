@@ -1,0 +1,61 @@
+metadata:
+  name: demo-aws-asg
+  version: "1.0.0"
+  description: "AWS Auto Scaling Group management (demo mock)"
+  author: "orchstep"
+  tags: ["aws", "autoscaling", "asg", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      min_instances:
+        type: string
+        required: false
+        default: "2"
+        desc: "Minimum instance count"
+      max_instances:
+        type: string
+        required: false
+        default: "10"
+        desc: "Maximum instance count"
+      target_cpu:
+        type: string
+        required: false
+        default: "70"
+        desc: "Target CPU utilization percentage"
+
+exports:
+  create_asg:
+    desc: "Create an Auto Scaling Group"
+    params:
+      - name: name
+        type: string
+        required: true
+        desc: "ASG name"
+      - name: subnet_ids
+        type: string
+        required: true
+        desc: "Subnets for the ASG"
+      - name: instance_type
+        type: string
+        required: false
+        desc: "Instance type for launch template"
+      - name: ami_id
+        type: string
+        required: false
+        desc: "AMI for launch template"
+    returns:
+      type: object
+      properties:
+        asg_name:
+          type: string
+        lb_dns:
+          type: string
+        target_group_arn:
+          type: string

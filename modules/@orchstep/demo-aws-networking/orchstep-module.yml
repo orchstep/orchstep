@@ -1,0 +1,82 @@
+metadata:
+  name: demo-aws-networking
+  version: "1.0.0"
+  description: "AWS VPC networking provisioning (demo mock)"
+  author: "orchstep"
+  tags: ["aws", "networking", "vpc", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      region:
+        type: string
+        required: true
+        desc: "AWS region for networking resources"
+      vpc_cidr:
+        type: string
+        required: false
+        default: "10.0.0.0/16"
+        desc: "CIDR block for the VPC"
+      az_count:
+        type: string
+        required: false
+        default: "2"
+        desc: "Number of availability zones to use"
+
+exports:
+  create_vpc:
+    desc: "Create a VPC with the specified CIDR block"
+    params:
+      - name: vpc_cidr
+        type: string
+        required: false
+        desc: "Override VPC CIDR (defaults to config)"
+    returns:
+      type: object
+      properties:
+        vpc_id:
+          type: string
+        cidr:
+          type: string
+        region:
+          type: string
+
+  create_subnets:
+    desc: "Create public and private subnets across AZs"
+    params:
+      - name: vpc_id
+        type: string
+        required: true
+        desc: "VPC ID to create subnets in"
+    returns:
+      type: object
+      properties:
+        public_subnet_ids:
+          type: string
+        private_subnet_ids:
+          type: string
+        az_list:
+          type: string
+
+  create_security_groups:
+    desc: "Create security groups for web, app, and database tiers"
+    params:
+      - name: vpc_id
+        type: string
+        required: true
+        desc: "VPC ID for security groups"
+    returns:
+      type: object
+      properties:
+        web_sg_id:
+          type: string
+        app_sg_id:
+          type: string
+        db_sg_id:
+          type: string

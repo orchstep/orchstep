@@ -1,0 +1,80 @@
+metadata:
+  name: demo-aws-ec2
+  version: "1.0.0"
+  description: "AWS EC2 instance management (demo mock)"
+  author: "orchstep"
+  tags: ["aws", "ec2", "compute", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      region:
+        type: string
+        required: true
+        desc: "AWS region"
+      instance_type:
+        type: string
+        required: false
+        default: "t3.medium"
+        desc: "EC2 instance type"
+      ami_id:
+        type: string
+        required: false
+        default: "ami-demo-al2023"
+        desc: "AMI to launch from"
+      key_name:
+        type: string
+        required: false
+        default: "orchstep-demo-key"
+        desc: "SSH key pair name"
+
+exports:
+  launch_instance:
+    desc: "Launch an EC2 instance"
+    params:
+      - name: subnet_id
+        type: string
+        required: true
+        desc: "Subnet to launch in"
+      - name: security_group_id
+        type: string
+        required: true
+        desc: "Security group to attach"
+      - name: name_tag
+        type: string
+        required: false
+        desc: "Name tag for the instance"
+    returns:
+      type: object
+      properties:
+        instance_id:
+          type: string
+        private_ip:
+          type: string
+        status:
+          type: string
+
+  configure_instance:
+    desc: "Configure an instance with user data"
+    params:
+      - name: instance_id
+        type: string
+        required: true
+        desc: "Instance to configure"
+      - name: role
+        type: string
+        required: true
+        desc: "Server role (web, app, db)"
+    returns:
+      type: object
+      properties:
+        configured:
+          type: string
+        role:
+          type: string

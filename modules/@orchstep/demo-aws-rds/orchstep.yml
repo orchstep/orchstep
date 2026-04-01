@@ -1,0 +1,45 @@
+name: demo-aws-rds
+desc: "AWS RDS database provisioning (demo: uses simulated responses)"
+
+tasks:
+  create_db:
+    desc: "Create an RDS database instance"
+    steps:
+      - name: create_subnet_group
+        func: shell
+        do: |
+          SUBNET_IDS="{{ vars.subnet_ids }}"
+          DB_NAME="{{ vars.db_name }}"
+
+          # DEMO: Simulate DB subnet group creation
+          # In production: aws rds create-db-subnet-group ...
+          echo "Creating DB subnet group for ${DB_NAME}..."
+          echo "  Subnets: ${SUBNET_IDS}"
+          echo "Subnet group created: dbsubnet-${DB_NAME}-demo"
+          echo "subnet_group=dbsubnet-${DB_NAME}-demo"
+        outputs:
+          subnet_group: '{{ result.output | regexFind "subnet_group=(.*)" }}'
+
+      - name: provision_db
+        func: shell
+        do: |
+          REGION="{{ config.region }}"
+          ENGINE="{{ config.engine }}"
+          INSTANCE_CLASS="{{ config.instance_class }}"
+          STORAGE="{{ config.storage_gb }}"
+          DB_NAME="{{ vars.db_name }}"
+          SG="{{ vars.security_group_id }}"
+
+          # DEMO: Simulate RDS instance creation
+          # In production: aws rds create-db-instance --db-instance-identifier ${DB_NAME} ...
+          echo "Creating ${ENGINE} instance (${INSTANCE_CLASS}, ${STORAGE}GB) in ${REGION}..."
+          echo "  Security group: ${SG}"
+          echo "  Subnet group: {{ steps.create_subnet_group.subnet_group }}"
+          echo "Database provisioned successfully"
+          echo "db_endpoint=${DB_NAME}.demo.${REGION}.rds.amazonaws.com"
+          echo "db_port=5432"
+          echo "db_identifier=${DB_NAME}-demo"
+        outputs:
+          db_endpoint: '{{ result.output | regexFind "db_endpoint=(.*)" }}'
+          db_port: '{{ result.output | regexFind "db_port=(.*)" }}'
+          db_identifier: '{{ result.output | regexFind "db_identifier=(.*)" }}'
