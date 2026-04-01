@@ -1,0 +1,81 @@
+metadata:
+  name: demo-gcp-networking
+  version: "1.0.0"
+  description: "GCP VPC networking provisioning (demo mock)"
+  author: "orchstep"
+  tags: ["gcp", "networking", "vpc", "firewall", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      region:
+        type: string
+        required: true
+        desc: "GCP region for networking resources"
+      network_cidr:
+        type: string
+        required: false
+        default: "10.0.0.0/16"
+        desc: "CIDR block for the VPC network"
+      project_id:
+        type: string
+        required: true
+        desc: "GCP project ID"
+
+exports:
+  create_network:
+    desc: "Create a VPC network"
+    params:
+      - name: network_cidr
+        type: string
+        required: false
+        desc: "Override network CIDR (defaults to config)"
+    returns:
+      type: object
+      properties:
+        network_name:
+          type: string
+        cidr:
+          type: string
+        project_id:
+          type: string
+
+  create_subnets:
+    desc: "Create subnets in the VPC network"
+    params:
+      - name: network_name
+        type: string
+        required: true
+        desc: "VPC network name to create subnets in"
+    returns:
+      type: object
+      properties:
+        subnet_name:
+          type: string
+        cidr_range:
+          type: string
+        region:
+          type: string
+
+  create_firewall:
+    desc: "Create firewall rules for the VPC network"
+    params:
+      - name: network_name
+        type: string
+        required: true
+        desc: "VPC network name for firewall rules"
+    returns:
+      type: object
+      properties:
+        firewall_name:
+          type: string
+        allowed_ports:
+          type: string
+        direction:
+          type: string

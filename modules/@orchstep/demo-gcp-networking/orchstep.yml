@@ -1,0 +1,83 @@
+name: demo-gcp-networking
+desc: "GCP VPC networking provisioning (demo: uses simulated responses)"
+
+tasks:
+  create_network:
+    desc: "Create a VPC network"
+    steps:
+      - name: provision_network
+        func: shell
+        do: |
+          REGION="{{ config.region }}"
+          NETWORK_CIDR="{{ vars.network_cidr | default config.network_cidr }}"
+          PROJECT_ID="{{ config.project_id }}"
+
+          # DEMO: Simulate gcloud compute networks create
+          # In production, replace with:
+          # gcloud compute networks create ${PROJECT_ID}-vpc --subnet-mode=custom --project=${PROJECT_ID}
+          NETWORK_NAME="${PROJECT_ID}-vpc-demo"
+          echo "Creating VPC network in project ${PROJECT_ID}..."
+          echo "  Network: ${NETWORK_NAME}"
+          echo "  CIDR:    ${NETWORK_CIDR}"
+          echo "  Region:  ${REGION}"
+          echo "Network created successfully"
+          echo "network_name=${NETWORK_NAME}"
+          echo "cidr=${NETWORK_CIDR}"
+          echo "project_id=${PROJECT_ID}"
+        outputs:
+          network_name: '{{ result.output | regexFind "network_name=(.*)" }}'
+          cidr: '{{ result.output | regexFind "cidr=(.*)" }}'
+          project_id: '{{ result.output | regexFind "project_id=(.*)" }}'
+
+  create_subnets:
+    desc: "Create subnets in the VPC network"
+    steps:
+      - name: provision_subnets
+        func: shell
+        do: |
+          NETWORK_NAME="{{ vars.network_name }}"
+          REGION="{{ config.region }}"
+          NETWORK_CIDR="{{ config.network_cidr | default "10.0.0.0/16" }}"
+
+          # DEMO: Simulate gcloud compute networks subnets create
+          # In production, replace with:
+          # gcloud compute networks subnets create ${NETWORK_NAME}-subnet --network=${NETWORK_NAME} --region=${REGION} --range=${NETWORK_CIDR}
+          SUBNET_NAME="${NETWORK_NAME}-subnet-${REGION}"
+          echo "Creating subnet in ${NETWORK_NAME}..."
+          echo "  Subnet: ${SUBNET_NAME}"
+          echo "  CIDR:   ${NETWORK_CIDR}"
+          echo "  Region: ${REGION}"
+          echo "Subnet created successfully"
+          echo "subnet_name=${SUBNET_NAME}"
+          echo "cidr_range=${NETWORK_CIDR}"
+          echo "region=${REGION}"
+        outputs:
+          subnet_name: '{{ result.output | regexFind "subnet_name=(.*)" }}'
+          cidr_range: '{{ result.output | regexFind "cidr_range=(.*)" }}'
+          region: '{{ result.output | regexFind "region=(.*)" }}'
+
+  create_firewall:
+    desc: "Create firewall rules for the VPC network"
+    steps:
+      - name: provision_firewall
+        func: shell
+        do: |
+          NETWORK_NAME="{{ vars.network_name }}"
+          PROJECT_ID="{{ config.project_id }}"
+
+          # DEMO: Simulate gcloud compute firewall-rules create
+          # In production, replace with:
+          # gcloud compute firewall-rules create ${NETWORK_NAME}-allow-internal --network=${NETWORK_NAME} --allow=tcp,udp,icmp --source-ranges=10.0.0.0/16
+          FIREWALL_NAME="${NETWORK_NAME}-allow-internal"
+          echo "Creating firewall rules for ${NETWORK_NAME}..."
+          echo "  Rule:    ${FIREWALL_NAME}"
+          echo "  Allow:   tcp:80,443,8080 udp icmp"
+          echo "  Direction: INGRESS"
+          echo "Firewall rule created successfully"
+          echo "firewall_name=${FIREWALL_NAME}"
+          echo "allowed_ports=tcp:80,443,8080"
+          echo "direction=INGRESS"
+        outputs:
+          firewall_name: '{{ result.output | regexFind "firewall_name=(.*)" }}'
+          allowed_ports: '{{ result.output | regexFind "allowed_ports=(.*)" }}'
+          direction: '{{ result.output | regexFind "direction=(.*)" }}'

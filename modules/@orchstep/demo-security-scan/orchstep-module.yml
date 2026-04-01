@@ -1,0 +1,80 @@
+metadata:
+  name: demo-security-scan
+  version: "1.0.0"
+  description: "Security scanning with SAST, dependency analysis, and reporting (demo mock)"
+  author: "orchstep"
+  tags: ["security", "sast", "scanning", "semgrep", "trivy", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      scan_path:
+        type: string
+        required: true
+        desc: "Path to scan for vulnerabilities"
+      severity_threshold:
+        type: string
+        required: false
+        desc: "Minimum severity to report (low, medium, high, critical)"
+
+exports:
+  run_sast:
+    desc: "Run static application security testing"
+    params:
+      - name: scan_path
+        type: string
+        required: false
+        desc: "Override scan path (defaults to config)"
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+        findings_count:
+          type: string
+        tool:
+          type: string
+
+  run_dependency_scan:
+    desc: "Scan dependencies for known vulnerabilities"
+    params:
+      - name: scan_path
+        type: string
+        required: false
+        desc: "Override scan path (defaults to config)"
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+        findings_count:
+          type: string
+        tool:
+          type: string
+
+  generate_report:
+    desc: "Generate consolidated security report"
+    params:
+      - name: sast_findings
+        type: string
+        required: false
+        desc: "Number of SAST findings"
+      - name: dep_findings
+        type: string
+        required: false
+        desc: "Number of dependency findings"
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+        findings_count:
+          type: string
+        report_path:
+          type: string

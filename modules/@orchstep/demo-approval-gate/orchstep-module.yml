@@ -1,0 +1,80 @@
+metadata:
+  name: demo-approval-gate
+  version: "1.0.0"
+  description: "Approval gate workflow with policy enforcement (demo mock)"
+  author: "orchstep"
+  tags: ["approval", "gate", "governance", "policy", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      approvers:
+        type: string
+        required: true
+        desc: "Comma-separated list of approvers"
+      policy:
+        type: string
+        required: true
+        desc: "Approval policy (any, all, majority)"
+      timeout:
+        type: string
+        required: false
+        desc: "Approval timeout in minutes"
+
+exports:
+  request_approval:
+    desc: "Submit an approval request to designated approvers"
+    params:
+      - name: change_description
+        type: string
+        required: true
+        desc: "Description of the change requiring approval"
+    returns:
+      type: object
+      properties:
+        request_id:
+          type: string
+        status:
+          type: string
+        approvers:
+          type: string
+
+  check_status:
+    desc: "Check the status of an approval request"
+    params:
+      - name: request_id
+        type: string
+        required: true
+        desc: "Approval request ID to check"
+    returns:
+      type: object
+      properties:
+        approved:
+          type: string
+        approver:
+          type: string
+        status:
+          type: string
+
+  enforce_policy:
+    desc: "Enforce the approval policy and return final decision"
+    params:
+      - name: request_id
+        type: string
+        required: true
+        desc: "Approval request ID to enforce"
+    returns:
+      type: object
+      properties:
+        policy_result:
+          type: string
+        policy:
+          type: string
+        approved:
+          type: string

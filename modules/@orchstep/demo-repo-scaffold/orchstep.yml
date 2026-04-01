@@ -1,0 +1,109 @@
+name: demo-repo-scaffold
+desc: "Repository scaffolding with structure and CI configuration (demo: uses simulated responses)"
+
+tasks:
+  create_repo:
+    desc: "Create a new GitHub repository"
+    steps:
+      - name: gh_create_repo
+        func: shell
+        do: |
+          REPO_NAME="{{ vars.repo_name | default config.repo_name }}"
+          LANGUAGE="{{ config.language }}"
+          TEMPLATE="{{ config.template | default "" }}"
+
+          # DEMO: Simulate gh repo create
+          # In production, replace with:
+          # gh repo create ${REPO_NAME} --public --clone --gitignore=${LANGUAGE} ${TEMPLATE:+--template=${TEMPLATE}}
+          REPO_URL="https://github.com/demo-org/${REPO_NAME}"
+          echo "Creating GitHub repository..."
+          echo "  Name:       ${REPO_NAME}"
+          echo "  Language:   ${LANGUAGE}"
+          [ -n "${TEMPLATE}" ] && echo "  Template:   ${TEMPLATE}"
+          echo "  Visibility: public"
+          echo "Repository created successfully"
+          echo "repo_url=${REPO_URL}"
+          echo "repo_name=${REPO_NAME}"
+          echo "visibility=public"
+        outputs:
+          repo_url: '{{ result.output | regexFind "repo_url=(.*)" }}'
+          repo_name: '{{ result.output | regexFind "repo_name=(.*)" }}'
+          visibility: '{{ result.output | regexFind "visibility=(.*)" }}'
+
+  init_structure:
+    desc: "Initialize project directory structure"
+    steps:
+      - name: create_structure
+        func: shell
+        do: |
+          REPO_NAME="{{ vars.repo_name }}"
+          LANGUAGE="{{ config.language }}"
+
+          # DEMO: Simulate mkdir and touch for project structure
+          # In production, replace with:
+          # mkdir -p ${REPO_NAME}/{src,tests,docs,scripts}
+          # touch ${REPO_NAME}/{README.md,LICENSE,.gitignore,Makefile}
+          echo "Initializing project structure for ${REPO_NAME} (${LANGUAGE})..."
+
+          case "${LANGUAGE}" in
+            go)
+              DIRS="cmd pkg internal tests docs"
+              FILES="go.mod go.sum Makefile README.md .gitignore"
+              ;;
+            python)
+              DIRS="src tests docs scripts"
+              FILES="pyproject.toml requirements.txt Makefile README.md .gitignore"
+              ;;
+            node)
+              DIRS="src tests docs scripts"
+              FILES="package.json tsconfig.json Makefile README.md .gitignore"
+              ;;
+            rust)
+              DIRS="src tests docs"
+              FILES="Cargo.toml Makefile README.md .gitignore"
+              ;;
+            *)
+              DIRS="src tests docs"
+              FILES="Makefile README.md .gitignore"
+              ;;
+          esac
+
+          echo "  Directories: ${DIRS}"
+          echo "  Files:       ${FILES}"
+          echo "Structure initialized successfully"
+          echo "structure_created=true"
+          echo "directories=${DIRS}"
+          echo "files=${FILES}"
+        outputs:
+          structure_created: '{{ result.output | regexFind "structure_created=(.*)" }}'
+          directories: '{{ result.output | regexFind "directories=(.*)" }}'
+          files: '{{ result.output | regexFind "files=(.*)" }}'
+
+  configure_ci:
+    desc: "Configure CI pipeline for the repository"
+    steps:
+      - name: write_ci_config
+        func: shell
+        do: |
+          REPO_NAME="{{ vars.repo_name }}"
+          LANGUAGE="{{ config.language }}"
+
+          # DEMO: Simulate writing CI configuration
+          # In production, replace with:
+          # mkdir -p ${REPO_NAME}/.github/workflows
+          # cat > ${REPO_NAME}/.github/workflows/ci.yml <<EOF
+          # ...CI config...
+          # EOF
+          CI_FILE=".github/workflows/ci.yml"
+          echo "Configuring CI for ${REPO_NAME} (${LANGUAGE})..."
+          echo "  Provider: github-actions"
+          echo "  File:     ${CI_FILE}"
+          echo "  Steps:    lint, test, build"
+          echo "CI configured successfully"
+          echo "ci_configured=true"
+          echo "ci_file=${CI_FILE}"
+          echo "provider=github-actions"
+        outputs:
+          ci_configured: '{{ result.output | regexFind "ci_configured=(.*)" }}'
+          ci_file: '{{ result.output | regexFind "ci_file=(.*)" }}'
+          provider: '{{ result.output | regexFind "provider=(.*)" }}'

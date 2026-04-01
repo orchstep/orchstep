@@ -1,0 +1,56 @@
+metadata:
+  name: demo-package-manager
+  version: "1.0.0"
+  description: "Cross-platform package installation and verification (demo mock)"
+  author: "orchstep"
+  tags: ["packages", "brew", "apt", "dnf", "cross-platform", "demo"]
+
+permissions:
+  shell: true
+  http:
+    allow: []
+  git: false
+
+config:
+  schema:
+    properties:
+      os_type:
+        type: string
+        required: false
+        default: "auto"
+        desc: "OS type override (auto, macos, debian, fedora)"
+
+exports:
+  install:
+    desc: "Detect OS and simulate package installation"
+    params:
+      - name: packages
+        type: string
+        required: true
+        desc: "Space-separated list of packages to install"
+    returns:
+      type: object
+      properties:
+        installed:
+          type: string
+        package_manager:
+          type: string
+        count:
+          type: string
+
+  verify:
+    desc: "Verify installed packages are available on PATH"
+    params:
+      - name: packages
+        type: string
+        required: true
+        desc: "Space-separated list of packages to verify"
+    returns:
+      type: object
+      properties:
+        installed:
+          type: string
+        missing:
+          type: string
+        count:
+          type: string
