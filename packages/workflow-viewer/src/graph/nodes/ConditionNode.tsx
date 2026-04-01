@@ -1,5 +1,5 @@
 import React from 'react'
-import { Handle, Position } from '@xyflow/react'
+import { NodeHandles } from './NodeHandles'
 import { GitFork } from 'lucide-react'
 import type { GraphNode } from '../../types'
 
@@ -20,7 +20,7 @@ export function ConditionNode({ data, selected }: { data: GraphNode; selected?: 
           : 'var(--shadow)',
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ visibility: 'hidden' }} />
+      <NodeHandles />
       <div
         style={{
           position: 'absolute',
@@ -56,7 +56,6 @@ export function ConditionNode({ data, selected }: { data: GraphNode; selected?: 
           )}
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} style={{ visibility: 'hidden' }} />
     </div>
   )
 }

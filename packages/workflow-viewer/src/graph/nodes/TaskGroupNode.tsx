@@ -1,6 +1,6 @@
 import React from 'react'
-import { Handle, Position } from '@xyflow/react'
 import { FolderOpen } from 'lucide-react'
+import { NodeHandles } from './NodeHandles'
 import type { GraphNode } from '../../types'
 
 interface TaskGroupData extends GraphNode {
@@ -24,7 +24,7 @@ export function TaskGroupNode({ data }: { data: TaskGroupData }) {
         boxShadow: 'var(--shadow)',
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ visibility: 'hidden' }} />
+      <NodeHandles />
       <div
         style={{
           display: 'flex',
@@ -63,7 +63,6 @@ export function TaskGroupNode({ data }: { data: TaskGroupData }) {
           {stepCount} steps (collapsed)
         </div>
       )}
-      <Handle type="source" position={Position.Bottom} style={{ visibility: 'hidden' }} />
     </div>
   )
 }

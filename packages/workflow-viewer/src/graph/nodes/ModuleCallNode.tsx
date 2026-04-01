@@ -1,5 +1,5 @@
 import React from 'react'
-import { Handle, Position } from '@xyflow/react'
+import { NodeHandles } from './NodeHandles'
 import { Package } from 'lucide-react'
 import type { GraphNode } from '../../types'
 
@@ -19,7 +19,7 @@ export function ModuleCallNode({ data, selected }: { data: GraphNode; selected?:
           : 'var(--shadow)',
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ visibility: 'hidden' }} />
+      <NodeHandles />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Package size={16} color={color} />
         <div>
@@ -39,7 +39,6 @@ export function ModuleCallNode({ data, selected }: { data: GraphNode; selected?:
           )}
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} style={{ visibility: 'hidden' }} />
     </div>
   )
 }
