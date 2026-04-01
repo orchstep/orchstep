@@ -34,6 +34,7 @@ orchstep list           # List all available tasks
 | 16 | [User Prompts](16-user-prompts/) | 4 | Interactive input, select/confirm/text/password/multiselect, non-interactive mode |
 | 17 | [Task Discovery](17-task-discovery/) | 4 | Auto-discovery, naming, precedence, exclusion |
 | 18 | [Nested Patterns](18-nested-patterns/) | 3 | Nested conditionals, switch-in-loop, deep elif |
+| 19 | [Stdin & Pipes](19-stdin-pipe/) | 3 | Pipe data in, auto-detect JSON/YAML, --stdin-var |
 
 ---
 
@@ -233,6 +234,16 @@ Combine control flow structures for complex decision logic.
 | [nested-conditionals.yml](18-nested-patterns/nested-conditionals.yml) | if/else inside if/else for multi-dimensional decisions |
 | [switch-in-loop.yml](18-nested-patterns/switch-in-loop.yml) | Loop with switch/case for per-item routing |
 | [deep-elif-chains.yml](18-nested-patterns/deep-elif-chains.yml) | Multi-branch elif for severity-based routing |
+
+## 19 - Stdin & Pipes
+
+Pipe data from external commands into OrchStep workflows.
+
+| File | What it shows |
+|------|---------------|
+| [basic-pipe.yml](19-stdin-pipe/basic-pipe.yml) | Auto-detect text/JSON, access via `{{ stdin }}` and `{{ stdin.field }}` |
+| [stdin-var.yml](19-stdin-pipe/stdin-var.yml) | `--stdin-var` flag to inject as a named variable in `{{ vars.* }}` |
+| [pipeline-chaining.yml](19-stdin-pipe/pipeline-chaining.yml) | Real-world patterns: terraform, curl, gh piped into orchstep |
 
 ---
 

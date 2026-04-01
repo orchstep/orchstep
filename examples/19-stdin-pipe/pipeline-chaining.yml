@@ -1,0 +1,42 @@
+# Example: Pipeline Chaining
+# Use OrchStep as a composable citizen in Unix pipelines.
+# Pipe output from any tool into orchstep for processing.
+#
+# Real-world examples:
+#   terraform output -json | orchstep run validate --stdin-var tf
+#   curl -s api/health | orchstep run check-health
+#   cat inventory.yml | orchstep run provision --stdin-var inventory
+#   gh api repos/org/repo | orchstep run analyze --stdin-var repo
+#
+# Try: echo '{"vpc_id":"vpc-123","status":"active"}' | orchstep run validate
+
+name: pipeline-chaining
+desc: "OrchStep as a Unix pipeline citizen"
+
+tasks:
+  validate:
+    desc: "Validate infrastructure output from an external tool"
+    steps:
+      - name: check_vpc
+        func: shell
+        do: |
+          echo "=== Infrastructure Validation ==="
+          echo "VPC: {{ stdin.vpc_id }}"
+          echo "Status: {{ stdin.status }}"
+
+      - name: assert_active
+        func: assert
+        args:
+          condition: '{{ eq stdin.status "active" }}'
+          message: "Infrastructure must be in active state"
+
+      - name: report
+        func: shell
+        do: |
+          echo ""
+          echo "Validation passed for {{ stdin.vpc_id }}"
+          echo ""
+          echo "This workflow received data from a pipe."
+          echo "In production:"
+          echo "  terraform output -json | orchstep run validate"
+          echo "  aws ec2 describe-vpcs --output json | orchstep run validate"

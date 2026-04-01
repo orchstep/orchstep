@@ -1,0 +1,30 @@
+# Example: Named Stdin Variable
+# Use --stdin-var to inject piped data as a named variable.
+# The data joins the normal variable system and follows precedence rules.
+#
+# Try: echo '{"env":"prod","replicas":3}' | orchstep run --stdin-var config
+# Try: echo '{"env":"prod"}' | orchstep run --stdin-var config --var config.env=staging
+
+name: stdin-var-demo
+desc: "Inject piped data as a named variable with --stdin-var"
+
+tasks:
+  main:
+    desc: "Access piped data via vars namespace"
+    steps:
+      - name: show_config
+        func: shell
+        do: |
+          echo "=== Named Stdin Variable ==="
+          echo ""
+          echo "Access via vars:  {{ vars.config.env }}"
+          echo "Access via stdin: {{ stdin.env }}"
+          echo ""
+          echo "Both point to the same data."
+          echo "Use --var to override specific fields:"
+          echo "  echo '...' | orchstep run --stdin-var config --var config.env=staging"
+
+      - name: deploy
+        func: shell
+        do: |
+          echo "Deploying to {{ vars.config.env }} with {{ vars.config.replicas }} replicas"
