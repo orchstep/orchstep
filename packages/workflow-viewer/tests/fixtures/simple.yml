@@ -1,0 +1,33 @@
+name: simple-deploy
+desc: A basic deployment workflow
+
+tasks:
+  build:
+    desc: Build the application
+    steps:
+      - name: compile
+        desc: Compile source code
+        func: shell
+        do: go build -o app ./cmd/app
+        timeout: 60s
+
+      - name: run_tests
+        func: shell
+        do: go test ./...
+        outputs:
+          test_result: "{{ result.output }}"
+
+  deploy:
+    desc: Deploy to production
+    steps:
+      - name: run_build
+        task: build
+
+      - name: push_image
+        func: shell
+        do: docker push myapp:latest
+
+      - name: apply_config
+        func: shell
+        do: kubectl apply -f deploy.yml
+        timeout: 30s

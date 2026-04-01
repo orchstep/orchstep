@@ -1,0 +1,119 @@
+name: full-pipeline
+desc: Complex workflow with all features
+
+defaults:
+  app_name: myapp
+  replicas: 3
+
+modules:
+  - name: notify
+    source: github.com/orchstep/modules/slack-notify
+    version: "^2.0.0"
+    config:
+      channel: "#ci"
+
+tasks:
+  build:
+    desc: Build and test
+    vars:
+      build_env: production
+    steps:
+      - name: compile
+        func: shell
+        do: "go build -o {{ vars.app_name }} ./cmd/{{ vars.app_name }}"
+        timeout: 120s
+        outputs:
+          binary: "{{ vars.app_name }}"
+
+      - name: unit_test
+        func: shell
+        do: go test ./... -cover
+        retry:
+          max_attempts: 2
+          interval: 5s
+
+      - name: lint
+        func: shell
+        do: golangci-lint run
+
+  deploy:
+    desc: Deploy to target environment
+    steps:
+      - name: run_build
+        task: build
+
+      - name: check_environment
+        if: '{{ eq vars.environment "production" }}'
+        task: deploy_prod
+        else: deploy_staging
+
+  deploy_prod:
+    steps:
+      - name: push_image
+        func: shell
+        do: docker push myapp:latest
+
+      - name: apply_prod
+        func: shell
+        do: kubectl apply -f k8s/prod.yml
+        timeout: 60s
+        retry:
+          max_attempts: 3
+          interval: 10s
+          backoff_rate: 2.0
+          jitter: 0.3
+        catch:
+          - name: rollback
+            func: shell
+            do: kubectl rollout undo deployment/myapp
+
+      - name: health_check
+        loop:
+          items: "{{ vars.endpoints }}"
+          as: endpoint
+        func: http
+        args:
+          url: "{{ loop.endpoint }}/health"
+          method: GET
+        retry:
+          max_attempts: 5
+          interval: 3s
+
+    finally:
+      - name: notify_team
+        module: notify
+        task: send
+        with:
+          message: "Production deploy finished"
+
+  deploy_staging:
+    steps:
+      - name: apply_staging
+        func: shell
+        do: kubectl apply -f k8s/staging.yml
+
+  report:
+    steps:
+      - name: generate_report
+        func: render
+        args:
+          template: report.tmpl
+          output: report.html
+
+      - name: send_report
+        func: http
+        args:
+          url: https://api.example.com/reports
+          method: POST
+
+      - name: verify
+        func: assert
+        args:
+          condition: '{{ eq steps.send_report.status 200 }}'
+          desc: Report API returned 200
+
+      - name: commit_results
+        func: git
+        args:
+          operation: commit
+          message: "ci: update report"

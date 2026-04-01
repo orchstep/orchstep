@@ -1,0 +1,35 @@
+name: error-handling-workflow
+desc: Workflow with catch and finally blocks
+
+tasks:
+  deploy:
+    catch:
+      - name: task_rollback
+        func: shell
+        do: kubectl rollout undo deployment/app
+
+    finally:
+      - name: task_cleanup
+        func: shell
+        do: rm -rf /tmp/deploy-*
+
+    steps:
+      - name: apply
+        func: shell
+        do: kubectl apply -f deploy.yml
+        timeout: 30s
+        retry:
+          max_attempts: 3
+          interval: 2s
+          backoff_rate: 1.5
+        catch:
+          - name: step_notify
+            func: http
+            args:
+              url: https://hooks.slack.com/notify
+              method: POST
+              body: '{"text": "Deploy failed"}'
+        finally:
+          - name: step_log
+            func: shell
+            do: echo "Step completed"

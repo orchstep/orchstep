@@ -1,0 +1,19 @@
+name: circular-workflow
+desc: Workflow with circular task references
+
+tasks:
+  task_a:
+    steps:
+      - name: do_something
+        func: shell
+        do: echo "A"
+      - name: call_b
+        task: task_b
+
+  task_b:
+    steps:
+      - name: do_something
+        func: shell
+        do: echo "B"
+      - name: call_a
+        task: task_a

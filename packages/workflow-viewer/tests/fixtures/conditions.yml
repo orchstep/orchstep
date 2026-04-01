@@ -1,0 +1,67 @@
+name: conditional-deploy
+desc: Deploy with environment branching
+
+defaults:
+  environment: staging
+
+tasks:
+  main:
+    steps:
+      - name: check_env
+        func: shell
+        do: echo "Checking environment"
+        outputs:
+          env_name: "{{ vars.environment }}"
+
+      - name: deploy_decision
+        if: '{{ eq vars.environment "production" }}'
+        task: deploy_prod
+        else: deploy_staging
+
+  deploy_prod:
+    steps:
+      - name: prod_deploy
+        func: shell
+        do: kubectl apply -f prod.yml
+
+  deploy_staging:
+    steps:
+      - name: staging_deploy
+        func: shell
+        do: kubectl apply -f staging.yml
+
+  graded:
+    steps:
+      - name: grade_score
+        if: '{{ gt vars.score 90 }}'
+        task: grade_a
+        elif:
+          - if: '{{ gt vars.score 80 }}'
+            task: grade_b
+          - if: '{{ gt vars.score 70 }}'
+            task: grade_c
+        else: grade_f
+
+  grade_a:
+    steps:
+      - name: log_a
+        func: shell
+        do: echo "Grade A"
+
+  grade_b:
+    steps:
+      - name: log_b
+        func: shell
+        do: echo "Grade B"
+
+  grade_c:
+    steps:
+      - name: log_c
+        func: shell
+        do: echo "Grade C"
+
+  grade_f:
+    steps:
+      - name: log_f
+        func: shell
+        do: echo "Grade F"
