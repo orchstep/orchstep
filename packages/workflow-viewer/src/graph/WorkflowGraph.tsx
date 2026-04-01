@@ -1,10 +1,12 @@
-import React, { useMemo, useCallback, useEffect } from 'react'
+import React, { useMemo, useCallback, useEffect, useImperativeHandle, forwardRef, useState } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
   Background,
   MiniMap,
   useReactFlow,
+  useNodesState,
+  useEdgesState,
   MarkerType,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -44,22 +46,46 @@ interface WorkflowGraphProps {
   onNodeSelect: (node: GraphNode | null) => void
 }
 
-function GraphInner({
+export interface WorkflowGraphHandle {
+  fitView: () => void
+  zoomIn: () => void
+  zoomOut: () => void
+}
+
+// Helper component rendered inside <ReactFlow> to access the store
+const FlowControls = forwardRef<WorkflowGraphHandle, { direction: Direction }>(
+  function FlowControls({ direction }, ref) {
+    const { fitView, zoomIn, zoomOut } = useReactFlow()
+
+    useImperativeHandle(ref, () => ({
+      fitView: () => fitView({ padding: 0.1 }),
+      zoomIn: () => zoomIn(),
+      zoomOut: () => zoomOut(),
+    }), [fitView, zoomIn, zoomOut])
+
+    useEffect(() => {
+      const t = setTimeout(() => fitView({ padding: 0.1 }), 50)
+      return () => clearTimeout(t)
+    }, [direction, fitView])
+
+    return null
+  }
+)
+
+const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function GraphInner({
   nodes,
   edges,
   direction,
   searchQuery,
   minimapVisible,
   onNodeSelect,
-}: WorkflowGraphProps) {
-  const { fitView, zoomIn: rfZoomIn, zoomOut: rfZoomOut } = useReactFlow()
-
+}, ref) {
   const positioned = useMemo(
     () => computeLayout(nodes, edges, direction),
     [nodes, edges, direction],
   )
 
-  const flowNodes = useMemo(() => {
+  const initialFlowNodes = useMemo(() => {
     const query = searchQuery.toLowerCase().trim()
     return positioned.map((n) => {
       const matches =
@@ -77,7 +103,7 @@ function GraphInner({
     })
   }, [positioned, searchQuery])
 
-  const flowEdges = useMemo(
+  const initialFlowEdges = useMemo(
     () =>
       edges.map((e) => ({
         id: e.id,
@@ -95,11 +121,17 @@ function GraphInner({
     [edges],
   )
 
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialFlowNodes)
+  const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialFlowEdges)
+
+  // Sync when layout changes (new YAML, direction change, search)
   useEffect(() => {
-    // small delay to let layout settle before fitting
-    const t = setTimeout(() => fitView({ padding: 0.1 }), 50)
-    return () => clearTimeout(t)
-  }, [direction, fitView])
+    setFlowNodes(initialFlowNodes)
+  }, [initialFlowNodes, setFlowNodes])
+
+  useEffect(() => {
+    setFlowEdges(initialFlowEdges)
+  }, [initialFlowEdges, setFlowEdges])
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: any) => {
@@ -117,6 +149,8 @@ function GraphInner({
     <ReactFlow
       nodes={flowNodes}
       edges={flowEdges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       onNodeClick={onNodeClick}
@@ -124,8 +158,10 @@ function GraphInner({
       fitView
       minZoom={0.1}
       maxZoom={2}
+      nodesDraggable={true}
       proOptions={{ hideAttribution: true }}
     >
+      <FlowControls ref={ref} direction={direction} />
       <Background gap={16} size={1} />
       {minimapVisible && (
         <MiniMap
@@ -135,16 +171,14 @@ function GraphInner({
       )}
     </ReactFlow>
   )
-}
+})
 
-export function WorkflowGraph(props: WorkflowGraphProps) {
-  return (
-    <ReactFlowProvider>
-      <GraphInner {...props} />
-    </ReactFlowProvider>
-  )
-}
-
-// Export zoom helpers — consumers can use useReactFlow directly or
-// we expose a ref-based approach via the parent component.
-export { useReactFlow }
+export const WorkflowGraph = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(
+  function WorkflowGraph(props, ref) {
+    return (
+      <ReactFlowProvider>
+        <GraphInner ref={ref} {...props} />
+      </ReactFlowProvider>
+    )
+  }
+)

@@ -19,8 +19,8 @@ export function TaskGroupNode({ data }: { data: TaskGroupData }) {
         border: '2px solid #333',
         borderRadius: 8,
         background: 'var(--node-bg, white)',
-        minWidth: 260,
-        minHeight: collapsed ? undefined : 100,
+        width: '100%',
+        height: '100%',
         boxShadow: 'var(--shadow)',
       }}
     >
