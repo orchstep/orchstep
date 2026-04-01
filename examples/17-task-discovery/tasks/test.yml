@@ -1,0 +1,11 @@
+name: test
+desc: "Run the test suite"
+
+steps:
+  - name: unit_tests
+    func: shell
+    do: echo "Running unit tests... 42 passed, 0 failed"
+
+  - name: integration_tests
+    func: shell
+    do: echo "Running integration tests... 15 passed, 0 failed"

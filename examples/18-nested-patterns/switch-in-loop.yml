@@ -1,0 +1,52 @@
+# Example: Switch Inside Loop
+# Process a list of items where each item needs different handling
+# based on its type. Combines loop iteration with switch/case routing.
+#
+# Scenario: an event processing pipeline receives mixed event types.
+# Each event is routed to the appropriate handler.
+#
+# Try: orchstep run
+
+name: switch-in-loop
+desc: "Route mixed event types using switch/case inside a loop"
+
+defaults:
+  events: ["deploy", "alert", "metric", "log"]
+
+tasks:
+  main:
+    desc: "Process a stream of mixed events"
+    steps:
+      - name: process_events
+        loop: '{{ vars.events }}'
+        then:
+          - name: route_event
+            switch:
+              value: '{{ loop.item }}'
+              cases:
+                - when: deploy
+                  then:
+                    - name: handle_deploy
+                      func: shell
+                      do: echo "Deploy event -- triggering release pipeline"
+
+                - when: alert
+                  then:
+                    - name: handle_alert
+                      func: shell
+                      do: echo "Alert event -- notifying on-call team"
+
+                - when: metric
+                  then:
+                    - name: handle_metric
+                      func: shell
+                      do: echo "Metric event -- forwarding to monitoring dashboard"
+
+              default:
+                - name: handle_other
+                  func: shell
+                  do: echo "Unknown event type '{{ loop.item }}' -- logging for review"
+
+      - name: done
+        func: shell
+        do: echo "Processed {{ vars.events | len }} events"

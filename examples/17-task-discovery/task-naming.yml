@@ -1,0 +1,44 @@
+# Example: Task Naming Conventions
+# Task file names map directly to task names.
+# Flat files:     tasks/build.yml       -> task "build"
+# Subdirectories: tasks/deploy/staging.yml -> task "deploy-staging"
+#
+# The directory structure uses hyphens to join folder and file names.
+# This lets you organize related tasks into folders while keeping
+# a flat, readable task namespace.
+#
+# Try: orchstep run
+# Try: orchstep list
+
+name: task-naming-conventions
+desc: "Demonstrate how file paths map to task names"
+
+tasks:
+  main:
+    desc: "Show naming rules in action"
+    steps:
+      # Flat file: tasks/build.yml -> "build"
+      - name: run_flat_task
+        desc: "Call a top-level task file"
+        func: shell
+        do: echo "Task 'build' comes from tasks/build.yml"
+
+      # Subdirectory: tasks/deploy/staging.yml -> "deploy-staging"
+      - name: run_nested_task
+        desc: "Call a task nested in a subdirectory"
+        func: shell
+        do: echo "Task 'deploy-staging' comes from tasks/deploy/staging.yml"
+
+      # Subdirectory: tasks/deploy/production.yml -> "deploy-production"
+      - name: run_another_nested
+        desc: "Another nested task"
+        func: shell
+        do: echo "Task 'deploy-production' comes from tasks/deploy/production.yml"
+
+      - name: naming_summary
+        func: shell
+        do: |
+          echo "=== Naming Rules ==="
+          echo "tasks/FILE.yml          -> FILE"
+          echo "tasks/DIR/FILE.yml      -> DIR-FILE"
+          echo "tasks/DIR/SUB/FILE.yml  -> DIR-SUB-FILE"

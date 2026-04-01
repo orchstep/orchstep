@@ -1,0 +1,37 @@
+# Example: Excluding Task Files
+# Files prefixed with an underscore (_) are excluded from task discovery.
+# This convention lets you keep helper files, templates, or work-in-progress
+# tasks in the tasks/ directory without exposing them as callable tasks.
+#
+# For example:
+#   tasks/build.yml      -> discovered as task "build"
+#   tasks/_helpers.yml   -> ignored (underscore prefix)
+#   tasks/_draft.yml     -> ignored (underscore prefix)
+#
+# Try: orchstep run
+# Try: orchstep list   (underscore-prefixed files will not appear)
+
+name: exclusion-patterns
+desc: "Show how underscore-prefixed files are excluded from discovery"
+
+tasks:
+  main:
+    desc: "List which tasks are discoverable"
+    steps:
+      - name: explain
+        func: shell
+        do: |
+          echo "=== Task Discovery Exclusion ==="
+          echo ""
+          echo "Discovered (no prefix):"
+          echo "  tasks/build.yml    -> task 'build'"
+          echo "  tasks/test.yml     -> task 'test'"
+          echo "  tasks/deploy.yml   -> task 'deploy'"
+          echo ""
+          echo "Excluded (underscore prefix):"
+          echo "  tasks/_helpers.yml -> not discovered"
+          echo "  tasks/_draft.yml   -> not discovered"
+
+      - name: run_discovered
+        desc: "Only discovered tasks can be called"
+        task: build
