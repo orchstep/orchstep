@@ -379,6 +379,8 @@ function extractMetadata(step: Record<string, unknown>): NodeMetadata {
   if (step.env) metadata.env = step.env as Record<string, unknown>
   if (step.with) metadata.with = step.with as Record<string, unknown>
   if (step.on_error) metadata.onError = step.on_error as string
+  if (step.total_timeout)
+    metadata.totalTimeout = step.total_timeout as string | undefined
 
   if (step.retry) {
     metadata.retry = extractRetryInfo(step.retry as Record<string, unknown>)
