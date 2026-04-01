@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react'
-import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { parseWorkflowYaml } from './parser/yaml-to-graph'
 import { Toolbar } from './controls/Toolbar'
 import { DetailPanel } from './panel/DetailPanel'
@@ -7,7 +6,7 @@ import { WorkflowGraph } from './graph/WorkflowGraph'
 import { LIGHT_THEME, DARK_THEME } from './theme'
 import type { WorkflowViewerProps, GraphNode, Direction, Theme } from './types'
 
-function WorkflowViewerInner({
+export function WorkflowViewer({
   yaml,
   direction: initialDirection = 'TB',
   theme: initialTheme = 'light',
@@ -23,7 +22,7 @@ function WorkflowViewerInner({
   const [minimapVisible, setMinimapVisible] = useState(false)
   const [allCollapsed, setAllCollapsed] = useState(initialCollapsed)
 
-  const { fitView, zoomIn, zoomOut } = useReactFlow()
+  const graphRef = useRef<{ fitView: () => void; zoomIn: () => void; zoomOut: () => void } | null>(null)
 
   const parseResult = useMemo(() => parseWorkflowYaml(yaml), [yaml])
 
@@ -126,9 +125,9 @@ function WorkflowViewerInner({
           searchQuery={searchQuery}
           onDirectionChange={setDirection}
           onThemeChange={setTheme}
-          onFitView={() => fitView({ padding: 0.1 })}
-          onZoomIn={() => zoomIn()}
-          onZoomOut={() => zoomOut()}
+          onFitView={() => graphRef.current?.fitView()}
+          onZoomIn={() => graphRef.current?.zoomIn()}
+          onZoomOut={() => graphRef.current?.zoomOut()}
           onToggleCollapseAll={() => setAllCollapsed((c) => !c)}
           onToggleMinimap={() => setMinimapVisible((v) => !v)}
           onSearchChange={setSearchQuery}
@@ -140,6 +139,7 @@ function WorkflowViewerInner({
       {hasNodes ? (
         <div style={{ flex: 1, position: 'relative' }}>
           <WorkflowGraph
+            ref={graphRef}
             nodes={parseResult.nodes}
             edges={parseResult.edges}
             direction={direction}
@@ -171,13 +171,5 @@ function WorkflowViewerInner({
         </div>
       )}
     </div>
-  )
-}
-
-export function WorkflowViewer(props: WorkflowViewerProps) {
-  return (
-    <ReactFlowProvider>
-      <WorkflowViewerInner {...props} />
-    </ReactFlowProvider>
   )
 }

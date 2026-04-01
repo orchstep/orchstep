@@ -1,6 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState, Component } from 'react'
+import type { ReactNode, ErrorInfo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { WorkflowViewer } from '@orchstep/workflow-viewer'
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null }
+  static getDerivedStateFromError(error: Error) { return { error } }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('WorkflowViewer error:', error, info)
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 20, color: '#e76f51' }}>
+          <h3>Render Error</h3>
+          <pre style={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>{this.state.error.message}</pre>
+          <button onClick={() => this.setState({ error: null })} style={{ marginTop: 10 }}>
+            Retry
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 const DEFAULT_YAML = `name: example-deploy
 desc: Build, test, and deploy
@@ -70,7 +93,9 @@ function App() {
         />
       </div>
       <div id="viewer">
-        <WorkflowViewer yaml={yaml} />
+        <ErrorBoundary>
+          <WorkflowViewer yaml={yaml} />
+        </ErrorBoundary>
       </div>
     </>
   )
