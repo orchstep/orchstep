@@ -1,0 +1,30 @@
+name: loop-workflow
+desc: Workflow with loop patterns
+
+defaults:
+  servers:
+    - server1.example.com
+    - server2.example.com
+    - server3.example.com
+
+tasks:
+  main:
+    steps:
+      - name: deploy_to_all
+        loop: "{{ vars.servers }}"
+        func: shell
+        do: "echo Deploying to {{ loop.item }}"
+        outputs:
+          last_server: "{{ loop.item }}"
+
+      - name: retry_check
+        loop:
+          range: [1, 5]
+          as: attempt
+        func: shell
+        do: "echo Attempt {{ loop.attempt }}"
+
+      - name: counted_loop
+        loop: 3
+        func: shell
+        do: "echo Iteration {{ loop.item }}"

@@ -1,0 +1,9 @@
+name: broken-workflow
+tasks:
+  main:
+    steps:
+      - name: ok_step
+        func: shell
+        do: echo hello
+      - this is not valid yaml: [
+        broken

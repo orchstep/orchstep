@@ -1,0 +1,33 @@
+name: module-workflow
+desc: Workflow using external modules
+
+modules:
+  - name: slack
+    source: github.com/orchstep/modules/slack-notify
+    version: "^1.0.0"
+    config:
+      channel: "#deployments"
+
+  - name: healthcheck
+    source: ./modules/health-check
+    config:
+      timeout: 30
+
+tasks:
+  main:
+    steps:
+      - name: deploy
+        func: shell
+        do: kubectl apply -f deploy.yml
+
+      - name: check_health
+        module: healthcheck
+        task: run
+        with:
+          endpoint: https://api.example.com/health
+
+      - name: notify
+        module: slack
+        task: send
+        with:
+          message: "Deploy complete"
