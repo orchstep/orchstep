@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect, useImperativeHandle, forwardRef, useState } from 'react'
+import React, { useMemo, useCallback, useEffect, useImperativeHandle, forwardRef } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -9,6 +9,7 @@ import {
   useEdgesState,
   MarkerType,
 } from '@xyflow/react'
+import type { Node, NodeChange } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 
 import { StepNode } from './nodes/StepNode'
@@ -20,6 +21,8 @@ import { ErrorHandlerNode } from './nodes/ErrorHandlerNode'
 import { MergeDotNode } from './nodes/MergeDotNode'
 import { CustomEdge } from './edges/CustomEdge'
 import { computeLayout } from './layout/auto-layout'
+import { getBestHandles, getAbsolutePosition } from './edge-routing'
+import { resolveTaskCollision } from './collision'
 import { EDGE_COLORS } from '../theme'
 import type { GraphNode, GraphEdge, Direction } from '../types'
 
@@ -52,7 +55,6 @@ export interface WorkflowGraphHandle {
   zoomOut: () => void
 }
 
-// Helper component rendered inside <ReactFlow> to access the store
 const FlowControls = forwardRef<WorkflowGraphHandle, { direction: Direction }>(
   function FlowControls({ direction }, ref) {
     const { fitView, zoomIn, zoomOut } = useReactFlow()
@@ -71,6 +73,36 @@ const FlowControls = forwardRef<WorkflowGraphHandle, { direction: Direction }>(
     return null
   }
 )
+
+/**
+ * Compute edges with smart handle selection based on current node positions.
+ */
+function computeSmartEdges(
+  graphEdges: GraphEdge[],
+  flowNodes: Array<{ id: string; position: { x: number; y: number }; parentId?: string; style?: any }>
+) {
+  return graphEdges.map((e) => {
+    const sourceRect = getAbsolutePosition(e.source, flowNodes)
+    const targetRect = getAbsolutePosition(e.target, flowNodes)
+    const { sourceHandle, targetHandle } = getBestHandles(sourceRect, targetRect)
+
+    return {
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      sourceHandle,
+      targetHandle,
+      type: 'custom' as const,
+      data: { edgeType: e.type, label: e.label },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 16,
+        height: 16,
+        color: EDGE_COLORS[e.type] ?? '#999',
+      },
+    }
+  })
+}
 
 const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function GraphInner({
   nodes,
@@ -104,34 +136,57 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
   }, [positioned, searchQuery])
 
   const initialFlowEdges = useMemo(
-    () =>
-      edges.map((e) => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        type: 'custom' as const,
-        data: { edgeType: e.type, label: e.label },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 16,
-          height: 16,
-          color: EDGE_COLORS[e.type] ?? '#999',
-        },
-      })),
-    [edges],
+    () => computeSmartEdges(edges, initialFlowNodes),
+    [edges, initialFlowNodes],
   )
 
-  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialFlowNodes)
-  const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialFlowEdges)
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialFlowNodes as any)
+  const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialFlowEdges as any)
 
   // Sync when layout changes (new YAML, direction change, search)
   useEffect(() => {
-    setFlowNodes(initialFlowNodes)
+    setFlowNodes(initialFlowNodes as any)
   }, [initialFlowNodes, setFlowNodes])
 
   useEffect(() => {
-    setFlowEdges(initialFlowEdges)
+    setFlowEdges(initialFlowEdges as any)
   }, [initialFlowEdges, setFlowEdges])
+
+  // Recompute edge handles after nodes are dragged
+  const handleNodesChange = useCallback((changes: NodeChange[]) => {
+    onNodesChange(changes)
+
+    // Check if any position changed (drag)
+    const hasPositionChange = changes.some(
+      c => c.type === 'position' && c.dragging === false
+    )
+    if (hasPositionChange) {
+      // After drag ends, recompute smart edges with current positions
+      setFlowNodes(currentNodes => {
+        // Resolve task collisions
+        for (const change of changes) {
+          if (change.type === 'position' && !change.dragging && change.id) {
+            const adjusted = resolveTaskCollision(change.id, currentNodes as any)
+            if (adjusted) {
+              return currentNodes.map(n =>
+                n.id === change.id ? { ...n, position: adjusted } : n
+              )
+            }
+          }
+        }
+        return currentNodes
+      })
+
+      // Recompute edges with updated positions
+      setTimeout(() => {
+        setFlowNodes(currentNodes => {
+          const smartEdges = computeSmartEdges(edges, currentNodes as any)
+          setFlowEdges(smartEdges)
+          return currentNodes
+        })
+      }, 0)
+    }
+  }, [onNodesChange, edges, setFlowNodes, setFlowEdges])
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: any) => {
@@ -149,7 +204,7 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
     <ReactFlow
       nodes={flowNodes}
       edges={flowEdges}
-      onNodesChange={onNodesChange}
+      onNodesChange={handleNodesChange}
       onEdgesChange={onEdgesChange}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}

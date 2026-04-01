@@ -1,5 +1,5 @@
 import React from 'react'
-import { Handle, Position } from '@xyflow/react'
+import { NodeHandles } from './NodeHandles'
 
 export function MergeDotNode() {
   return (
@@ -11,8 +11,7 @@ export function MergeDotNode() {
         background: '#999',
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ visibility: 'hidden' }} />
-      <Handle type="source" position={Position.Bottom} style={{ visibility: 'hidden' }} />
+      <NodeHandles />
     </div>
   )
 }

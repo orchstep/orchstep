@@ -1,6 +1,6 @@
 import React from 'react'
-import { Handle, Position } from '@xyflow/react'
 import { getNodeColor, getNodeIcon } from '../../theme'
+import { NodeHandles } from './NodeHandles'
 import type { GraphNode } from '../../types'
 
 export function StepNode({ data, selected }: { data: GraphNode; selected?: boolean }) {
@@ -22,7 +22,7 @@ export function StepNode({ data, selected }: { data: GraphNode; selected?: boole
         cursor: 'pointer',
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ visibility: 'hidden' }} />
+      <NodeHandles />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Icon size={16} color={color} />
         <div>
@@ -42,7 +42,6 @@ export function StepNode({ data, selected }: { data: GraphNode; selected?: boole
           </div>
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} style={{ visibility: 'hidden' }} />
     </div>
   )
 }
