@@ -8,6 +8,20 @@
 
 OrchStep orchestrates multi-step workflows defined in YAML. It delegates to your existing tools (terraform, kubectl, aws, docker) rather than reimplementing them.
 
+### CI/CD Pipeline
+
+A deployment workflow with environment branching, retry, and error handling:
+
+![CI/CD Pipeline Workflow](docs/images/workflow-cicd-pipeline.png)
+
+### Data Pipeline
+
+An ETL pipeline with task chaining, validation, and module integration:
+
+![Data Pipeline Workflow](docs/images/workflow-data-pipeline.png)
+
+> Diagrams generated with [@orchstep/workflow-viewer](packages/workflow-viewer) — try the [live visualizer](https://orchstep.dev/visualize).
+
 ## Quick Start
 
 ```bash
