@@ -23,6 +23,8 @@ export function WorkflowViewer({
   const [minimapVisible, setMinimapVisible] = useState(false)
   const [collapsedTasks, setCollapsedTasks] = useState<Set<string>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
+  const [panelMode, setPanelMode] = useState<'sidebar' | 'float'>('float')
+  const [clickPosition, setClickPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
 
   const graphRef = useRef<{ fitView: () => void; zoomIn: () => void; zoomOut: () => void } | null>(null)
 
@@ -39,8 +41,9 @@ export function WorkflowViewer({
   }, [initialCollapsed, parseResult.nodes])
 
   const handleNodeSelect = useCallback(
-    (node: GraphNode | null) => {
+    (node: GraphNode | null, clickPos?: { x: number; y: number }) => {
       setSelectedNode(node)
+      if (clickPos) setClickPosition(clickPos)
       if (node && onNodeClick) {
         onNodeClick(node)
       }
@@ -227,7 +230,10 @@ export function WorkflowViewer({
           {selectedNode && (
             <DetailPanel
               node={selectedNode}
+              mode={panelMode}
               onClose={() => setSelectedNode(null)}
+              onToggleMode={() => setPanelMode(m => m === 'sidebar' ? 'float' : 'sidebar')}
+              clickPosition={clickPosition}
             />
           )}
         </div>
