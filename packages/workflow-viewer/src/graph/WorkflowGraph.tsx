@@ -49,7 +49,7 @@ interface WorkflowGraphProps {
   searchQuery: string
   minimapVisible: boolean
   collapsedTasks?: Set<string>
-  onNodeSelect: (node: GraphNode | null) => void
+  onNodeSelect: (node: GraphNode | null, clickPos?: { x: number; y: number }) => void
   onToggleTask?: (taskId: string) => void
 }
 
@@ -281,9 +281,9 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
   }, [onNodesChange, edges, theme, remapEdges, setFlowNodes, setFlowEdges])
 
   const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: any) => {
+    (event: React.MouseEvent, node: any) => {
       const graphNode = node.data as GraphNode
-      onNodeSelect(graphNode)
+      onNodeSelect(graphNode, { x: event.clientX, y: event.clientY })
     },
     [onNodeSelect],
   )

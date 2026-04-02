@@ -1,11 +1,17 @@
 import React, { useState } from 'react'
-import { X, ChevronDown, ChevronRight } from 'lucide-react'
+import { X, ChevronDown, ChevronRight, PanelRightClose, MessageSquare } from 'lucide-react'
 import { getNodeColor, getNodeIcon } from '../theme'
 import type { GraphNode } from '../types'
 
+export type PanelMode = 'sidebar' | 'float'
+
 interface DetailPanelProps {
   node: GraphNode
+  mode: PanelMode
   onClose: () => void
+  onToggleMode: () => void
+  /** Position hint for float mode (absolute px from React Flow viewport) */
+  clickPosition?: { x: number; y: number }
 }
 
 function Section({
@@ -28,21 +34,18 @@ function Section({
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          cursor: collapsible ? 'pointer' : undefined,
-          fontSize: 12,
-          fontWeight: 600,
-          color: 'var(--text-secondary, #888)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          marginBottom: collapsed ? 0 : 8,
+          cursor: collapsible ? 'pointer' : 'default',
+          userSelect: 'none',
         }}
-        onClick={collapsible ? () => setCollapsed((c) => !c) : undefined}
+        onClick={collapsible ? () => setCollapsed(!collapsed) : undefined}
       >
         {collapsible &&
-          (collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />)}
-        {title}
+          (collapsed ? <ChevronRight size={14} color="var(--text-secondary, #888)" /> : <ChevronDown size={14} color="var(--text-secondary, #888)" />)}
+        <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary, #888)', letterSpacing: '0.05em' }}>
+          {title}
+        </span>
       </div>
-      {!collapsed && children}
+      {!collapsed && <div style={{ marginTop: 6 }}>{children}</div>}
     </div>
   )
 }
@@ -66,120 +69,49 @@ function KeyValueList({ record }: { record: Record<string, unknown> }) {
   )
 }
 
-export function DetailPanel({ node, onClose }: DetailPanelProps) {
-  const color = getNodeColor(node.type, node.metadata.func)
-  const Icon = getNodeIcon(node.type, node.metadata.func)
+function PanelContent({ node }: { node: GraphNode }) {
   const m = node.metadata
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        width: 320,
-        height: '100%',
-        background: 'var(--panel-bg, white)',
-        borderLeft: '1px solid var(--panel-border, #e0e0e0)',
-        boxShadow: '-2px 0 8px rgba(0,0,0,0.06)',
-        overflowY: 'auto',
-        zIndex: 10,
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '12px 16px',
-          borderBottom: '1px solid var(--panel-border, #e0e0e0)',
-        }}
-      >
-        <Icon size={18} color={color} />
-        <span
-          style={{
-            flex: 1,
-            fontSize: 15,
-            fontWeight: 600,
-            color: 'var(--text-primary, #111)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {node.label}
-        </span>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 4,
-            color: 'var(--text-secondary, #888)',
-          }}
-        >
-          <X size={16} />
-        </button>
-      </div>
-
-      {/* Description */}
+    <>
       {m.description && (
         <Section title="Description">
           <div style={{ fontSize: 13, color: 'var(--text-primary, #111)' }}>{m.description}</div>
         </Section>
       )}
 
-      {/* Command */}
       {m.command && (
         <Section title="Command">
-          <pre
-            style={{
-              fontSize: 12,
-              fontFamily: 'monospace',
-              background: 'var(--canvas-bg, #fafafa)',
-              padding: 8,
-              borderRadius: 4,
-              overflow: 'auto',
-              margin: 0,
-              color: 'var(--text-primary, #111)',
-            }}
-          >
+          <pre style={{ fontSize: 12, fontFamily: 'monospace', background: 'var(--canvas-bg, #fafafa)', padding: 8, borderRadius: 4, overflow: 'auto', margin: 0, color: 'var(--text-primary, #111)' }}>
             {m.command}
           </pre>
         </Section>
       )}
 
-      {/* Condition */}
       {m.condition && (
         <Section title="Condition">
           <code style={{ fontSize: 12, color: 'var(--text-primary, #111)' }}>{m.condition}</code>
         </Section>
       )}
 
-      {/* Variables */}
       {m.variables && Object.keys(m.variables).length > 0 && (
         <Section title="Variables" collapsible defaultCollapsed={false}>
           <KeyValueList record={m.variables} />
         </Section>
       )}
 
-      {/* Parameters (with) */}
       {m.with && Object.keys(m.with).length > 0 && (
         <Section title="Parameters" collapsible defaultCollapsed={false}>
           <KeyValueList record={m.with} />
         </Section>
       )}
 
-      {/* Outputs */}
       {m.outputs && Object.keys(m.outputs).length > 0 && (
         <Section title="Outputs" collapsible defaultCollapsed={false}>
           <KeyValueList record={m.outputs} />
         </Section>
       )}
 
-      {/* Resilience */}
       {(m.timeout || m.retry) && (
         <Section title="Resilience">
           {m.timeout && <KV label="Timeout" value={m.timeout} />}
@@ -197,7 +129,6 @@ export function DetailPanel({ node, onClose }: DetailPanelProps) {
         </Section>
       )}
 
-      {/* Loop Config */}
       {m.loopConfig && (
         <Section title="Loop Config">
           {m.loopConfig.items && <KV label="Items" value={m.loopConfig.items} />}
@@ -210,7 +141,6 @@ export function DetailPanel({ node, onClose }: DetailPanelProps) {
         </Section>
       )}
 
-      {/* Error Handling */}
       {(m.catch || m.finally || m.onError) && (
         <Section title="Error Handling">
           {m.onError && <KV label="On Error" value={m.onError} />}
@@ -219,7 +149,6 @@ export function DetailPanel({ node, onClose }: DetailPanelProps) {
         </Section>
       )}
 
-      {/* Module info */}
       {(m.moduleName || m.moduleSource) && (
         <Section title="Module">
           {m.moduleName && <KV label="Name" value={m.moduleName} />}
@@ -227,33 +156,105 @@ export function DetailPanel({ node, onClose }: DetailPanelProps) {
         </Section>
       )}
 
-      {/* Task Reference */}
       {m.taskRef && (
         <Section title="Task Reference">
           <KV label="Task" value={m.taskRef} />
         </Section>
       )}
 
-      {/* Raw YAML */}
       {m.yamlSnippet && (
         <Section title="Raw YAML" collapsible defaultCollapsed>
-          <pre
-            style={{
-              fontSize: 11,
-              fontFamily: 'monospace',
-              background: 'var(--canvas-bg, #fafafa)',
-              padding: 8,
-              borderRadius: 4,
-              overflow: 'auto',
-              margin: 0,
-              color: 'var(--text-primary, #111)',
-              maxHeight: 300,
-            }}
-          >
+          <pre style={{ fontSize: 11, fontFamily: 'monospace', background: 'var(--canvas-bg, #fafafa)', padding: 8, borderRadius: 4, overflow: 'auto', margin: 0, maxHeight: 200, color: 'var(--text-primary, #111)' }}>
             {m.yamlSnippet}
           </pre>
         </Section>
       )}
+    </>
+  )
+}
+
+function PanelHeader({ node, onClose, onToggleMode, mode }: {
+  node: GraphNode; onClose: () => void; onToggleMode: () => void; mode: PanelMode
+}) {
+  const color = getNodeColor(node.type, node.metadata.func)
+  const Icon = getNodeIcon(node.type, node.metadata.func)
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '10px 16px',
+      borderBottom: '1px solid var(--panel-border, #e0e0e0)',
+      background: 'var(--panel-bg, white)',
+      borderRadius: mode === 'float' ? '8px 8px 0 0' : undefined,
+    }}>
+      <Icon size={18} color={color} />
+      <span style={{
+        flex: 1, fontSize: 15, fontWeight: 600,
+        color: 'var(--text-primary, #111)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        {node.label}
+      </span>
+      <button
+        onClick={onToggleMode}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-secondary, #888)' }}
+        title={mode === 'sidebar' ? 'Switch to floating window' : 'Switch to sidebar'}
+      >
+        {mode === 'sidebar' ? <MessageSquare size={14} /> : <PanelRightClose size={14} />}
+      </button>
+      <button
+        onClick={onClose}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-secondary, #888)' }}
+      >
+        <X size={16} />
+      </button>
+    </div>
+  )
+}
+
+export function DetailPanel({ node, mode, onClose, onToggleMode, clickPosition }: DetailPanelProps) {
+  if (mode === 'sidebar') {
+    return (
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: 320,
+        height: '100%',
+        background: 'var(--panel-bg, white)',
+        borderLeft: '1px solid var(--panel-border, #e0e0e0)',
+        boxShadow: '-2px 0 8px rgba(0,0,0,0.06)',
+        overflowY: 'auto',
+        zIndex: 10,
+      }}>
+        <PanelHeader node={node} onClose={onClose} onToggleMode={onToggleMode} mode={mode} />
+        <PanelContent node={node} />
+      </div>
+    )
+  }
+
+  // Float mode: positioned near the clicked node
+  const floatX = clickPosition ? Math.min(clickPosition.x + 20, window.innerWidth - 360) : 100
+  const floatY = clickPosition ? Math.min(clickPosition.y - 40, window.innerHeight - 400) : 100
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left: Math.max(10, floatX),
+        top: Math.max(10, floatY),
+        width: 320,
+        maxHeight: 450,
+        background: 'var(--panel-bg, white)',
+        border: '1px solid var(--panel-border, #e0e0e0)',
+        borderRadius: 8,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        overflowY: 'auto',
+        zIndex: 20,
+      }}
+    >
+      <PanelHeader node={node} onClose={onClose} onToggleMode={onToggleMode} mode={mode} />
+      <PanelContent node={node} />
     </div>
   )
 }
