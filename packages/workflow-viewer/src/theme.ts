@@ -95,7 +95,7 @@ export const DARK_THEME = {
   '--node-bg': '#242438',
   '--text-primary': '#e0e0e0',
   '--text-secondary': '#888888',
-  '--edge-color': '#555555',
+  '--edge-color': '#aaaaaa',
   '--panel-bg': '#1e1e30',
   '--panel-border': '#333355',
   '--shadow': '0 1px 3px rgba(0,0,0,0.3)',
@@ -104,13 +104,13 @@ export const DARK_THEME = {
 }
 
 export const DARK_EDGE_COLORS: Record<string, string> = {
-  sequential: '#aaaaaa',
-  'conditional-true': '#4dbd7a',
+  sequential: '#cccccc',
+  'conditional-true': '#5dd88a',
   'conditional-false': '#f09070',
   'conditional-elif': '#f0d060',
   'error-path': '#f09070',
-  'cleanup-path': '#999999',
-  'task-call': '#aaaaaa',
+  'cleanup-path': '#bbbbbb',
+  'task-call': '#cccccc',
   'module-call': '#6ab0f0',
-  'loop-body': '#bb80e0',
+  'loop-body': '#cc90f0',
 }

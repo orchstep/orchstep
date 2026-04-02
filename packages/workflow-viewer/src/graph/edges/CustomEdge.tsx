@@ -63,7 +63,7 @@ export function CustomEdge({
         id={id}
         path={edgePath}
         markerEnd={markerEnd}
-        style={{ stroke: color, strokeWidth: 1.5, strokeDasharray }}
+        style={{ stroke: color, strokeWidth: 2, strokeDasharray }}
       />
       {label && labelStyle && (
         <EdgeLabelRenderer>
