@@ -14,7 +14,7 @@ interface PositionedNode {
 
 const NODE_WIDTH = 240
 const NODE_HEIGHT = 60
-const TASK_PADDING = 24
+const TASK_PADDING = 30
 const TASK_HEADER = 50
 const TASK_GAP = 40
 
@@ -88,19 +88,29 @@ export function computeLayout(
     taskBounds.set(node.id, { x: minX, y: minY, w: maxX - minX, h: maxY - minY })
   }
 
-  // Step 4: For AUTO mode, reposition tasks using a task-level dagre graph
-  if (direction === 'AUTO') {
-    repositionTasksAuto(nodes, edges, taskBounds, absPositions)
+  // Step 4: Save original task bounds (before any repositioning)
+  // Children's relative positions are computed from original dagre layout,
+  // so we need the original bounds to calculate relative coords correctly.
+  const originalTaskBounds = new Map<string, { x: number; y: number; w: number; h: number }>()
+  for (const [id, bounds] of taskBounds) {
+    originalTaskBounds.set(id, { ...bounds })
   }
 
-  // Step 5: Spread tasks apart to maintain gaps
+  // Step 5: For AUTO mode, reposition tasks using a task-level dagre graph
+  if (direction === 'AUTO') {
+    repositionTasksAuto(nodes, edges, taskBounds, absPositions)
+    // Update original bounds after AUTO repositioning (AUTO shifts children too)
+    for (const [id, bounds] of taskBounds) {
+      originalTaskBounds.set(id, { ...bounds })
+    }
+  }
+
+  // Step 6: Spread tasks apart to maintain gaps
   spreadTasks(taskBounds, TASK_GAP)
 
-  // Step 6: Sync child absolute positions with adjusted task bounds
-  // (tasks may have shifted due to AUTO layout or gap enforcement)
-  syncChildPositions(nodes, taskBounds, absPositions)
-
   // Step 7: Build positioned nodes
+  // For children: compute relative position using ORIGINAL bounds (pre-spread),
+  // because absPositions reflect the pre-spread layout.
   const positioned: PositionedNode[] = []
 
   for (const node of nodes) {
@@ -121,11 +131,11 @@ export function computeLayout(
     const abs = absPositions.get(node.id)
     if (!abs) continue
 
-    const parentBounds = node.parentId ? taskBounds.get(node.parentId) : null
-    if (parentBounds) {
+    const origParentBounds = node.parentId ? originalTaskBounds.get(node.parentId) : null
+    if (origParentBounds) {
       positioned.push({
         id: node.id,
-        position: { x: abs.x - parentBounds.x, y: abs.y - parentBounds.y },
+        position: { x: abs.x - origParentBounds.x, y: abs.y - origParentBounds.y },
         data: node,
         type: node.type === 'merge-dot' ? 'mergeDot' : node.type,
         parentId: node.parentId,
@@ -220,17 +230,7 @@ function findParentTask(nodeId: string, nodes: GraphNode[]): string | undefined 
   return node?.parentId
 }
 
-/**
- * After tasks have been repositioned, sync child absolute positions.
- */
-function syncChildPositions(
-  nodes: GraphNode[],
-  taskBounds: Map<string, { x: number; y: number; w: number; h: number }>,
-  absPositions: Map<string, { x: number; y: number; w: number; h: number }>
-) {
-  // Already handled in repositionTasksAuto — this is a safety pass
-  // to ensure children are within bounds
-}
+
 
 /**
  * Push task containers apart to maintain minimum gaps.

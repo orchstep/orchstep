@@ -10,7 +10,7 @@ interface TaskGroupData extends GraphNode {
 }
 
 const RESIZE_HANDLE_SIZE = 12
-const PADDING = 24
+const PADDING = 30
 const HEADER_HEIGHT = 50
 const MAX_EXTRA_PADDING = 60
 
