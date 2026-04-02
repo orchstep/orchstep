@@ -23,6 +23,7 @@ import { CustomEdge } from './edges/CustomEdge'
 import { computeLayout } from './layout/auto-layout'
 import { getBestHandles, getAbsolutePosition } from './edge-routing'
 import { resolveTaskCollision } from './collision'
+import { recalcTaskBounds } from './task-bounds'
 import { EDGE_COLORS } from '../theme'
 import type { GraphNode, GraphEdge, Direction } from '../types'
 
@@ -171,11 +172,19 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
     }
 
     if (dragEnded) {
-      // Resolve task collisions after drag ends
       setTimeout(() => {
         setFlowNodes(currentNodes => {
           let updated = [...currentNodes]
           let changed = false
+
+          // 1. Recalculate task container bounds to fit children (auto-shrink/grow)
+          const boundsResult = recalcTaskBounds(updated as any)
+          if (boundsResult) {
+            updated = boundsResult as any
+            changed = true
+          }
+
+          // 2. Resolve task collisions
           for (const change of changes) {
             if (change.type === 'position' && !change.dragging && change.id) {
               const adjusted = resolveTaskCollision(change.id, updated as any)
@@ -187,8 +196,8 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
               }
             }
           }
+
           if (changed) {
-            // Recompute edges again after collision adjustment
             const smartEdges = computeSmartEdges(edges, updated as any)
             setFlowEdges(smartEdges as any)
           }
