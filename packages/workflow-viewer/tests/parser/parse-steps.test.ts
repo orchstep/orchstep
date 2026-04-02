@@ -35,10 +35,11 @@ describe('parseSteps', () => {
       expect(elifEdges).toHaveLength(2)
     })
 
-    it('creates merge-dot nodes after conditions', () => {
+    it('omits merge-dot when all branches go to external tasks', () => {
+      // conditions.yml only has task-reference branches (no inline then/else steps)
       const result = parseWorkflowYaml(fixture('conditions.yml'))
       const mergeNodes = result.nodes.filter((n) => n.type === 'merge-dot')
-      expect(mergeNodes.length).toBeGreaterThanOrEqual(1)
+      expect(mergeNodes).toHaveLength(0)
     })
   })
 

@@ -147,14 +147,8 @@ function parseConditionalStep(
     metadata,
   })
 
-  // Merge dot node
-  nodes.push({
-    id: mergeNodeId,
-    type: 'merge-dot',
-    label: '',
-    parentId: `task:${taskName}`,
-    metadata: {},
-  })
+  // Track whether all branches go to external tasks (no inline steps)
+  let allBranchesExternal = true
 
   // True branch -> task reference
   if (step.task) {
@@ -166,10 +160,12 @@ function parseConditionalStep(
       type: 'conditional-true',
       label: 'true',
     })
+  } else if (step.then) {
+    allBranchesExternal = false
   }
 
   // False branch -> else task
-  if (step.else) {
+  if (step.else && typeof step.else === 'string') {
     const elseTaskId = `task:${step.else}`
     edges.push({
       id: `edge:${conditionNodeId}->${elseTaskId}:false`,
@@ -178,6 +174,8 @@ function parseConditionalStep(
       type: 'conditional-false',
       label: 'false',
     })
+  } else if (step.else) {
+    allBranchesExternal = false
   }
 
   // Elif branches
@@ -192,15 +190,29 @@ function parseConditionalStep(
           type: 'conditional-elif',
           label: String(branch.if ?? 'elif'),
         })
+      } else {
+        allBranchesExternal = false
       }
     }
+  }
+
+  // Only create merge dot when branches have inline steps that rejoin
+  // When all branches go to external tasks, there's no convergence point
+  if (!allBranchesExternal) {
+    nodes.push({
+      id: mergeNodeId,
+      type: 'merge-dot',
+      label: '',
+      parentId: `task:${taskName}`,
+      metadata: {},
+    })
   }
 
   return {
     nodes,
     edges,
     mainNodeId: conditionNodeId,
-    lastNodeId: mergeNodeId,
+    lastNodeId: allBranchesExternal ? conditionNodeId : mergeNodeId,
   }
 }
 
