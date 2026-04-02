@@ -4,7 +4,7 @@
  */
 
 const PADDING = 24
-const HEADER_HEIGHT = 40
+const HEADER_HEIGHT = 50
 const DEFAULT_CHILD_WIDTH = 240
 const DEFAULT_CHILD_HEIGHT = 60
 

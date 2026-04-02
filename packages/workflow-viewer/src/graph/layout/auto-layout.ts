@@ -15,7 +15,7 @@ interface PositionedNode {
 const NODE_WIDTH = 240
 const NODE_HEIGHT = 60
 const TASK_PADDING = 24
-const TASK_HEADER = 40
+const TASK_HEADER = 50
 const TASK_GAP = 40
 
 export function computeLayout(

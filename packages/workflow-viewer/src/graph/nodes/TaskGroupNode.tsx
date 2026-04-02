@@ -11,8 +11,8 @@ interface TaskGroupData extends GraphNode {
 
 const RESIZE_HANDLE_SIZE = 12
 const PADDING = 24
-const HEADER_HEIGHT = 40
-const MAX_EXTRA_PADDING = 60 // Max extra space beyond children bounds
+const HEADER_HEIGHT = 50
+const MAX_EXTRA_PADDING = 60
 
 export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData }) {
   const collapsed = data.collapsed
