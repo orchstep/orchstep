@@ -20,7 +20,9 @@ An ETL pipeline with task chaining, validation, and module integration:
 
 ![Data Pipeline Workflow](docs/images/workflow-data-pipeline.png)
 
-> Diagrams generated with [@orchstep/workflow-viewer](packages/workflow-viewer) — try the [live visualizer](https://orchstep.dev/visualize).
+> **[Try the live Workflow Visualizer →](https://orchstep.dev/visualize)** Paste any OrchStep YAML to see it as an interactive diagram.
+>
+> The `@orchstep/workflow-viewer` package powers the visualizer — an interactive React component that renders OrchStep workflows as directed graphs. Features include Smart/Vertical/Horizontal layouts, dark mode, collapsible tasks, search, export to PNG, and copy to clipboard. Available at [`packages/workflow-viewer`](packages/workflow-viewer).
 
 ## Quick Start
 
@@ -117,16 +119,6 @@ OrchStep runs on Linux, macOS, and Windows:
 - **Default shell:** POSIX `sh` — works on Alpine, distroless, all Linux/macOS
 - **Go-native shell:** Set `type: "gosh"` for Windows support without bash
 - **Explicit shells:** `bash`, `zsh`, `pwsh` available as opt-in
-
-## Editions
-
-| Edition | Price | Features |
-|---------|-------|----------|
-| **Community** | Free forever | Full execution engine, all functions, unlimited concurrency, public modules |
-| **Pro** | $49/user/month | + Team registry, RBAC, audit logs, AI governance, advanced tooling |
-| **Enterprise** | Custom pricing | + SSO/SAML, compliance certifications, SLA, priority support |
-
-[See pricing →](https://orchstep.com/pricing)
 
 ## Module Registry
 
