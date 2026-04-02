@@ -159,6 +159,7 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
 
     const isDragging = changes.some(c => c.type === 'position' && c.dragging === true)
     const dragEnded = changes.some(c => c.type === 'position' && c.dragging === false)
+    const hasDimensionChange = changes.some(c => c.type === 'dimensions')
 
     if (isDragging || dragEnded) {
       // Recompute edge routing with current node positions
@@ -172,12 +173,16 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
     }
 
     if (dragEnded) {
+      // Use a slightly longer delay to ensure React Flow has finished
+      // processing expandParent and other internal state updates
       setTimeout(() => {
         setFlowNodes(currentNodes => {
           let updated = [...currentNodes]
           let changed = false
 
           // 1. Recalculate task container bounds to fit children (auto-shrink/grow)
+          // This handles both grow (when expandParent made it bigger) and shrink
+          // (when a child was moved back closer to siblings)
           const boundsResult = recalcTaskBounds(updated as any)
           if (boundsResult) {
             updated = boundsResult as any
@@ -197,13 +202,18 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
             }
           }
 
+          // 3. Run bounds recalc again after collision adjustment
           if (changed) {
+            const boundsResult2 = recalcTaskBounds(updated as any)
+            if (boundsResult2) {
+              updated = boundsResult2 as any
+            }
             const smartEdges = computeSmartEdges(edges, updated as any)
             setFlowEdges(smartEdges as any)
           }
           return changed ? updated : currentNodes
         })
-      }, 10)
+      }, 50)
     }
   }, [onNodesChange, edges, setFlowNodes, setFlowEdges])
 
