@@ -12,13 +12,19 @@ interface TaskGroupData extends GraphNode {
 const RESIZE_HANDLE_SIZE = 12
 const PADDING = 24
 const HEADER_HEIGHT = 40
+const MAX_EXTRA_PADDING = 60 // Max extra space beyond children bounds
 
 export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData }) {
   const collapsed = data.collapsed
   const onToggleCollapse = data.onToggleCollapse
   const stepCount = data.metadata.stepCount ?? 0
   const { setNodes, getNodes } = useReactFlow()
-  const resizing = useRef<{ startX: number; startY: number; startW: number; startH: number; minW: number; minH: number } | null>(null)
+  const resizing = useRef<{
+    startX: number; startY: number
+    startW: number; startH: number
+    minW: number; minH: number
+    maxW: number; maxH: number
+  } | null>(null)
 
   const onResizeStart = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -30,9 +36,10 @@ export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData })
     const rect = nodeEl.getBoundingClientRect()
     const zoom = rect.width / (parseFloat(nodeEl.style.width) || rect.width)
 
-    // Calculate minimum size from children positions
     const allNodes = getNodes()
     const children = allNodes.filter((n: any) => n.parentId === id)
+
+    // Min size: must contain all children
     let minW = 200
     let minH = HEADER_HEIGHT + PADDING * 2
 
@@ -49,22 +56,24 @@ export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData })
       minH = Math.max(minH, maxChildBottom + PADDING)
     }
 
+    // Max size: children bounds + limited extra padding (prevent swallowing other tasks)
+    const maxW = minW + MAX_EXTRA_PADDING
+    const maxH = minH + MAX_EXTRA_PADDING
+
     resizing.current = {
       startX: e.clientX,
       startY: e.clientY,
       startW: parseFloat(nodeEl.style.width) || rect.width / zoom,
       startH: parseFloat(nodeEl.style.height) || rect.height / zoom,
-      minW,
-      minH,
+      minW, minH, maxW, maxH,
     }
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!resizing.current) return
       const dx = (ev.clientX - resizing.current.startX) / zoom
       const dy = (ev.clientY - resizing.current.startY) / zoom
-      // Enforce minimum size so children can't escape
-      const newW = Math.max(resizing.current.minW, resizing.current.startW + dx)
-      const newH = Math.max(resizing.current.minH, resizing.current.startH + dy)
+      const newW = Math.min(resizing.current.maxW, Math.max(resizing.current.minW, resizing.current.startW + dx))
+      const newH = Math.min(resizing.current.maxH, Math.max(resizing.current.minH, resizing.current.startH + dy))
 
       setNodes(nodes => nodes.map(n =>
         n.id === id ? { ...n, style: { ...n.style, width: newW, height: newH } } : n
@@ -108,14 +117,7 @@ export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData })
         onClick={onToggleCollapse}
       >
         <FolderOpen size={14} color="#333" />
-        <span
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            color: '#666',
-          }}
-        >
+        <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>
           Task
         </span>
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary, #111)', flex: 1 }}>
@@ -132,7 +134,6 @@ export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData })
           {stepCount} steps (collapsed)
         </div>
       )}
-      {/* Resize handle */}
       <div
         className="nodrag"
         onMouseDown={onResizeStart}

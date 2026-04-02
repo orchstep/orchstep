@@ -153,16 +153,15 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
     setFlowEdges(initialFlowEdges as any)
   }, [initialFlowEdges, setFlowEdges])
 
-  // Handle node position changes: recompute edges during drag, resolve collisions on drag end
+  // Handle node changes: auto-resize tasks, recompute edges, resolve collisions
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     onNodesChange(changes)
 
     const isDragging = changes.some(c => c.type === 'position' && c.dragging === true)
     const dragEnded = changes.some(c => c.type === 'position' && c.dragging === false)
-    const hasDimensionChange = changes.some(c => c.type === 'dimensions')
 
+    // Recompute edges during and after drag
     if (isDragging || dragEnded) {
-      // Recompute edge routing with current node positions
       setTimeout(() => {
         setFlowNodes(currentNodes => {
           const smartEdges = computeSmartEdges(edges, currentNodes as any)
@@ -172,24 +171,21 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
       }, 0)
     }
 
+    // After any drag ends: auto-resize task containers + resolve collisions
     if (dragEnded) {
-      // Use a slightly longer delay to ensure React Flow has finished
-      // processing expandParent and other internal state updates
       setTimeout(() => {
         setFlowNodes(currentNodes => {
           let updated = [...currentNodes]
           let changed = false
 
-          // 1. Recalculate task container bounds to fit children (auto-shrink/grow)
-          // This handles both grow (when expandParent made it bigger) and shrink
-          // (when a child was moved back closer to siblings)
+          // 1. Auto-resize all task containers to fit their children
           const boundsResult = recalcTaskBounds(updated as any)
           if (boundsResult) {
             updated = boundsResult as any
             changed = true
           }
 
-          // 2. Resolve task collisions
+          // 2. Resolve task-to-task collisions
           for (const change of changes) {
             if (change.type === 'position' && !change.dragging && change.id) {
               const adjusted = resolveTaskCollision(change.id, updated as any)
@@ -202,12 +198,11 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
             }
           }
 
-          // 3. Run bounds recalc again after collision adjustment
+          // 3. Recalc bounds again after collision pushes
           if (changed) {
             const boundsResult2 = recalcTaskBounds(updated as any)
-            if (boundsResult2) {
-              updated = boundsResult2 as any
-            }
+            if (boundsResult2) updated = boundsResult2 as any
+
             const smartEdges = computeSmartEdges(edges, updated as any)
             setFlowEdges(smartEdges as any)
           }
