@@ -156,7 +156,7 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
           style: {
             ...n.style,
             // Collapsed tasks become compact
-            ...(isCollapsed ? { height: 44, width: n.style?.width } : {}),
+            ...(isCollapsed ? { height: 36, width: n.style?.width ?? 280 } : {}),
             opacity: query && !matches ? 0.2 : 1,
             transition: 'opacity 0.2s',
           },
