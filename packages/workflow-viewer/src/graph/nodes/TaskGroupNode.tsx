@@ -10,37 +10,61 @@ interface TaskGroupData extends GraphNode {
 }
 
 const RESIZE_HANDLE_SIZE = 12
+const PADDING = 24
+const HEADER_HEIGHT = 40
 
 export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData }) {
   const collapsed = data.collapsed
   const onToggleCollapse = data.onToggleCollapse
   const stepCount = data.metadata.stepCount ?? 0
-  const { setNodes } = useReactFlow()
-  const resizing = useRef<{ startX: number; startY: number; startW: number; startH: number } | null>(null)
+  const { setNodes, getNodes } = useReactFlow()
+  const resizing = useRef<{ startX: number; startY: number; startW: number; startH: number; minW: number; minH: number } | null>(null)
 
   const onResizeStart = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
 
-    const node = document.querySelector(`[data-id="${id}"]`) as HTMLElement
-    if (!node) return
+    const nodeEl = document.querySelector(`[data-id="${id}"]`) as HTMLElement
+    if (!nodeEl) return
 
-    const rect = node.getBoundingClientRect()
-    const zoom = rect.width / (parseFloat(node.style.width) || rect.width)
+    const rect = nodeEl.getBoundingClientRect()
+    const zoom = rect.width / (parseFloat(nodeEl.style.width) || rect.width)
+
+    // Calculate minimum size from children positions
+    const allNodes = getNodes()
+    const children = allNodes.filter((n: any) => n.parentId === id)
+    let minW = 200
+    let minH = HEADER_HEIGHT + PADDING * 2
+
+    if (children.length > 0) {
+      const maxChildRight = Math.max(...children.map((c: any) => {
+        const w = c.measured?.width ?? c.style?.width ?? 240
+        return c.position.x + w
+      }))
+      const maxChildBottom = Math.max(...children.map((c: any) => {
+        const h = c.measured?.height ?? c.style?.height ?? 60
+        return c.position.y + h
+      }))
+      minW = Math.max(minW, maxChildRight + PADDING)
+      minH = Math.max(minH, maxChildBottom + PADDING)
+    }
 
     resizing.current = {
       startX: e.clientX,
       startY: e.clientY,
-      startW: parseFloat(node.style.width) || rect.width / zoom,
-      startH: parseFloat(node.style.height) || rect.height / zoom,
+      startW: parseFloat(nodeEl.style.width) || rect.width / zoom,
+      startH: parseFloat(nodeEl.style.height) || rect.height / zoom,
+      minW,
+      minH,
     }
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!resizing.current) return
       const dx = (ev.clientX - resizing.current.startX) / zoom
       const dy = (ev.clientY - resizing.current.startY) / zoom
-      const newW = Math.max(200, resizing.current.startW + dx)
-      const newH = Math.max(100, resizing.current.startH + dy)
+      // Enforce minimum size so children can't escape
+      const newW = Math.max(resizing.current.minW, resizing.current.startW + dx)
+      const newH = Math.max(resizing.current.minH, resizing.current.startH + dy)
 
       setNodes(nodes => nodes.map(n =>
         n.id === id ? { ...n, style: { ...n.style, width: newW, height: newH } } : n
@@ -55,7 +79,7 @@ export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData })
 
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseup', onMouseUp)
-  }, [id, setNodes])
+  }, [id, setNodes, getNodes])
 
   return (
     <div
@@ -108,7 +132,7 @@ export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData })
           {stepCount} steps (collapsed)
         </div>
       )}
-      {/* Resize handle — bottom-right corner */}
+      {/* Resize handle */}
       <div
         className="nodrag"
         onMouseDown={onResizeStart}
