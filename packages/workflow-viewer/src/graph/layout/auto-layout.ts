@@ -131,7 +131,6 @@ export function computeLayout(
         type: node.type === 'merge-dot' ? 'mergeDot' : node.type,
         parentId: node.parentId,
         extent: 'parent',
-        expandParent: true,
         draggable: true,
       })
     } else {
