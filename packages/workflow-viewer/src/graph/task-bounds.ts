@@ -1,13 +1,12 @@
 /**
  * Recalculate task container bounds to tightly fit their children.
- * Always sets the container size to exactly wrap children + padding.
- * Handles both shrinking (child moved inward) and growing (child moved outward).
+ * Uses measured (actual rendered) dimensions when available.
  */
 
 const PADDING = 24
 const HEADER_HEIGHT = 40
-const CHILD_WIDTH = 240
-const CHILD_HEIGHT = 60
+const DEFAULT_CHILD_WIDTH = 240
+const DEFAULT_CHILD_HEIGHT = 60
 
 interface FlowNode {
   id: string
@@ -31,24 +30,36 @@ export function recalcTaskBounds(nodes: FlowNode[]): FlowNode[] | null {
     const children = updated.filter(n => n.parentId === task.id)
     if (children.length === 0) continue
 
-    // Child positions are relative to parent
-    const minX = Math.min(...children.map(c => c.position.x))
-    const minY = Math.min(...children.map(c => c.position.y))
-    const maxX = Math.max(...children.map(c => c.position.x + getChildWidth(c)))
-    const maxY = Math.max(...children.map(c => c.position.y + getChildHeight(c)))
+    // Child positions are relative to parent.
+    // Use measured dimensions (actual rendered size) for accurate bounds.
+    const childRects = children.map(c => ({
+      x: c.position.x,
+      y: c.position.y,
+      w: getWidth(c),
+      h: getHeight(c),
+    }))
 
-    // Desired size with padding
-    const desiredWidth = (maxX - minX) + PADDING * 2
-    const desiredHeight = (maxY - minY) + PADDING * 2 + HEADER_HEIGHT
+    const minX = Math.min(...childRects.map(r => r.x))
+    const minY = Math.min(...childRects.map(r => r.y))
+    const maxX = Math.max(...childRects.map(r => r.x + r.w))
+    const maxY = Math.max(...childRects.map(r => r.y + r.h))
 
-    // Where children should start (relative to parent top-left)
+    // Content box: the bounding box of all children
+    const contentWidth = maxX - minX
+    const contentHeight = maxY - minY
+
+    // Desired container size: content + padding on all 4 sides + header
+    const desiredWidth = contentWidth + PADDING * 2
+    const desiredHeight = contentHeight + PADDING * 2 + HEADER_HEIGHT
+
+    // Where children top-left corner should be inside the container
     const idealMinX = PADDING
     const idealMinY = PADDING + HEADER_HEIGHT
 
+    // How much to shift children to normalize their position
     const shiftX = idealMinX - minX
     const shiftY = idealMinY - minY
 
-    // Get current actual size (from style or measured)
     const currentWidth = task.style?.width ?? task.measured?.width ?? desiredWidth
     const currentHeight = task.style?.height ?? task.measured?.height ?? desiredHeight
 
@@ -90,11 +101,12 @@ export function recalcTaskBounds(nodes: FlowNode[]): FlowNode[] | null {
   return changed ? updated : null
 }
 
-function getChildWidth(node: FlowNode): number {
-  return node.measured?.width ?? node.style?.width ?? CHILD_WIDTH
+function getWidth(node: FlowNode): number {
+  // Prefer measured (actual DOM size), then style, then default
+  return node.measured?.width ?? node.style?.width ?? DEFAULT_CHILD_WIDTH
 }
 
-function getChildHeight(node: FlowNode): number {
+function getHeight(node: FlowNode): number {
   if (node.type === 'mergeDot') return 10
-  return node.measured?.height ?? node.style?.height ?? CHILD_HEIGHT
+  return node.measured?.height ?? node.style?.height ?? DEFAULT_CHILD_HEIGHT
 }
