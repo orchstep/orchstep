@@ -5,3 +5,5 @@ pip/dist/
 pip/*.egg-info/
 pip/orchstep.egg-info/
 .gstack/
+packages/workflow-viewer/node_modules/
+packages/workflow-viewer/dist/
