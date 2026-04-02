@@ -11,7 +11,7 @@ interface CustomEdgeProps {
   targetY: number
   sourcePosition: any
   targetPosition: any
-  data?: { edgeType?: EdgeType; label?: string }
+  data?: { edgeType?: EdgeType; label?: string; color?: string }
   markerEnd?: string
 }
 
@@ -38,7 +38,7 @@ export function CustomEdge({
   markerEnd,
 }: CustomEdgeProps) {
   const edgeType = data?.edgeType ?? 'sequential'
-  const color = EDGE_COLORS[edgeType] ?? '#999'
+  const color = data?.color ?? EDGE_COLORS[edgeType] ?? '#999'
   const styleType = EDGE_STYLES[edgeType] ?? 'solid'
 
   let strokeDasharray: string | undefined

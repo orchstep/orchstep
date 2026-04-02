@@ -99,7 +99,7 @@ function computeSmartEdges(
       sourceHandle,
       targetHandle,
       type: 'custom' as const,
-      data: { edgeType: e.type, label: e.label },
+      data: { edgeType: e.type, label: e.label, color: colors[e.type] ?? '#999' },
       markerEnd: {
         type: MarkerType.ArrowClosed,
         width: 16,
