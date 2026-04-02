@@ -164,17 +164,15 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
       })
   }, [positioned, searchQuery, collapsedTasks, onToggleTask])
 
-  const initialFlowEdges = useMemo(() => {
-    const visibleIds = new Set(initialFlowNodes.map(n => n.id))
+  // Remap edges for collapsed tasks — extract as a function so drag handler can reuse
+  const remapEdges = useCallback((flowNodesList: typeof initialFlowNodes) => {
+    const visibleIds = new Set(flowNodesList.map(n => n.id))
     const collapsed = collapsedTasks ?? new Set<string>()
 
-    // Remap edges: if source or target is hidden (inside collapsed task),
-    // redirect the edge to the collapsed task container instead
     const remappedEdges = edges.map(e => {
       let source = e.source
       let target = e.target
 
-      // If source is hidden, find its parent task
       if (!visibleIds.has(source)) {
         const sourceNode = nodes.find(n => n.id === source)
         if (sourceNode?.parentId && collapsed.has(sourceNode.parentId)) {
@@ -182,7 +180,6 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
         }
       }
 
-      // If target is hidden, find its parent task
       if (!visibleIds.has(target)) {
         const targetNode = nodes.find(n => n.id === target)
         if (targetNode?.parentId && collapsed.has(targetNode.parentId)) {
@@ -190,24 +187,25 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
         }
       }
 
-      // Skip if source or target still not visible, or self-loop
       if (!visibleIds.has(source) || !visibleIds.has(target)) return null
       if (source === target) return null
 
       return { ...e, id: `${e.id}:remapped`, source, target }
     }).filter((e): e is NonNullable<typeof e> => e !== null)
 
-    // Deduplicate (multiple edges may remap to the same source→target)
     const seen = new Set<string>()
-    const deduped = remappedEdges.filter(e => {
+    return remappedEdges.filter(e => {
       const key = `${e.source}->${e.target}`
       if (seen.has(key)) return false
       seen.add(key)
       return true
     })
+  }, [edges, nodes, collapsedTasks])
 
-    return computeSmartEdges(deduped, initialFlowNodes, theme)
-  }, [edges, nodes, initialFlowNodes, theme, collapsedTasks])
+  const initialFlowEdges = useMemo(() => {
+    const remapped = remapEdges(initialFlowNodes)
+    return computeSmartEdges(remapped, initialFlowNodes, theme)
+  }, [initialFlowNodes, theme, remapEdges])
 
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialFlowNodes as any)
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialFlowEdges as any)
@@ -232,7 +230,8 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
     if (isDragging || dragEnded) {
       setTimeout(() => {
         setFlowNodes(currentNodes => {
-          const smartEdges = computeSmartEdges(edges, currentNodes as any, theme)
+          const remapped = remapEdges(currentNodes as any)
+          const smartEdges = computeSmartEdges(remapped, currentNodes as any, theme)
           setFlowEdges(smartEdges as any)
           return currentNodes
         })
@@ -271,14 +270,15 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
             const boundsResult2 = recalcTaskBounds(updated as any)
             if (boundsResult2) updated = boundsResult2 as any
 
-            const smartEdges = computeSmartEdges(edges, updated as any, theme)
+            const remapped = remapEdges(updated as any)
+            const smartEdges = computeSmartEdges(remapped, updated as any, theme)
             setFlowEdges(smartEdges as any)
           }
           return changed ? updated : currentNodes
         })
       }, 50)
     }
-  }, [onNodesChange, edges, theme, setFlowNodes, setFlowEdges])
+  }, [onNodesChange, edges, theme, remapEdges, setFlowNodes, setFlowEdges])
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: any) => {
