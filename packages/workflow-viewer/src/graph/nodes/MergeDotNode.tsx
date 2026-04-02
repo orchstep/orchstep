@@ -8,7 +8,7 @@ export function MergeDotNode() {
         width: 8,
         height: 8,
         borderRadius: '50%',
-        background: '#999',
+        background: 'var(--edge-color, #999)',
       }}
     >
       <NodeHandles />
