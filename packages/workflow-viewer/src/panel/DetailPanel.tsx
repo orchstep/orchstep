@@ -233,16 +233,40 @@ export function DetailPanel({ node, mode, onClose, onToggleMode, clickPosition }
     )
   }
 
-  // Float mode: positioned near the clicked node
-  const floatX = clickPosition ? Math.min(clickPosition.x + 20, window.innerWidth - 360) : 100
-  const floatY = clickPosition ? Math.min(clickPosition.y - 40, window.innerHeight - 400) : 100
+  // Float mode: position to the right of the clicked node, or left if no room
+  const panelWidth = 320
+  const panelHeight = 450
+  const offset = 260 // push well clear of the node
+
+  let floatX: number
+  let floatY: number
+
+  if (clickPosition) {
+    // Try placing to the right of the node
+    const rightX = clickPosition.x + offset
+    // If it would overflow the right edge, place to the left instead
+    if (rightX + panelWidth > window.innerWidth - 20) {
+      floatX = clickPosition.x - offset - panelWidth
+    } else {
+      floatX = rightX
+    }
+    // Vertically center near the click, clamped to viewport
+    floatY = clickPosition.y - 60
+  } else {
+    floatX = 100
+    floatY = 100
+  }
+
+  // Clamp to viewport
+  floatX = Math.max(10, Math.min(floatX, window.innerWidth - panelWidth - 10))
+  floatY = Math.max(10, Math.min(floatY, window.innerHeight - panelHeight - 10))
 
   return (
     <div
       style={{
         position: 'fixed',
-        left: Math.max(10, floatX),
-        top: Math.max(10, floatY),
+        left: floatX,
+        top: floatY,
         width: 320,
         maxHeight: 450,
         background: 'var(--panel-bg, white)',
