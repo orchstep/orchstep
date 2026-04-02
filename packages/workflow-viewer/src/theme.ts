@@ -110,7 +110,7 @@ export const DARK_EDGE_COLORS: Record<string, string> = {
   'conditional-elif': '#f0d060',
   'error-path': '#f09070',
   'cleanup-path': '#cccccc',
-  'task-call': '#e0e0e0',
-  'module-call': '#6ab0f0',
+  'task-call': '#7ec8e3',
+  'module-call': '#7ec8e3',
   'loop-body': '#cc90f0',
 }
