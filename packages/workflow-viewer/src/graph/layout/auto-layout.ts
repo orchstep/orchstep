@@ -41,7 +41,12 @@ export function computeLayout(
   for (const node of nodes) {
     if (node.type === 'task') continue
     const height = node.type === 'merge-dot' ? 10 : NODE_HEIGHT
-    g.setNode(node.id, { width: NODE_WIDTH, height, label: node.label })
+    // Condition nodes with long expressions need more width
+    let width = NODE_WIDTH
+    if (node.type === 'condition' && node.metadata.condition) {
+      width = Math.max(NODE_WIDTH, Math.min(400, node.metadata.condition.length * 7 + 80))
+    }
+    g.setNode(node.id, { width, height, label: node.label })
   }
 
   for (const edge of edges) {
