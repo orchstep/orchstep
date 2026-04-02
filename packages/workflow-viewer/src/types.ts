@@ -1,6 +1,6 @@
 export type NodeType = 'task' | 'step' | 'condition' | 'loop' | 'module-call' | 'error-handler' | 'merge-dot'
 
-export type Direction = 'TB' | 'LR'
+export type Direction = 'TB' | 'LR' | 'AUTO'
 
 export type Theme = 'light' | 'dark'
 
