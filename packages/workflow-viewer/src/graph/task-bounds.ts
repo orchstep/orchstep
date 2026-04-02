@@ -1,7 +1,7 @@
 /**
  * Recalculate task container bounds to tightly fit their children.
- * Handles auto-shrink when children are moved closer together,
- * and auto-grow when children are moved apart.
+ * Always sets the container size to exactly wrap children + padding.
+ * Handles both shrinking (child moved inward) and growing (child moved outward).
  */
 
 const PADDING = 24
@@ -16,13 +16,10 @@ interface FlowNode {
   type?: string
   style?: Record<string, any>
   data?: any
+  measured?: { width?: number; height?: number }
   [key: string]: any
 }
 
-/**
- * Recalculate all task node bounds based on their current children positions.
- * Returns updated nodes array if any task changed, or null if no changes.
- */
 export function recalcTaskBounds(nodes: FlowNode[]): FlowNode[] | null {
   const taskNodes = nodes.filter(n => n.type === 'task')
   if (taskNodes.length === 0) return null
@@ -31,46 +28,51 @@ export function recalcTaskBounds(nodes: FlowNode[]): FlowNode[] | null {
   let updated = [...nodes]
 
   for (const task of taskNodes) {
-    const children = nodes.filter(n => n.parentId === task.id)
+    const children = updated.filter(n => n.parentId === task.id)
     if (children.length === 0) continue
 
-    // Get child bounding box (positions are relative to parent)
+    // Child positions are relative to parent
     const minX = Math.min(...children.map(c => c.position.x))
     const minY = Math.min(...children.map(c => c.position.y))
     const maxX = Math.max(...children.map(c => c.position.x + getChildWidth(c)))
     const maxY = Math.max(...children.map(c => c.position.y + getChildHeight(c)))
 
-    const newWidth = maxX - minX + PADDING * 2
-    const newHeight = maxY - minY + PADDING * 2 + HEADER_HEIGHT
+    // Desired size with padding
+    const desiredWidth = (maxX - minX) + PADDING * 2
+    const desiredHeight = (maxY - minY) + PADDING * 2 + HEADER_HEIGHT
 
-    const currentWidth = task.style?.width ?? newWidth
-    const currentHeight = task.style?.height ?? newHeight
+    // Where children should start (relative to parent top-left)
+    const idealMinX = PADDING
+    const idealMinY = PADDING + HEADER_HEIGHT
 
-    // Check if bounds need updating (with a small tolerance to avoid jitter)
-    const widthDiff = Math.abs(newWidth - currentWidth)
-    const heightDiff = Math.abs(newHeight - currentHeight)
+    const shiftX = idealMinX - minX
+    const shiftY = idealMinY - minY
 
-    if (widthDiff > 2 || heightDiff > 2) {
-      // Compute how much the children need to shift so the top-left child
-      // is at (PADDING, PADDING + HEADER_HEIGHT)
-      const shiftX = PADDING - minX
-      const shiftY = PADDING + HEADER_HEIGHT - minY
+    // Get current actual size (from style or measured)
+    const currentWidth = task.style?.width ?? task.measured?.width ?? desiredWidth
+    const currentHeight = task.style?.height ?? task.measured?.height ?? desiredHeight
 
+    const sizeDiff = Math.abs(desiredWidth - currentWidth) > 2 ||
+                     Math.abs(desiredHeight - currentHeight) > 2
+    const positionDiff = Math.abs(shiftX) > 1 || Math.abs(shiftY) > 1
+
+    if (sizeDiff || positionDiff) {
       updated = updated.map(n => {
         if (n.id === task.id) {
-          // Update task size and position
-          const newPos = {
-            x: task.position.x - shiftX,
-            y: task.position.y - shiftY,
-          }
           return {
             ...n,
-            position: newPos,
-            style: { ...n.style, width: newWidth, height: newHeight },
+            position: positionDiff ? {
+              x: n.position.x - shiftX,
+              y: n.position.y - shiftY,
+            } : n.position,
+            style: {
+              ...n.style,
+              width: desiredWidth,
+              height: desiredHeight,
+            },
           }
         }
-        if (n.parentId === task.id) {
-          // Shift children so they're properly positioned relative to new parent
+        if (n.parentId === task.id && positionDiff) {
           return {
             ...n,
             position: {
@@ -89,10 +91,10 @@ export function recalcTaskBounds(nodes: FlowNode[]): FlowNode[] | null {
 }
 
 function getChildWidth(node: FlowNode): number {
-  return node.style?.width ?? CHILD_WIDTH
+  return node.measured?.width ?? node.style?.width ?? CHILD_WIDTH
 }
 
 function getChildHeight(node: FlowNode): number {
   if (node.type === 'mergeDot') return 10
-  return node.style?.height ?? CHILD_HEIGHT
+  return node.measured?.height ?? node.style?.height ?? CHILD_HEIGHT
 }
