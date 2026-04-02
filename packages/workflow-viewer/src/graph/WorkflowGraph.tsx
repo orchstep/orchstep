@@ -165,11 +165,49 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
   }, [positioned, searchQuery, collapsedTasks, onToggleTask])
 
   const initialFlowEdges = useMemo(() => {
-    // Filter edges: only keep edges where both source and target are visible
     const visibleIds = new Set(initialFlowNodes.map(n => n.id))
-    const visibleEdges = edges.filter(e => visibleIds.has(e.source) && visibleIds.has(e.target))
-    return computeSmartEdges(visibleEdges, initialFlowNodes, theme)
-  }, [edges, initialFlowNodes, theme])
+    const collapsed = collapsedTasks ?? new Set<string>()
+
+    // Remap edges: if source or target is hidden (inside collapsed task),
+    // redirect the edge to the collapsed task container instead
+    const remappedEdges = edges.map(e => {
+      let source = e.source
+      let target = e.target
+
+      // If source is hidden, find its parent task
+      if (!visibleIds.has(source)) {
+        const sourceNode = nodes.find(n => n.id === source)
+        if (sourceNode?.parentId && collapsed.has(sourceNode.parentId)) {
+          source = sourceNode.parentId
+        }
+      }
+
+      // If target is hidden, find its parent task
+      if (!visibleIds.has(target)) {
+        const targetNode = nodes.find(n => n.id === target)
+        if (targetNode?.parentId && collapsed.has(targetNode.parentId)) {
+          target = targetNode.parentId
+        }
+      }
+
+      // Skip if source or target still not visible, or self-loop
+      if (!visibleIds.has(source) || !visibleIds.has(target)) return null
+      if (source === target) return null
+
+      return { ...e, id: `${e.id}:remapped`, source, target }
+    }).filter((e): e is NonNullable<typeof e> => e !== null)
+
+    // Deduplicate (multiple edges may remap to the same source→target)
+    const seen = new Set<string>()
+    const deduped = remappedEdges.filter(e => {
+      const key = `${e.source}->${e.target}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+
+    return computeSmartEdges(deduped, initialFlowNodes, theme)
+  }, [edges, nodes, initialFlowNodes, theme, collapsedTasks])
 
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialFlowNodes as any)
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialFlowEdges as any)
