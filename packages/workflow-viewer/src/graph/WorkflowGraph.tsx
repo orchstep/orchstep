@@ -24,8 +24,8 @@ import { computeLayout } from './layout/auto-layout'
 import { getBestHandles, getAbsolutePosition } from './edge-routing'
 import { resolveTaskCollision } from './collision'
 import { recalcTaskBounds } from './task-bounds'
-import { EDGE_COLORS } from '../theme'
-import type { GraphNode, GraphEdge, Direction } from '../types'
+import { EDGE_COLORS, DARK_EDGE_COLORS } from '../theme'
+import type { GraphNode, GraphEdge, Direction, Theme } from '../types'
 
 const nodeTypes: Record<string, any> = {
   step: StepNode,
@@ -45,6 +45,7 @@ interface WorkflowGraphProps {
   nodes: GraphNode[]
   edges: GraphEdge[]
   direction: Direction
+  theme: Theme
   searchQuery: string
   minimapVisible: boolean
   onNodeSelect: (node: GraphNode | null) => void
@@ -80,8 +81,10 @@ const FlowControls = forwardRef<WorkflowGraphHandle, { direction: Direction }>(
  */
 function computeSmartEdges(
   graphEdges: GraphEdge[],
-  flowNodes: Array<{ id: string; position: { x: number; y: number }; parentId?: string; style?: any }>
+  flowNodes: Array<{ id: string; position: { x: number; y: number }; parentId?: string; style?: any }>,
+  theme: Theme = 'light',
 ) {
+  const colors = theme === 'dark' ? DARK_EDGE_COLORS : EDGE_COLORS
   return graphEdges.map((e) => {
     const sourceRect = getAbsolutePosition(e.source, flowNodes)
     const targetRect = getAbsolutePosition(e.target, flowNodes)
@@ -99,7 +102,7 @@ function computeSmartEdges(
         type: MarkerType.ArrowClosed,
         width: 16,
         height: 16,
-        color: EDGE_COLORS[e.type] ?? '#999',
+        color: colors[e.type] ?? '#999',
       },
     }
   })
@@ -109,6 +112,7 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
   nodes,
   edges,
   direction,
+  theme,
   searchQuery,
   minimapVisible,
   onNodeSelect,
@@ -137,8 +141,8 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
   }, [positioned, searchQuery])
 
   const initialFlowEdges = useMemo(
-    () => computeSmartEdges(edges, initialFlowNodes),
-    [edges, initialFlowNodes],
+    () => computeSmartEdges(edges, initialFlowNodes, theme),
+    [edges, initialFlowNodes, theme],
   )
 
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialFlowNodes as any)
@@ -164,7 +168,7 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
     if (isDragging || dragEnded) {
       setTimeout(() => {
         setFlowNodes(currentNodes => {
-          const smartEdges = computeSmartEdges(edges, currentNodes as any)
+          const smartEdges = computeSmartEdges(edges, currentNodes as any, theme)
           setFlowEdges(smartEdges as any)
           return currentNodes
         })
@@ -203,14 +207,14 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
             const boundsResult2 = recalcTaskBounds(updated as any)
             if (boundsResult2) updated = boundsResult2 as any
 
-            const smartEdges = computeSmartEdges(edges, updated as any)
+            const smartEdges = computeSmartEdges(edges, updated as any, theme)
             setFlowEdges(smartEdges as any)
           }
           return changed ? updated : currentNodes
         })
       }, 50)
     }
-  }, [onNodesChange, edges, setFlowNodes, setFlowEdges])
+  }, [onNodesChange, edges, theme, setFlowNodes, setFlowEdges])
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: any) => {

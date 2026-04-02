@@ -5,13 +5,12 @@ import {
   Maximize2,
   ArrowDown,
   ArrowRight,
-  ChevronsDownUp,
-  ChevronsUpDown,
   Search,
   Map,
   Moon,
   Sun,
   Download,
+  Copy,
   Sparkles,
 } from 'lucide-react'
 import type { Direction, Theme } from '../types'
@@ -19,7 +18,6 @@ import type { Direction, Theme } from '../types'
 interface ToolbarProps {
   direction: Direction
   theme: Theme
-  allCollapsed: boolean
   minimapVisible: boolean
   searchQuery: string
   onDirectionChange: (d: Direction) => void
@@ -27,10 +25,10 @@ interface ToolbarProps {
   onFitView: () => void
   onZoomIn: () => void
   onZoomOut: () => void
-  onToggleCollapseAll: () => void
   onToggleMinimap: () => void
   onSearchChange: (q: string) => void
   onExport: () => void
+  onCopy: () => void
 }
 
 const btnStyle: React.CSSProperties = {
@@ -49,7 +47,6 @@ const btnStyle: React.CSSProperties = {
 export function Toolbar({
   direction,
   theme,
-  allCollapsed,
   minimapVisible,
   searchQuery,
   onDirectionChange,
@@ -57,10 +54,10 @@ export function Toolbar({
   onFitView,
   onZoomIn,
   onZoomOut,
-  onToggleCollapseAll,
   onToggleMinimap,
   onSearchChange,
   onExport,
+  onCopy,
 }: ToolbarProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -112,9 +109,6 @@ export function Toolbar({
           {direction === 'AUTO' ? <Sparkles size={14} /> : direction === 'TB' ? <ArrowDown size={14} /> : <ArrowRight size={14} />}
           <span style={{ fontSize: 11 }}>{direction === 'AUTO' ? 'Smart' : direction === 'TB' ? 'Vertical' : 'Horizontal'}</span>
         </button>
-        <button style={btnStyle} onClick={onToggleCollapseAll} title={allCollapsed ? 'Expand All' : 'Collapse All'}>
-          {allCollapsed ? <ChevronsUpDown size={14} /> : <ChevronsDownUp size={14} />}
-        </button>
       </div>
 
       {/* Center: search */}
@@ -162,8 +156,11 @@ export function Toolbar({
         >
           {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
         </button>
-        <button style={btnStyle} onClick={onExport} title="Export">
+        <button style={btnStyle} onClick={onExport} title="Export PNG">
           <Download size={14} />
+        </button>
+        <button style={btnStyle} onClick={onCopy} title="Copy to Clipboard">
+          <Copy size={14} />
         </button>
       </div>
     </div>

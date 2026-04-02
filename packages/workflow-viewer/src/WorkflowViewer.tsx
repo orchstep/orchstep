@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react'
+import { toPng, toBlob } from 'html-to-image'
 import { parseWorkflowYaml } from './parser/yaml-to-graph'
 import { Toolbar } from './controls/Toolbar'
 import { DetailPanel } from './panel/DetailPanel'
@@ -20,7 +21,6 @@ export function WorkflowViewer({
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [minimapVisible, setMinimapVisible] = useState(false)
-  const [allCollapsed, setAllCollapsed] = useState(initialCollapsed)
 
   const graphRef = useRef<{ fitView: () => void; zoomIn: () => void; zoomOut: () => void } | null>(null)
 
@@ -38,27 +38,36 @@ export function WorkflowViewer({
     [onNodeClick],
   )
 
-  const handleExport = useCallback(() => {
-    const svgEl = document.querySelector('.react-flow__viewport')
-    if (!svgEl) return
-    // Simple PNG export via canvas
-    const canvas = document.createElement('canvas')
-    const svgData = new XMLSerializer().serializeToString(svgEl)
-    const img = new Image()
-    img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.drawImage(img, 0, 0)
-        const a = document.createElement('a')
-        a.download = 'workflow.png'
-        a.href = canvas.toDataURL('image/png')
-        a.click()
-      }
+  const handleExport = useCallback(async () => {
+    const el = document.querySelector('.react-flow') as HTMLElement
+    if (!el) return
+    try {
+      const dataUrl = await toPng(el, {
+        backgroundColor: theme === 'dark' ? '#1a1a2e' : '#fafafa',
+      })
+      const a = document.createElement('a')
+      a.download = 'workflow.png'
+      a.href = dataUrl
+      a.click()
+    } catch (err) {
+      console.error('Export failed:', err)
     }
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgData)
-  }, [])
+  }, [theme])
+
+  const handleCopy = useCallback(async () => {
+    const el = document.querySelector('.react-flow') as HTMLElement
+    if (!el) return
+    try {
+      const blob = await toBlob(el, {
+        backgroundColor: theme === 'dark' ? '#1a1a2e' : '#fafafa',
+      })
+      if (blob) {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      }
+    } catch (err) {
+      console.error('Copy failed:', err)
+    }
+  }, [theme])
 
   const errors = parseResult.errors.filter((e) => e.severity === 'error')
   const warnings = parseResult.errors.filter((e) => e.severity === 'warning')
@@ -120,7 +129,6 @@ export function WorkflowViewer({
         <Toolbar
           direction={direction}
           theme={theme}
-          allCollapsed={allCollapsed}
           minimapVisible={minimapVisible}
           searchQuery={searchQuery}
           onDirectionChange={setDirection}
@@ -128,10 +136,10 @@ export function WorkflowViewer({
           onFitView={() => graphRef.current?.fitView()}
           onZoomIn={() => graphRef.current?.zoomIn()}
           onZoomOut={() => graphRef.current?.zoomOut()}
-          onToggleCollapseAll={() => setAllCollapsed((c) => !c)}
           onToggleMinimap={() => setMinimapVisible((v) => !v)}
           onSearchChange={setSearchQuery}
           onExport={handleExport}
+          onCopy={handleCopy}
         />
       )}
 
@@ -143,6 +151,7 @@ export function WorkflowViewer({
             nodes={parseResult.nodes}
             edges={parseResult.edges}
             direction={direction}
+            theme={theme}
             searchQuery={searchQuery}
             minimapVisible={minimapVisible}
             onNodeSelect={handleNodeSelect}

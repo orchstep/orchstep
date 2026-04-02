@@ -86,6 +86,8 @@ export const LIGHT_THEME = {
   '--panel-bg': 'white',
   '--panel-border': '#e0e0e0',
   '--shadow': '0 1px 3px rgba(0,0,0,0.06)',
+  '--task-header-bg': '#f0f0f0',
+  '--task-border': '#333333',
 }
 
 export const DARK_THEME = {
@@ -97,4 +99,18 @@ export const DARK_THEME = {
   '--panel-bg': '#1e1e30',
   '--panel-border': '#333355',
   '--shadow': '0 1px 3px rgba(0,0,0,0.3)',
+  '--task-header-bg': '#2a2a40',
+  '--task-border': '#888888',
+}
+
+export const DARK_EDGE_COLORS: Record<string, string> = {
+  sequential: '#aaaaaa',
+  'conditional-true': '#4dbd7a',
+  'conditional-false': '#f09070',
+  'conditional-elif': '#f0d060',
+  'error-path': '#f09070',
+  'cleanup-path': '#999999',
+  'task-call': '#aaaaaa',
+  'module-call': '#6ab0f0',
+  'loop-body': '#bb80e0',
 }

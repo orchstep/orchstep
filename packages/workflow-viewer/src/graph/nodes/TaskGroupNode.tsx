@@ -93,7 +93,7 @@ export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData })
   return (
     <div
       style={{
-        border: '2px solid #333',
+        border: '2px solid var(--task-border, #333)',
         borderRadius: 8,
         background: 'var(--node-bg, white)',
         width: '100%',
@@ -109,15 +109,15 @@ export function TaskGroupNode({ id, data }: { id: string; data: TaskGroupData })
           alignItems: 'center',
           gap: 8,
           padding: '6px 10px',
-          background: '#f0f0f0',
-          borderBottom: '1px solid #ddd',
+          background: 'var(--task-header-bg, #f0f0f0)',
+          borderBottom: '1px solid var(--panel-border, #ddd)',
           borderRadius: '6px 6px 0 0',
           cursor: 'pointer',
         }}
         onClick={onToggleCollapse}
       >
         <FolderOpen size={14} color="#333" />
-        <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#666' }}>
+        <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary, #666)' }}>
           Task
         </span>
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary, #111)', flex: 1 }}>
