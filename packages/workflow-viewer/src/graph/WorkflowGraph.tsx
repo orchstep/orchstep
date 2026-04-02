@@ -48,7 +48,9 @@ interface WorkflowGraphProps {
   theme: Theme
   searchQuery: string
   minimapVisible: boolean
+  collapsedTasks?: Set<string>
   onNodeSelect: (node: GraphNode | null) => void
+  onToggleTask?: (taskId: string) => void
 }
 
 export interface WorkflowGraphHandle {
@@ -115,7 +117,9 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
   theme,
   searchQuery,
   minimapVisible,
+  collapsedTasks,
   onNodeSelect,
+  onToggleTask,
 }, ref) {
   const positioned = useMemo(
     () => computeLayout(nodes, edges, direction),
@@ -124,26 +128,48 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
 
   const initialFlowNodes = useMemo(() => {
     const query = searchQuery.toLowerCase().trim()
-    return positioned.map((n) => {
-      const matches =
-        !query ||
-        n.data.label.toLowerCase().includes(query) ||
-        (n.data.metadata.func ?? '').toLowerCase().includes(query)
-      return {
-        ...n,
-        style: {
-          ...n.style,
-          opacity: query && !matches ? 0.2 : 1,
-          transition: 'opacity 0.2s',
-        },
-      }
-    })
-  }, [positioned, searchQuery])
+    const collapsed = collapsedTasks ?? new Set<string>()
 
-  const initialFlowEdges = useMemo(
-    () => computeSmartEdges(edges, initialFlowNodes, theme),
-    [edges, initialFlowNodes, theme],
-  )
+    return positioned
+      .filter((n) => {
+        // If this node's parent task is collapsed, hide it (unless it's the task itself)
+        if (n.parentId && collapsed.has(n.parentId)) return false
+        return true
+      })
+      .map((n) => {
+        const matches =
+          !query ||
+          n.data.label.toLowerCase().includes(query) ||
+          (n.data.metadata.func ?? '').toLowerCase().includes(query)
+
+        // For task nodes: inject collapse state and toggle callback
+        const isTask = n.data.type === 'task'
+        const isCollapsed = isTask && collapsed.has(n.id)
+
+        return {
+          ...n,
+          data: isTask ? {
+            ...n.data,
+            collapsed: isCollapsed,
+            onToggleCollapse: onToggleTask ? () => onToggleTask(n.id) : undefined,
+          } : n.data,
+          style: {
+            ...n.style,
+            // Collapsed tasks become compact
+            ...(isCollapsed ? { height: 44, width: n.style?.width } : {}),
+            opacity: query && !matches ? 0.2 : 1,
+            transition: 'opacity 0.2s',
+          },
+        }
+      })
+  }, [positioned, searchQuery, collapsedTasks, onToggleTask])
+
+  const initialFlowEdges = useMemo(() => {
+    // Filter edges: only keep edges where both source and target are visible
+    const visibleIds = new Set(initialFlowNodes.map(n => n.id))
+    const visibleEdges = edges.filter(e => visibleIds.has(e.source) && visibleIds.has(e.target))
+    return computeSmartEdges(visibleEdges, initialFlowNodes, theme)
+  }, [edges, initialFlowNodes, theme])
 
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initialFlowNodes as any)
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initialFlowEdges as any)

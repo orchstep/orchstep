@@ -12,6 +12,8 @@ import {
   Download,
   Copy,
   Sparkles,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from 'lucide-react'
 import type { Direction, Theme } from '../types'
 
@@ -20,6 +22,7 @@ interface ToolbarProps {
   theme: Theme
   minimapVisible: boolean
   searchQuery: string
+  allCollapsed: boolean
   onDirectionChange: (d: Direction) => void
   onThemeChange: (t: Theme) => void
   onFitView: () => void
@@ -29,6 +32,8 @@ interface ToolbarProps {
   onSearchChange: (q: string) => void
   onExport: () => void
   onCopy: () => void
+  onCollapseAll: () => void
+  onExpandAll: () => void
 }
 
 const btnStyle: React.CSSProperties = {
@@ -49,6 +54,7 @@ export function Toolbar({
   theme,
   minimapVisible,
   searchQuery,
+  allCollapsed,
   onDirectionChange,
   onThemeChange,
   onFitView,
@@ -58,6 +64,8 @@ export function Toolbar({
   onSearchChange,
   onExport,
   onCopy,
+  onCollapseAll,
+  onExpandAll,
 }: ToolbarProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -108,6 +116,13 @@ export function Toolbar({
         >
           {direction === 'AUTO' ? <Sparkles size={14} /> : direction === 'TB' ? <ArrowDown size={14} /> : <ArrowRight size={14} />}
           <span style={{ fontSize: 11 }}>{direction === 'AUTO' ? 'Smart' : direction === 'TB' ? 'Vertical' : 'Horizontal'}</span>
+        </button>
+        <button
+          style={btnStyle}
+          onClick={allCollapsed ? onExpandAll : onCollapseAll}
+          title={allCollapsed ? 'Expand All Tasks' : 'Collapse All Tasks'}
+        >
+          {allCollapsed ? <ChevronsUpDown size={14} /> : <ChevronsDownUp size={14} />}
         </button>
       </div>
 
