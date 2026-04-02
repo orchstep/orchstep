@@ -152,39 +152,49 @@ const GraphInner = forwardRef<WorkflowGraphHandle, WorkflowGraphProps>(function 
     setFlowEdges(initialFlowEdges as any)
   }, [initialFlowEdges, setFlowEdges])
 
-  // Recompute edge handles after nodes are dragged
+  // Handle node position changes: recompute edges during drag, resolve collisions on drag end
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     onNodesChange(changes)
 
-    // Check if any position changed (drag)
-    const hasPositionChange = changes.some(
-      c => c.type === 'position' && c.dragging === false
-    )
-    if (hasPositionChange) {
-      // After drag ends, recompute smart edges with current positions
-      setFlowNodes(currentNodes => {
-        // Resolve task collisions
-        for (const change of changes) {
-          if (change.type === 'position' && !change.dragging && change.id) {
-            const adjusted = resolveTaskCollision(change.id, currentNodes as any)
-            if (adjusted) {
-              return currentNodes.map(n =>
-                n.id === change.id ? { ...n, position: adjusted } : n
-              )
-            }
-          }
-        }
-        return currentNodes
-      })
+    const isDragging = changes.some(c => c.type === 'position' && c.dragging === true)
+    const dragEnded = changes.some(c => c.type === 'position' && c.dragging === false)
 
-      // Recompute edges with updated positions
+    if (isDragging || dragEnded) {
+      // Recompute edge routing with current node positions
       setTimeout(() => {
         setFlowNodes(currentNodes => {
           const smartEdges = computeSmartEdges(edges, currentNodes as any)
-          setFlowEdges(smartEdges)
+          setFlowEdges(smartEdges as any)
           return currentNodes
         })
       }, 0)
+    }
+
+    if (dragEnded) {
+      // Resolve task collisions after drag ends
+      setTimeout(() => {
+        setFlowNodes(currentNodes => {
+          let updated = [...currentNodes]
+          let changed = false
+          for (const change of changes) {
+            if (change.type === 'position' && !change.dragging && change.id) {
+              const adjusted = resolveTaskCollision(change.id, updated as any)
+              if (adjusted) {
+                updated = updated.map(n =>
+                  n.id === change.id ? { ...n, position: adjusted } : n
+                )
+                changed = true
+              }
+            }
+          }
+          if (changed) {
+            // Recompute edges again after collision adjustment
+            const smartEdges = computeSmartEdges(edges, updated as any)
+            setFlowEdges(smartEdges as any)
+          }
+          return changed ? updated : currentNodes
+        })
+      }, 10)
     }
   }, [onNodesChange, edges, setFlowNodes, setFlowEdges])
 
