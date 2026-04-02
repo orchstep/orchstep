@@ -12,6 +12,7 @@ import {
   Moon,
   Sun,
   Download,
+  Sparkles,
 } from 'lucide-react'
 import type { Direction, Theme } from '../types'
 
@@ -102,10 +103,14 @@ export function Toolbar({
         </button>
         <button
           style={btnStyle}
-          onClick={() => onDirectionChange(direction === 'TB' ? 'LR' : 'TB')}
-          title={direction === 'TB' ? 'Switch to Left-Right' : 'Switch to Top-Bottom'}
+          onClick={() => {
+            const next = direction === 'AUTO' ? 'TB' : direction === 'TB' ? 'LR' : 'AUTO'
+            onDirectionChange(next)
+          }}
+          title={direction === 'AUTO' ? 'Smart Layout' : direction === 'TB' ? 'Vertical' : 'Horizontal'}
         >
-          {direction === 'TB' ? <ArrowDown size={14} /> : <ArrowRight size={14} />}
+          {direction === 'AUTO' ? <Sparkles size={14} /> : direction === 'TB' ? <ArrowDown size={14} /> : <ArrowRight size={14} />}
+          <span style={{ fontSize: 11 }}>{direction === 'AUTO' ? 'Smart' : direction === 'TB' ? 'Vertical' : 'Horizontal'}</span>
         </button>
         <button style={btnStyle} onClick={onToggleCollapseAll} title={allCollapsed ? 'Expand All' : 'Collapse All'}>
           {allCollapsed ? <ChevronsUpDown size={14} /> : <ChevronsDownUp size={14} />}

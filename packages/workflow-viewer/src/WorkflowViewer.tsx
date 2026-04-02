@@ -8,7 +8,7 @@ import type { WorkflowViewerProps, GraphNode, Direction, Theme } from './types'
 
 export function WorkflowViewer({
   yaml,
-  direction: initialDirection = 'TB',
+  direction: initialDirection = 'AUTO',
   theme: initialTheme = 'light',
   onNodeClick,
   collapsed: initialCollapsed = false,
