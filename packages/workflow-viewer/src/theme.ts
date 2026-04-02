@@ -104,13 +104,13 @@ export const DARK_THEME = {
 }
 
 export const DARK_EDGE_COLORS: Record<string, string> = {
-  sequential: '#cccccc',
+  sequential: '#e0e0e0',
   'conditional-true': '#5dd88a',
   'conditional-false': '#f09070',
   'conditional-elif': '#f0d060',
   'error-path': '#f09070',
-  'cleanup-path': '#bbbbbb',
-  'task-call': '#cccccc',
+  'cleanup-path': '#cccccc',
+  'task-call': '#e0e0e0',
   'module-call': '#6ab0f0',
   'loop-body': '#cc90f0',
 }

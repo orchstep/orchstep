@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { toPng, toBlob } from 'html-to-image'
 import { parseWorkflowYaml } from './parser/yaml-to-graph'
 import { Toolbar } from './controls/Toolbar'
@@ -21,12 +21,22 @@ export function WorkflowViewer({
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [minimapVisible, setMinimapVisible] = useState(false)
+  const [collapsedTasks, setCollapsedTasks] = useState<Set<string>>(new Set())
+  const [toast, setToast] = useState<string | null>(null)
 
   const graphRef = useRef<{ fitView: () => void; zoomIn: () => void; zoomOut: () => void } | null>(null)
 
   const parseResult = useMemo(() => parseWorkflowYaml(yaml), [yaml])
 
   const themeVars = theme === 'dark' ? DARK_THEME : LIGHT_THEME
+
+  // Initialize collapsed state
+  useEffect(() => {
+    if (initialCollapsed) {
+      const taskIds = parseResult.nodes.filter(n => n.type === 'task').map(n => n.id)
+      setCollapsedTasks(new Set(taskIds))
+    }
+  }, [initialCollapsed, parseResult.nodes])
 
   const handleNodeSelect = useCallback(
     (node: GraphNode | null) => {
@@ -37,6 +47,11 @@ export function WorkflowViewer({
     },
     [onNodeClick],
   )
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2000)
+  }, [])
 
   const handleExport = useCallback(async () => {
     const el = document.querySelector('.react-flow') as HTMLElement
@@ -49,10 +64,11 @@ export function WorkflowViewer({
       a.download = 'workflow.png'
       a.href = dataUrl
       a.click()
+      showToast('Exported!')
     } catch (err) {
       console.error('Export failed:', err)
     }
-  }, [theme])
+  }, [theme, showToast])
 
   const handleCopy = useCallback(async () => {
     const el = document.querySelector('.react-flow') as HTMLElement
@@ -63,11 +79,35 @@ export function WorkflowViewer({
       })
       if (blob) {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+        showToast('Copied!')
       }
     } catch (err) {
       console.error('Copy failed:', err)
     }
-  }, [theme])
+  }, [theme, showToast])
+
+  const handleToggleTask = useCallback((taskId: string) => {
+    setCollapsedTasks(prev => {
+      const next = new Set(prev)
+      if (next.has(taskId)) next.delete(taskId)
+      else next.add(taskId)
+      return next
+    })
+  }, [])
+
+  const handleCollapseAll = useCallback(() => {
+    const taskIds = parseResult.nodes.filter(n => n.type === 'task').map(n => n.id)
+    setCollapsedTasks(new Set(taskIds))
+  }, [parseResult.nodes])
+
+  const handleExpandAll = useCallback(() => {
+    setCollapsedTasks(new Set())
+  }, [])
+
+  const allCollapsed = useMemo(() => {
+    const taskIds = parseResult.nodes.filter(n => n.type === 'task').map(n => n.id)
+    return taskIds.length > 0 && taskIds.every(id => collapsedTasks.has(id))
+  }, [parseResult.nodes, collapsedTasks])
 
   const errors = parseResult.errors.filter((e) => e.severity === 'error')
   const warnings = parseResult.errors.filter((e) => e.severity === 'warning')
@@ -90,6 +130,29 @@ export function WorkflowViewer({
         position: 'relative',
       } as React.CSSProperties}
     >
+      {/* Toast notification */}
+      {toast && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 60,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: theme === 'dark' ? '#444' : '#333',
+            color: 'white',
+            padding: '6px 16px',
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 500,
+            zIndex: 100,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          {toast}
+        </div>
+      )}
+
       {/* Error banner */}
       {errors.length > 0 && (
         <div
@@ -131,6 +194,7 @@ export function WorkflowViewer({
           theme={theme}
           minimapVisible={minimapVisible}
           searchQuery={searchQuery}
+          allCollapsed={allCollapsed}
           onDirectionChange={setDirection}
           onThemeChange={setTheme}
           onFitView={() => graphRef.current?.fitView()}
@@ -140,6 +204,8 @@ export function WorkflowViewer({
           onSearchChange={setSearchQuery}
           onExport={handleExport}
           onCopy={handleCopy}
+          onCollapseAll={handleCollapseAll}
+          onExpandAll={handleExpandAll}
         />
       )}
 
@@ -154,7 +220,9 @@ export function WorkflowViewer({
             theme={theme}
             searchQuery={searchQuery}
             minimapVisible={minimapVisible}
+            collapsedTasks={collapsedTasks}
             onNodeSelect={handleNodeSelect}
+            onToggleTask={handleToggleTask}
           />
           {selectedNode && (
             <DetailPanel
