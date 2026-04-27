@@ -8,8 +8,8 @@
 Output capture-demo.gif
 
 Set Shell "zsh"
-Set FontSize 14
-Set Width 1200
+Set FontSize 20
+Set Width 1280
 Set Height 720
 Set Theme "Catppuccin Mocha"
 Set TypingSpeed 35ms
