@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/logo.png" alt="OrchStep — Automate, Orchestrate, Reuse for Human & AI Agents" width="720">
+</p>
+
 # OrchStep
 
 ![Tests](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Forchstep%2Forchstep%2Fmain%2Ftest-results.json)
