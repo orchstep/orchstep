@@ -9,7 +9,8 @@
 | npm | `npm install -g orchstep` |
 | pip | `pip install orchstep` |
 | Docker | `docker pull orchstep/orchstep:latest` |
-| GitHub Action | `uses: orchstep/setup-orchstep@v1` |
+| GitHub Action (install) | `uses: orchstep/setup-orchstep@v1` |
+| GitHub Action (run a workflow) | `uses: orchstep/run-orchstep@v1` |
 | Direct download | [GitHub Releases](https://github.com/orchstep/orchstep/releases) |
 
 ## Verify Installation
