@@ -1,20 +1,13 @@
-# Setup OrchStep GitHub Action
+# Setup OrchStep (deprecated)
 
-Install OrchStep in your GitHub Actions workflow.
-
-## Usage
-
-```yaml
-steps:
-  - uses: orchstep/orchstep/action@main
-    with:
-      version: latest  # or specific version like "1.0.0"
-
-  - run: orchstep run deploy --var env=staging
-```
-
-## Inputs
-
-| Input | Description | Default |
-|-------|-------------|---------|
-| `version` | OrchStep version to install | `latest` |
+> **Deprecated.** This action now forwards to
+> [`orchstep/setup-orchstep`](https://github.com/orchstep/setup-orchstep).
+> Update your workflows:
+>
+> ```yaml
+> - uses: orchstep/setup-orchstep@v1
+>   with:
+>     version: latest
+> ```
+>
+> The forwarding shim will be removed after 2026-08-20.
