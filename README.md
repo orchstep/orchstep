@@ -93,7 +93,7 @@ The OrchStep engine is distributed as a compiled binary. Install it using any me
 | **npm** | `npm install -g orchstep` |
 | **pip** | `pip install orchstep` |
 | **Docker** | `docker pull orchstep/orchstep:latest` |
-| **GitHub Action** | `uses: orchstep/orchstep/action@main` |
+| **GitHub Action** | `uses: orchstep/setup-orchstep@v1` (install) / `uses: orchstep/run-orchstep@v1` (one-step run) |
 
 All channels pull binaries from [GitHub Releases](https://github.com/orchstep/orchstep/releases).
 
