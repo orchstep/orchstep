@@ -39,6 +39,16 @@ Run it:
 orchstep run hello
 ```
 
+Or pick it from a keyboard-driven menu:
+
+```bash
+orchstep menu
+# Press 'h' to run hello, or arrow keys / '/' to search by name or description.
+# Press 'q' to quit.
+```
+
+> Plain `orchstep` (no subcommand) also auto-launches the menu when run in a terminal. In CI or any non-TTY context it exits 2 with a clear error so it never hangs a pipeline.
+
 ## Next Steps
 
 - Browse [demos/](../demos/) for real-world examples

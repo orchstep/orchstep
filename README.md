@@ -40,7 +40,12 @@ pip install orchstep
 # Run a demo
 cd demos/01-post-deploy-smoke-test
 orchstep run
+
+# Or pick a task interactively
+orchstep menu
 ```
+
+> **Interactive picker:** Run `orchstep menu` in any directory with an `orchstep.yml` to open a keyboard-driven task picker. Single-keystroke hotkeys, fuzzy search (arrow keys or `/`), and a filter cycle (`f` to cycle all → a-z → public → internal). Running plain `orchstep` in a terminal also auto-launches the menu; in a pipeline it exits cleanly instead of hanging.
 
 ## What's in This Repo
 
