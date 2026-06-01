@@ -9,6 +9,10 @@ You are running and managing OrchStep workflows via the CLI.
 
 ## Core Commands
 
+### Always specify a subcommand
+
+Plain `orchstep` (no subcommand) is a **human-only interactive mode** — when invoked in a terminal it auto-launches the `menu` TUI for task picking. **Agents should always pass an explicit subcommand** (`run`, `list-tasks`, `lint`, `version`) so this never fires. In non-terminal contexts (CI, piped stdin/stdout) plain `orchstep` exits 2 with `error: no subcommand specified — refusing to launch interactive menu`. The guard exists specifically to prevent agents and pipelines from hanging on the interactive picker.
+
 ### Run a Task
 
 ```bash
