@@ -36,6 +36,8 @@ Read the user's request and decide which mode to use:
    - Need the full YAML shape? → `references/syntax.md`
    - Need a specific function signature? → `references/functions.md`
    - Need variable handling? → `references/variables.md`
+   - Need template expressions / Sprig functions? → `references/templates.md`
+   - Need stdin/pipe data? → `references/stdin.md`
    - Need conditionals/loops/parallel? → `references/control-flow.md`
    - Need error handling/retry? → `references/error-handling.md`
    - Need modules? → `references/modules.md`
@@ -65,12 +67,16 @@ Read the user's request and decide which mode to use:
 For edge cases, complex module configurations, or version-specific
 behavior, dispatch a subagent:
 
-> Read examples from the public OrchStep website source at:
-> https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/examples/
->
-> Cross-reference against the private spec test patterns documented in
-> the user's session. Produce a workflow that matches the requested
-> behavior exactly.
+> Fetch a specific file from the public OrchStep website source:
+> - Functions: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/functions/shell.md (same path for assert, git, http, prompt, render, transform, wait)
+> - Spec docs: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/templates.md
+> - Variables: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/variables.md
+> - Control flow: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/control-flow.md
+> - Error handling: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/error-handling.md
+> - Shell execution: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/shell-execution.md
+> - Stdin/pipes: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/stdin-pipe.md
+> - Parallel: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/parallel.md
+> - Modules: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/modules/overview.md
 
 ## Output Quality Rules
 
