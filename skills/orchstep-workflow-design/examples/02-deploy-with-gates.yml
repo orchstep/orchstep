@@ -1,0 +1,103 @@
+# Multi-Environment Deploy with Approval Gates
+# Pattern: staggered rollout with manual approval between stages
+
+name: deploy-with-approval
+desc: "Multi-stage deploy with manual approval gates"
+
+defaults:
+  version: "latest"
+
+tasks:
+  deploy_staging:
+    desc: "Deploy to staging with health check"
+    steps:
+      - name: deploy
+        func: shell
+        do: |
+          kubectl set image deployment/app \
+            app=app:{{ vars.version }} -n staging
+        timeout: 120s
+        retry:
+          max_attempts: 2
+          interval: 5s
+
+      - name: health_check
+        func: http
+        args:
+          url: "https://staging.example.com/health"
+          method: GET
+        retry:
+          max_attempts: 5
+          interval: 10s
+
+      - name: verify
+        func: assert
+        args:
+          condition: '{{ eq steps.health_check.status_code 200 }}'
+          desc: "Staging health check must return 200"
+
+  approve_prod:
+    desc: "Manual approval gate before production"
+    steps:
+      - name: confirm
+        func: prompt
+        args:
+          message: "Deploy {{ vars.version }} to production?"
+          type: confirm
+          default: false
+
+      - name: check_approved
+        func: assert
+        args:
+          condition: '{{ eq steps.confirm.value "true" }}'
+          desc: "User must approve production deploy"
+
+  deploy_production:
+    desc: "Deploy to production with rollback"
+    steps:
+      - name: deploy
+        func: shell
+        do: |
+          kubectl set image deployment/app \
+            app=app:{{ vars.version }} -n production
+        timeout: 180s
+        retry:
+          max_attempts: 2
+          interval: 10s
+        catch:
+          - name: rollback
+            func: shell
+            do: kubectl rollout undo deployment/app -n production
+          - name: alert
+            func: http
+            args:
+              url: "{{ env.SLACK_WEBHOOK }}"
+              method: POST
+              body:
+                text: "Production deploy of {{ vars.version }} failed"
+
+      - name: smoke_test
+        func: http
+        args:
+          url: "https://app.example.com/health"
+          method: GET
+        timeout: 30s
+        retry:
+          max_attempts: 3
+          interval: 5s
+
+  main:
+    desc: "Full promote pipeline"
+    steps:
+      - task: deploy_staging
+
+      - task: approve_prod
+
+      - task: deploy_production
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== Deployment Complete ==="
+          echo "Version: {{ vars.version }}"
+          echo "Staging health: {{ steps.deploy_staging.health_check.status_code }}"

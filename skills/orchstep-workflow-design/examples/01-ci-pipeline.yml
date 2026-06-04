@@ -1,0 +1,83 @@
+# CI Pipeline with Quality Gates
+# Best-practice pattern: build → lint → test → deploy
+# Each stage has appropriate error handling and output extraction.
+
+name: ci-pipeline
+desc: "Build, test, and deploy workflow with quality gates"
+
+defaults:
+  node_version: "20"
+  deploy_enabled: false        # Controlled by --var deploy_enabled=true
+
+tasks:
+  ci:
+    desc: "Full CI pipeline with gates"
+    steps:
+      - name: install
+        desc: "Install dependencies"
+        func: shell
+        do: npm ci
+        timeout: 120s
+        on_error: fail
+
+      - name: lint
+        desc: "Run linter (non-blocking)"
+        func: shell
+        do: eslint src/
+        timeout: 60s
+        on_error: warn
+        outputs:
+          lint_output: "{{ result.output }}"
+
+      - name: test
+        desc: "Run unit tests with retry for flaky tests"
+        func: shell
+        do: npm test -- --ci
+        timeout: 180s
+        retry:
+          max_attempts: 2
+          interval: 5s
+
+      - name: build
+        desc: "Build the application"
+        func: shell
+        do: npm run build
+        timeout: 120s
+        outputs:
+          build_id: '{{ result.output | regexFind "BUILD_ID=([a-f0-9]+)" }}'
+
+      - name: verify_build
+        desc: "Assert build produced an output before deploying"
+        func: assert
+        args:
+          condition: '{{ ne steps.build.build_id "" }}'
+          desc: "Build must produce a valid build ID"
+
+      - name: security_scan
+        desc: "Security audit (non-blocking advisory)"
+        func: shell
+        do: npm audit --audit-level=high
+        timeout: 60s
+        on_error: warn
+
+      - name: deploy
+        desc: "Deploy if enabled"
+        if: '{{ eq vars.deploy_enabled "true" }}'
+        func: shell
+        do: |
+          echo "Deploying build {{ steps.build.build_id }}"
+          ./scripts/deploy.sh {{ steps.build.build_id }}
+        timeout: 300s
+        retry:
+          max_attempts: 2
+          interval: 10s
+        catch:
+          - name: rollback
+            desc: "Rollback on deploy failure"
+            func: shell
+            do: ./scripts/rollback.sh
+        finally:
+          - name: cleanup
+            desc: "Clean up temp artifacts"
+            func: shell
+            do: rm -rf ./tmp-deploy

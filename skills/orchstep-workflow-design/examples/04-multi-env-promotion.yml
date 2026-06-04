@@ -1,0 +1,128 @@
+# Multi-Environment Promotion
+# Best-practice pattern: staggered rollout across environments
+# Uses env_groups + environments + task calling with 'with' parameters
+
+name: promotion-pipeline
+desc: "Staggered multi-environment promotion pipeline"
+
+defaults:
+  version: "latest"
+  app_name: "my-service"
+
+# Environment groups for shared config
+env_groups:
+  nonprod:
+    vars:
+      replicas: 2
+      log_level: debug
+      health_check_retries: 3
+
+  prod:
+    vars:
+      replicas: 10
+      log_level: info
+      monitoring_enabled: true
+      health_check_retries: 5
+
+# Individual environment definitions
+environments:
+  dev:
+    group: nonprod
+    vars:
+      db_host: "dev-db.internal"
+      hostname: "dev.example.com"
+
+  staging:
+    group: nonprod
+    vars:
+      db_host: "staging-db.internal"
+      hostname: "staging.example.com"
+      replicas: 4    # Override group default
+
+  production:
+    group: prod
+    vars:
+      db_host: "prod-db.internal"
+      hostname: "app.example.com"
+
+tasks:
+  deploy_single:
+    desc: "Deploy to a single environment"
+    steps:
+      - name: deploy
+        func: shell
+        do: |
+          ./scripts/deploy.sh \
+            --app {{ vars.app_name }} \
+            --env {{ vars.env_name }} \
+            --version {{ vars.version }} \
+            --host {{ vars.hostname }} \
+            --replicas {{ vars.replicas }}
+
+      - name: health
+        func: http
+        args:
+          url: "https://{{ vars.hostname }}/health"
+          method: GET
+        retry:
+          max_attempts: "{{ vars.health_check_retries }}"
+          interval: 5s
+
+  promote:
+    desc: "Promote version across environments in order"
+    steps:
+      - name: deploy_dev
+        task: deploy_single
+        with:
+          env_name: development
+
+      - name: dev_check
+        func: assert
+        args:
+          condition: '{{ eq steps.deploy_dev.health.status_code 200 }}'
+          desc: "Dev health check must pass before promoting"
+
+      - name: deploy_staging
+        task: deploy_single
+        with:
+          env_name: staging
+
+      - name: staging_check
+        func: assert
+        args:
+          condition: '{{ eq steps.deploy_staging.health.status_code 200 }}'
+          desc: "Staging must pass before production"
+
+      - name: confirm_prod
+        func: prompt
+        args:
+          message: "Promote {{ vars.version }} to production?"
+          type: confirm
+          default: false
+
+      - name: gate
+        func: assert
+        args:
+          condition: '{{ eq steps.confirm_prod.value "true" }}'
+          desc: "User must approve production deploy"
+
+      - name: deploy_production
+        task: deploy_single
+        with:
+          env_name: production
+        catch:
+          - name: rollback_prod
+            func: shell
+            do: ./scripts/rollback.sh "{{ vars.version }}" production
+          - name: alert
+            func: http
+            args:
+              url: "{{ env.ALERT_WEBHOOK }}"
+              method: POST
+              body:
+                text: "Production promotion of {{ vars.version }} FAILED"
+
+  main:
+    desc: "Run full promotion pipeline"
+    steps:
+      - task: promote

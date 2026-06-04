@@ -1,0 +1,80 @@
+# Parallel Build Matrix
+# Best-practice pattern: cross-compile across platforms concurrently
+
+name: parallel-build
+desc: "Cross-platform build with parallel execution"
+
+tasks:
+  build_all:
+    desc: "Build all platforms in parallel"
+    steps:
+      - name: cross_compile
+        parallel:
+          - name: linux_amd64
+            func: shell
+            do: GOOS=linux GOARCH=amd64 go build -o bin/app-linux-amd64 .
+            timeout: 180s
+
+          - name: linux_arm64
+            func: shell
+            do: GOOS=linux GOARCH=arm64 go build -o bin/app-linux-arm64 .
+            timeout: 180s
+
+          - name: darwin_amd64
+            func: shell
+            do: GOOS=darwin GOARCH=amd64 go build -o bin/app-darwin-amd64 .
+            timeout: 180s
+
+          - name: darwin_arm64
+            func: shell
+            do: GOOS=darwin GOARCH=arm64 go build -o bin/app-darwin-arm64 .
+            timeout: 180s
+
+          - name: windows_amd64
+            func: shell
+            do: GOOS=windows GOARCH=amd64 go build -o bin/app-windows-amd64.exe .
+            timeout: 180s
+
+      - name: check_results
+        desc: "Verify all binaries were built"
+        func: shell
+        do: |
+          for f in bin/app-*; do
+            echo "Checking $f..."
+            file "$f"
+          done
+
+  publish:
+    desc: "Publish builds to release channel"
+    steps:
+      - name: package
+        func: shell
+        do: |
+          for platform in linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64; do
+            ext=""
+            [ "$platform" = "windows-amd64" ] && ext=".exe"
+            tar -czf "bin/app-${platform}.tar.gz" -C bin "app-${platform}${ext}"
+          done
+
+      - name: upload
+        func: http
+        args:
+          url: "https://releases.example.com/upload"
+          method: POST
+          auth:
+            type: bearer
+            token: "{{ env.RELEASE_TOKEN }}"
+          body:
+            version: "{{ vars.version }}"
+            artifacts:
+              - linux-amd64
+              - linux-arm64
+              - darwin-amd64
+              - darwin-arm64
+              - windows-amd64
+
+  main:
+    desc: "Build and publish"
+    steps:
+      - task: build_all
+      - task: publish
