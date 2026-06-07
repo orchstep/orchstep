@@ -1,25 +1,27 @@
 # Demo 1 — Sequential Validation (no actions/checkout@v4)
-# Uses OrchStep's native func: git to clone the repo instead.
-# Replaces actions/checkout@v4 with a single native func: git step.
+# Uses @orchstep/github_action_git-checkout module to clone the repo.
+# The module is fetched automatically by the engine via the @orchstep/ scope,
+# which resolves to github.com/orchstep/orchstep (the SDK repo).
 
 name: orchstep-demo1-sequential
-desc: "Validate orchstep repo — sequential (func: git replaces checkout)"
+desc: "Validate orchstep repo — sequential (module replaces checkout)"
+
+modules:
+  - name: git-checkout
+    source: "@orchstep/github_action_git-checkout"
 
 tasks:
   main:
-    desc: "Clone repo via native func: git, then run 5 validations"
+    desc: "Clone repo via module, then run 5 validations"
     steps:
       - name: clone_repo
-        desc: "Replaces actions/checkout@v4 — native func: git with go-git"
-        func: git
-        args:
-          operation: "clone"
-          url: "https://github.com/orchstep/orchstep.git"
-          dest: "/tmp/ws"
-          branch: "main"
-          depth: 1
-          single_branch: true
-          force: true
+        desc: "Replaces actions/checkout@v4 — fetches @orchstep/github_action_git-checkout natively"
+        task: git-checkout.checkout
+        with:
+          repository: "https://github.com/orchstep/orchstep.git"
+          ref: "main"
+          path: "/tmp/ws"
+          depth: "1"
 
       - name: validate_registry
         desc: "Check modules/registry.json"

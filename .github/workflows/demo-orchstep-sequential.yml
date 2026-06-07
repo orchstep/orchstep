@@ -1,10 +1,8 @@
 # Demo 1 — Sequential Validation (no actions/checkout@v4)
-# Bootstraps only the OrchStep workflow file + git-checkout module via curl,
-# then delegates to the git-checkout module for the real repo clone.
-#
-# This demonstrates: actions/checkout@v4 replaced by @orchstep/github_action_git-checkout.
-# The OrchStep workflow's FIRST step clones the full repo using native func: git,
-# then runs 5 validations on the checked-out code.
+# Bootstrap: 1 curl of the workflow YAML. The OrchStep workflow then imports
+# @orchstep/github_action_git-checkout natively — the engine resolves the
+# @orchstep/ scope to github.com/orchstep/orchstep and fetches the module
+# into its cache automatically. No module files need to be bootstrapped.
 
 name: demo-orchstep-sequential
 on:
@@ -22,8 +20,6 @@ jobs:
     name: orchstep validate (sequential)
     runs-on: ubuntu-latest
     steps:
-      # Bootstrap: download just the OrchStep workflow file. No actions/checkout@v4.
-      # The OrchStep workflow uses native func: git to clone the repo.
       - name: Bootstrap workflow file
         run: |
           mkdir -p demos/11-orchestrated-validation
