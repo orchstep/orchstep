@@ -91,10 +91,11 @@ jobs:
       - name: Check for potential secrets
         run: |
           # Ensure no Go source code leaked
-          go_files=$(find . -name "*.go" | wc -l)
-          if [ "$go_files" -gt 0 ]; then
-            echo "ERROR: Found .go files in public repo!"
-            find . -name "*.go"
+          # Exclude skills/ — intentional demo files live there.
+          leaked=$(find . -name "*.go" -not -path "./skills/*" | wc -l)
+          if [ "$leaked" -gt 0 ]; then
+            echo "ERROR: Found .go files outside skills/ in public repo!"
+            find . -name "*.go" -not -path "./skills/*"
             exit 1
           fi
           # Check for potential secrets
