@@ -13,6 +13,7 @@ tasks:
         desc: "Replaces actions/checkout@v4 — native func: git"
         func: git
         args:
+          operation: "clone"
           url: "https://github.com/orchstep/orchstep.git"
           dest: "/tmp/ws"
           branch: "main"
