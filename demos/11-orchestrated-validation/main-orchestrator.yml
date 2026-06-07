@@ -25,15 +25,7 @@ tasks:
 
       - name: validate_registry
         func: shell
-        do: |
-          python3 -c "
-import json
-reg = json.load(open('modules/registry.json'))
-for m in reg['modules']:
-    assert all(k in m for k in ('name','version','tier'))
-    assert m['tier'] in ('official','community','ai')
-print(f'Registry OK: {len(reg[\"modules\"])} modules')
-"
+        do: python3 -c "import json;reg=json.load(open('modules/registry.json'));[assert all(k in m for k in ('name','version','tier')) and m['tier'] in ('official','community','ai') for m in reg['modules']];print(f'Registry OK: {len(reg[\"modules\"])} modules')"
 
       - name: lint_examples
         func: shell
