@@ -1,0 +1,41 @@
+name: check-links
+desc: "Check for broken markdown links"
+
+config:
+  search_paths: "README.md CONTRIBUTING.md docs/"
+
+tasks:
+  scan:
+    desc: "Scan markdown files for broken relative links"
+    steps:
+      - name: find_broken
+        func: shell
+        do: |
+          PATHS="{{ vars.search_paths | default config.search_paths }}"
+          RESULT=/tmp/ua-link-check
+          > "${RESULT}"
+          TOTAL=0; BROKEN=0
+          for target in ${PATHS}; do
+            find "${target}" -name "*.md" 2>/dev/null | while read md; do
+              dir=$(dirname "${md}")
+              grep -oP '\(\.\.?/[^)]+\)' "${md}" 2>/dev/null | tr -d '()' | sort -u | while read link; do
+                echo 1 >> "${RESULT}_counter"
+                full="${dir}/${link}"
+                [ -e "${full}" ] || [ -e "${link}" ] || echo "${md} -> ${link}" >> "${RESULT}"
+              done
+            done
+          done
+          TOTAL=$(wc -l < "${RESULT}_counter" 2>/dev/null || echo 0)
+          BROKEN=$(wc -l < "${RESULT}" 2>/dev/null || echo 0)
+          if [ "${BROKEN}" -gt 0 ]; then echo "=== BROKEN LINKS ==="; cat "${RESULT}"; fi
+          echo "total=${TOTAL}"
+          echo "broken=${BROKEN}"
+          rm -f "${RESULT}" "${RESULT}_counter"
+        outputs:
+          total: "{{ result.output | regexFind \"total=([0-9]+)\" }}"
+          broken: "{{ result.output | regexFind \"broken=([0-9]+)\" }}"
+
+  main:
+    desc: "Run link check"
+    steps:
+      - task: scan

@@ -1,0 +1,33 @@
+metadata:
+  name: validate-modules
+  version: "1.0.0"
+  description: "Validate OrchStep module directory structure"
+  author: "orchstep"
+  tags: ["validate", "modules", "structure", "ci"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties:
+      modules_dir:
+        type: string
+        required: false
+        default: "modules/@orchstep"
+        desc: "Directory containing module packages"
+
+exports:
+  check_metadata:
+    desc: "Check every module has a metadata file (orchstep-module.yml or orchstep.yml)"
+    params:
+      - name: modules_dir
+        type: string
+        required: false
+    returns:
+      type: object
+      properties:
+        total:
+          type: string
+        missing:
+          type: string

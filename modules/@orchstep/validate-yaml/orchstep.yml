@@ -1,0 +1,30 @@
+name: validate-yaml
+desc: "Lint YAML files and report count"
+
+config:
+  search_path: "examples"
+  file_pattern: "*.yml"
+
+tasks:
+  lint_files:
+    desc: "Lint YAML files matching a pattern and report count"
+    steps:
+      - name: lint
+        func: shell
+        do: |
+          H="${HOME}"
+          pip install yamllint -q 2>/dev/null
+          SEARCH="{{ vars.search_path | default config.search_path }}"
+          PATTERN="{{ vars.file_pattern | default config.file_pattern }}"
+          find "${SEARCH}" -name "${PATTERN}" -not -path '*/node_modules/*' \
+            -exec yamllint -d relaxed {} + 2>&1 | tail -3
+          COUNT=$(find "${SEARCH}" -name "${PATTERN}" -not -path '*/node_modules/*' | wc -l)
+          echo "file_count=${COUNT}"
+          echo "OK: ${COUNT} YAML files"
+        outputs:
+          file_count: "{{ result.output | regexFind \"file_count=([0-9]+)\" }}"
+
+  main:
+    desc: "Run YAML lint"
+    steps:
+      - task: lint_files

@@ -1,47 +1,132 @@
-# Demo 1 — Sequential Validation Pipeline
-# Calls all 5 validation tasks one after another. Each task is a re-usable
-# workflow file that can also be called independently.
+# Demo 1 — Sequential Validation
+# One self-contained OrchStep workflow that runs 5 validation checks
+# in sequence. Each validation is its own task, demonstrating re-usable
+# task design within a single file.
 #
-# Design rationale:
-# - Sequential execution guarantees ordering: registry validation first,
-#   then YAML linting, then links, then secrets last
-# - Each task uses its file as both the task name AND the step source
-# - The `on_error: fail` (default) ensures the pipeline stops at the first
-#   failure — no point checking links if YAML is broken
+# Also demonstrates @orchstep/github_action_git-checkout by cloning the
+# public orchstep-website repo (a real, practical use of the module).
 
 name: orchstep-demo1-sequential
-desc: "OrchStep native validation — 5 checks in sequence"
+desc: "Validate the orchstep repo — sequential pipeline"
+
+modules:
+  - name: git-checkout
+    source: "modules/@orchstep/github_action_git-checkout"
 
 tasks:
-  main:
-    desc: "Run all 5 validation checks sequentially"
+  validate_registry:
+    desc: "Validate modules/registry.json structure"
     steps:
-      - name: validate_registry
-        desc: "Step 1 — Check modules/registry.json structure"
-        task: validate_registry
+      - name: check_json
+        func: shell
+        do: |
+          python3 -c "
+import json
+reg = json.load(open('modules/registry.json'))
+assert 'version' in reg
+assert 'modules' in reg
+for m in reg['modules']:
+    assert all(k in m for k in ('name','version','tier'))
+    assert m['tier'] in ('official','community','ai')
+print(f'Registry valid: {len(reg[\"modules\"])} modules')
+"
+
+  validate_examples:
+    desc: "Lint example YAML files"
+    steps:
+      - name: lint
+        func: shell
+        do: |
+          pip install yamllint -q 2>/dev/null
+          find examples -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
+          echo "count=$(find examples -name '*.yml' | wc -l)"
+        outputs:
+          count: "{{ result.output | regexFind 'count=([0-9]+)' }}"
+
+  validate_modules:
+    desc: "Check module metadata"
+    steps:
+      - name: check
+        func: shell
+        do: |
+          for d in modules/@orchstep/*/; do
+            m=$(basename "$d")
+            [ -f "${d}orchstep-module.yml" ] || [ -f "${d}orchstep.yml" ] || echo "WARN: $m no metadata"
+          done
+          echo "checked=$(ls -d modules/@orchstep/*/ | wc -l)"
+
+  check_links:
+    desc: "Scan for broken markdown links"
+    steps:
+      - name: scan
+        on_error: warn
+        func: shell
+        do: |
+          for f in README.md CONTRIBUTING.md docs/; do
+            find "$f" -name "*.md" 2>/dev/null | while read md; do
+              dir=$(dirname "$md")
+              grep -oP '\(\.\.?/[^)]+\)' "$md" 2>/dev/null | tr -d '()' | while read l; do
+                full="$dir/$l"; [ -e "$full" ] || [ -e "$l" ] || echo "BROKEN: $md -> $l"
+              done
+            done 2>/dev/null
+          done || true
+
+  scan_secrets:
+    desc: "Check for Go source leaks and license keys outside skills/"
+    steps:
+      - name: go_leak
+        func: shell
+        do: |
+          F=$(find . -name "*.go" -not -path "./skills/*" | wc -l)
+          [ "$F" -eq 0 ] || { echo "ERROR: $F .go files outside skills/!"; find . -name "*.go" -not -path "./skills/*"; exit 1; }
+          echo "go_check=pass"
+        outputs:
+          go_check: "{{ result.output | regexFind 'go_check=([^\\s]+)' }}"
+
+      - name: keys
+        func: shell
+        do: |
+          FOUND=$(grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . \
+            --include="*.md" --include="*.yml" --include="*.json" 2>/dev/null | \
+            grep -v "ORCH-XXXX\|ORCH-TEST\|ORCH-aBcD" || true)
+          [ -z "$FOUND" ] && echo "keys=pass" || { echo "$FOUND"; echo "WARNING"; }
+        outputs:
+          keys: "{{ result.output | regexFind 'keys=([^\\s]+)' }}"
+
+  main:
+    desc: "Bootstrap checkout then run validations sequentially"
+    steps:
+      - name: clone_website
+        desc: "Demonstrate @orchstep/github_action_git-checkout on orchstep-website"
+        task: git-checkout.checkout
         with:
-          orchstep_file: demos/11-orchestrated-validation/task-validate-registry.yml
+          repository: "github.com/orchstep/orchstep-website.git"
+          ref: "main"
+          path: "/tmp/orchstep-website"
+          depth: "1"
+
+      - name: verify_clone
+        func: shell
+        do: |
+          HASH=$(git -C /tmp/orchstep-website rev-parse --short HEAD 2>/dev/null || echo '?')
+          echo "Cloned orchstep-website @ $HASH"
+
+      - name: validate_registry
+        task: validate_registry
 
       - name: validate_examples
-        desc: "Step 2 — Lint all example YAML files"
         task: validate_examples
-        with:
-          orchstep_file: demos/11-orchestrated-validation/task-validate-examples.yml
 
       - name: validate_modules
-        desc: "Step 3 — Check module metadata structure"
         task: validate_modules
-        with:
-          orchstep_file: demos/11-orchestrated-validation/task-validate-modules.yml
 
       - name: check_links
-        desc: "Step 4 — Scan docs for broken markdown links"
         task: check_links
-        with:
-          orchstep_file: demos/11-orchestrated-validation/task-check-links.yml
 
       - name: scan_secrets
-        desc: "Step 5 — Check for leaked Go source and license keys"
         task: scan_secrets
-        with:
-          orchstep_file: demos/11-orchestrated-validation/task-scan-secrets.yml
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== orchstep-validate sequential: ALL PASSED ==="

@@ -1,0 +1,33 @@
+metadata:
+  name: scan-secrets
+  version: "1.0.0"
+  description: "Scan repository for leaked credentials and sensitive content"
+  author: "orchstep"
+  tags: ["security", "secrets", "scan", "ci", "gitleaks"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties:
+      exclude_path:
+        type: string
+        required: false
+        default: "./skills/*"
+        desc: "Path glob to exclude from Go-leak check"
+
+exports:
+  scan:
+    desc: "Check for Go source leaks and license key patterns"
+    params:
+      - name: exclude_path
+        type: string
+        required: false
+    returns:
+      type: object
+      properties:
+        go_check:
+          type: string
+        license_check:
+          type: string

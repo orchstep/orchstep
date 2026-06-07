@@ -1,0 +1,34 @@
+metadata:
+  name: validate-json
+  version: "1.0.0"
+  description: "Validate JSON files against structural schema rules"
+  author: "orchstep"
+  tags: ["validate", "json", "ci", "schema"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties:
+      json_path:
+        type: string
+        required: false
+        default: "modules/registry.json"
+        desc: "Path to the JSON file to validate"
+
+exports:
+  validate_schema:
+    desc: "Validate a JSON file has required fields and valid structure"
+    params:
+      - name: json_path
+        type: string
+        required: false
+        desc: "Override JSON path (defaults to config)"
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+        module_count:
+          type: string

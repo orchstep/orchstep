@@ -1,0 +1,36 @@
+metadata:
+  name: validate-yaml
+  version: "1.0.0"
+  description: "Lint YAML files and report counts"
+  author: "orchstep"
+  tags: ["validate", "yaml", "lint", "ci"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties:
+      search_path:
+        type: string
+        required: false
+        default: "examples"
+        desc: "Directory to search for YAML files"
+      file_pattern:
+        type: string
+        required: false
+        default: "*.yml"
+        desc: "Glob pattern for YAML files"
+
+exports:
+  lint_files:
+    desc: "Lint YAML files and report count"
+    params:
+      - name: search_path
+        type: string
+        required: false
+    returns:
+      type: object
+      properties:
+        file_count:
+          type: string

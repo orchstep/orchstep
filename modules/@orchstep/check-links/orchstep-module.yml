@@ -1,0 +1,33 @@
+metadata:
+  name: check-links
+  version: "1.0.0"
+  description: "Scan markdown files for broken relative links"
+  author: "orchstep"
+  tags: ["docs", "links", "validate", "ci"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties:
+      search_paths:
+        type: string
+        required: false
+        default: "README.md CONTRIBUTING.md docs/"
+        desc: "Space-separated list of files/dirs to scan"
+
+exports:
+  scan:
+    desc: "Scan for broken markdown links"
+    params:
+      - name: search_paths
+        type: string
+        required: false
+    returns:
+      type: object
+      properties:
+        total:
+          type: string
+        broken:
+          type: string

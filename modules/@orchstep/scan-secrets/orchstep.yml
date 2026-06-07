@@ -1,0 +1,43 @@
+name: scan-secrets
+desc: "Scan for leaked Go source and secret key patterns"
+
+config:
+  exclude_path: "./skills/*"
+
+tasks:
+  scan:
+    desc: "Check for Go source leaks and secret key patterns"
+    steps:
+      - name: check_go
+        func: shell
+        do: |
+          EXCLUDE="{{ vars.exclude_path | default config.exclude_path }}"
+          FILES=$(find . -name "*.go" -not -path "${EXCLUDE}" 2>/dev/null | wc -l)
+          if [ "${FILES}" -gt 0 ]; then
+            echo "ERROR: ${FILES} .go files outside allowed paths!"
+            find . -name "*.go" -not -path "${EXCLUDE}"
+            exit 1
+          fi
+          echo "go_check=pass"
+        outputs:
+          go_check: "{{ result.output | regexFind \"go_check=([^\\s]+)\" }}"
+
+      - name: check_keys
+        func: shell
+        do: |
+          FOUND=$(grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" \
+            . --include="*.md" --include="*.yml" --include="*.json" 2>/dev/null | \
+            grep -v "ORCH-XXXX\|ORCH-TEST\|ORCH-aBcD" || true)
+          if [ -n "$FOUND" ]; then
+            echo "WARNING: Possible real license key found!"
+            echo "$FOUND"
+          else
+            echo "license_check=pass"
+          fi
+        outputs:
+          license_check: "{{ result.output | regexFind \"license_check=([^\\s]+)\" }}"
+
+  main:
+    desc: "Run secret scan"
+    steps:
+      - task: scan

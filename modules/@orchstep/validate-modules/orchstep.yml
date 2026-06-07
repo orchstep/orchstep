@@ -1,0 +1,33 @@
+name: validate-modules
+desc: "Validate module directory structure"
+
+config:
+  modules_dir: "modules/@orchstep"
+
+tasks:
+  check_metadata:
+    desc: "Check every module has a metadata file"
+    steps:
+      - name: scan
+        func: shell
+        do: |
+          DIR="{{ vars.modules_dir | default config.modules_dir }}"
+          MISSING=0; TOTAL=0
+          for d in ${DIR}/*/; do
+            TOTAL=$((TOTAL + 1))
+            m=$(basename "$d")
+            if [ ! -f "${d}orchstep-module.yml" ] && [ ! -f "${d}orchstep.yml" ]; then
+              echo "WARN: ${m} has no metadata"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          echo "total=${TOTAL}"
+          echo "missing=${MISSING}"
+        outputs:
+          total: "{{ result.output | regexFind \"total=([0-9]+)\" }}"
+          missing: "{{ result.output | regexFind \"missing=([0-9]+)\" }}"
+
+  main:
+    desc: "Run module validation"
+    steps:
+      - task: check_metadata

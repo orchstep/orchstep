@@ -1,49 +1,62 @@
-# Demo 3 — 5 Independent Workflow Mappings
-# Each validation check is its own standalone workflow file that can be
-# run independently: `orchstep run -f demos/11-orchestrated-validation/task-X.yml`
+# Demo 3 — Module-Based Orchestration
+# All 5 validation checks are imported as proper modules from
+# modules/@orchstep/validate-* and called via module.task syntax.
 #
-# This orchestrator calls all 5. It demonstrates the pinnacle of re-usable
-# task design: each validation is decoupled, independently testable, and
-# callable from any orchestrator.
-#
-# Design rationale:
-# - Every task file is a valid self-contained workflow with its own `main`
-# - The orchestrator uses `task:` + `with:` to invoke them — no duplication
-# - Add a new check? Create task-validate-X.yml and add one line here
+# Also demonstrates @orchstep/github_action_git-checkout for bootstrap.
 
-name: orchstep-demo3-multi
-desc: "5 independent validation workflows, orchestrated together"
+name: orchstep-demo3-modules
+desc: "Validate the orchstep repo — module-based orchestration"
+
+modules:
+  - name: git-checkout
+    source: "modules/@orchstep/github_action_git-checkout"
+  - name: vjson
+    source: "modules/@orchstep/validate-json"
+  - name: vyaml
+    source: "modules/@orchstep/validate-yaml"
+  - name: vmods
+    source: "modules/@orchstep/validate-modules"
+  - name: vlinks
+    source: "modules/@orchstep/check-links"
+  - name: vsecret
+    source: "modules/@orchstep/scan-secrets"
 
 tasks:
   main:
-    desc: "Orchestrate all 5 independent validation workflows"
+    desc: "Orchestrate 6 modules — checkout + 5 validation checks"
     steps:
-      - name: validate_registry
-        desc: "Validate modules/registry.json"
-        task: validate_registry
+      - name: clone_website
+        desc: "Demonstrate git-checkout on a second repo"
+        task: git-checkout.checkout
         with:
-          orchstep_file: demos/11-orchestrated-validation/task-validate-registry.yml
+          repository: "github.com/orchstep/orchstep-website.git"
+          ref: "main"
+          path: "/tmp/orchstep-website"
+          depth: "1"
+
+      - name: validate_registry
+        desc: "Module: vjson.validate_schema"
+        task: vjson.validate_schema
 
       - name: validate_examples
-        desc: "Lint example YAML files"
-        task: validate_examples
+        desc: "Module: vyaml.lint_files"
+        task: vyaml.lint_files
         with:
-          orchstep_file: demos/11-orchestrated-validation/task-validate-examples.yml
+          search_path: "examples"
 
       - name: validate_modules
-        desc: "Check module metadata"
-        task: validate_modules
-        with:
-          orchstep_file: demos/11-orchestrated-validation/task-validate-modules.yml
+        desc: "Module: vmods.check_metadata"
+        task: vmods.check_metadata
 
       - name: check_links
-        desc: "Scan for broken markdown links"
-        task: check_links
-        with:
-          orchstep_file: demos/11-orchestrated-validation/task-check-links.yml
+        desc: "Module: vlinks.scan"
+        task: vlinks.scan
 
       - name: scan_secrets
-        desc: "Scan for leaked Go source and secrets"
-        task: scan_secrets
-        with:
-          orchstep_file: demos/11-orchestrated-validation/task-scan-secrets.yml
+        desc: "Module: vsecret.scan"
+        task: vsecret.scan
+
+      - name: summary
+        func: shell
+        do: |
+          echo "=== orchstep-validate module-based: DONE ==="

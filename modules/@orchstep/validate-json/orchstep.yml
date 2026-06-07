@@ -1,0 +1,40 @@
+name: validate-json
+desc: "Validate JSON file structure"
+
+config:
+  json_path: "modules/registry.json"
+
+tasks:
+  validate_schema:
+    desc: "Validate a JSON file has required fields and valid structure"
+    steps:
+      - name: load_and_check
+        func: shell
+        do: |
+          FILE="{{ vars.json_path | default config.json_path }}"
+          if [ ! -f "${FILE}" ]; then
+            echo "ERROR: ${FILE} not found"
+            exit 1
+          fi
+          python3 -c "
+import json, sys
+reg = json.load(open('${FILE}'))
+assert 'version' in reg, 'Missing version'
+assert 'modules' in reg, 'Missing modules'
+for m in reg['modules']:
+    assert 'name' in m, f'Name: {m}'
+    assert 'version' in m, f'Version: {m}'
+    assert 'tier' in m, f'Tier: {m}'
+    assert m['tier'] in ('official','community','ai'), f'Tier: {m[\"tier\"]}'
+print(f'OK: {len(reg[\"modules\"])} modules')
+"
+          echo "status=pass"
+          echo "module_count=$(python3 -c "import json; print(len(json.load(open('${FILE}'))['modules']))")"
+        outputs:
+          status: "{{ result.output | regexFind \"status=([^\\s]+)\" }}"
+          module_count: "{{ result.output | regexFind \"module_count=([0-9]+)\" }}"
+
+  main:
+    desc: "Run JSON validation"
+    steps:
+      - task: validate_schema
