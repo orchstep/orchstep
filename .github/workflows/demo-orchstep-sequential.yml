@@ -22,18 +22,13 @@ jobs:
     name: orchstep validate (sequential)
     runs-on: ubuntu-latest
     steps:
-      # Bootstrap: download just the workflow + module files (3 small files).
-      # No actions/checkout@v4 — the git-checkout module does the real clone.
-      - name: Bootstrap workflow files
+      # Bootstrap: download just the OrchStep workflow file. No actions/checkout@v4.
+      # The OrchStep workflow uses native func: git to clone the repo.
+      - name: Bootstrap workflow file
         run: |
           mkdir -p demos/11-orchestrated-validation
-          mkdir -p modules/@orchstep/github_action_git-checkout
           curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/demos/11-orchestrated-validation/sequential-workflow.yml \
             -o demos/11-orchestrated-validation/sequential-workflow.yml
-          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep-module.yml \
-            -o modules/@orchstep/github_action_git-checkout/orchstep-module.yml
-          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep.yml \
-            -o modules/@orchstep/github_action_git-checkout/orchstep.yml
 
       - uses: orchstep/setup-orchstep@v1
         with:

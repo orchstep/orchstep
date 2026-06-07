@@ -18,16 +18,11 @@ jobs:
     name: orchstep validate (parallel)
     runs-on: ubuntu-latest
     steps:
-      - name: Bootstrap workflow files
+      - name: Bootstrap workflow file
         run: |
           mkdir -p demos/11-orchestrated-validation
-          mkdir -p modules/@orchstep/github_action_git-checkout
           curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/demos/11-orchestrated-validation/parallel-workflow.yml \
             -o demos/11-orchestrated-validation/parallel-workflow.yml
-          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep-module.yml \
-            -o modules/@orchstep/github_action_git-checkout/orchstep-module.yml
-          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep.yml \
-            -o modules/@orchstep/github_action_git-checkout/orchstep.yml
 
       - uses: orchstep/setup-orchstep@v1
         with:

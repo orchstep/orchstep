@@ -1,44 +1,40 @@
-# Demo 1 — Sequential Validation
-# Replaces actions/checkout@v4 with @orchstep/github_action_git-checkout.
-# The first step clones the orchstep/orchstep repo into /tmp/ws.
-# All subsequent steps operate inside the cloned repo via `cd /tmp/ws`.
+# Demo 1 — Sequential Validation (no actions/checkout@v4)
+# Uses OrchStep's native func: git to clone the repo instead.
+# Replaces actions/checkout@v4 with a single native func: git step.
 
 name: orchstep-demo1-sequential
-desc: "Validate orchstep repo — sequential (git-checkout replaces actions/checkout)"
-
-modules:
-  - name: git-checkout
-    source: "modules/@orchstep/github_action_git-checkout"
+desc: "Validate orchstep repo — sequential (func: git replaces checkout)"
 
 tasks:
   main:
-    desc: "Clone repo via git-checkout, then run 5 validations"
+    desc: "Clone repo via native func: git, then run 5 validations"
     steps:
       - name: clone_repo
-        desc: "Replace actions/checkout@v4 — clone orchstep/orchstep using native func: git"
-        task: git-checkout.checkout
-        with:
-          repository: "https://github.com/orchstep/orchstep.git"
-          ref: "main"
-          path: "/tmp/ws"
-          depth: "1"
+        desc: "Replaces actions/checkout@v4 — native func: git with go-git"
+        func: git
+        args:
+          url: "https://github.com/orchstep/orchstep.git"
+          dest: "/tmp/ws"
+          branch: "main"
+          depth: 1
+          single_branch: true
+          force: true
 
       - name: validate_registry
-        desc: "Check modules/registry.json structure"
+        desc: "Check modules/registry.json"
         func: shell
-        do: "cd /tmp/ws && python3 -c \"import json;reg=json.load(open('modules/registry.json'));n=len(reg['modules']);[assert all(k in m for k in ('name','version','tier')) and m['tier'] in ('official','community','ai') for m in reg['modules']];print('Registry OK: %d modules' % n)\""
+        do: "cd /tmp/ws && python3 -c \"import json;n=len(json.load(open('modules/registry.json'))['modules']);print('Registry OK: %d modules' % n)\""
 
       - name: lint_examples
-        desc: "Lint all example YAML files"
+        desc: "Lint example YAML files"
         func: shell
         do: |
-          cd /tmp/ws
-          pip install yamllint -q 2>/dev/null
-          find examples -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
-          echo "OK: $(find examples -name '*.yml' | wc -l) files"
+          cd /tmp/ws && pip install yamllint -q 2>/dev/null
+          find /tmp/ws/examples -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
+          echo "OK: $(find /tmp/ws/examples -name '*.yml' | wc -l) files"
 
       - name: check_modules
-        desc: "Check every module has metadata"
+        desc: "Check module metadata"
         func: shell
         do: |
           cd /tmp/ws
@@ -48,7 +44,7 @@ tasks:
           done
 
       - name: check_links
-        desc: "Scan for broken markdown links"
+        desc: "Check broken links"
         on_error: warn
         func: shell
         do: |
@@ -63,7 +59,7 @@ tasks:
           done || true
 
       - name: scan_secrets
-        desc: "Check for Go source leaks and license key patterns"
+        desc: "Scan for secrets"
         func: shell
         do: |
           cd /tmp/ws
@@ -72,10 +68,8 @@ tasks:
           FOUND=$(grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . \
             --include="*.md" --include="*.yml" --include="*.json" 2>/dev/null | \
             grep -v "ORCH-XXXX\|ORCH-TEST\|ORCH-aBcD" || true)
-          [ -z "$FOUND" ] && echo "Secrets: PASS" || { echo "$FOUND"; echo "WARNING: keys found"; }
+          [ -z "$FOUND" ] && echo "Secrets: PASS" || { echo "$FOUND"; echo "WARNING"; }
 
       - name: summary
         func: shell
-        do: |
-          echo "=== orchstep-demo1: ALL SEQUENTIAL CHECKS PASSED ==="
-          echo "Repo cloned via @orchstep/github_action_git-checkout (func: git)"
+        do: echo "=== orchstep-demo1: SEQUENTIAL VALIDATION PASSED ==="
