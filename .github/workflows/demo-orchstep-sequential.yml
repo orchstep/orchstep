@@ -1,12 +1,10 @@
-# Demo 1 — Sequential Validation
-# Shows: 1 GHA job → 1 OrchStep workflow → 5 validation tasks run sequentially
+# Demo 1 — Sequential Validation (no actions/checkout@v4)
+# Bootstraps only the OrchStep workflow file + git-checkout module via curl,
+# then delegates to the git-checkout module for the real repo clone.
 #
-# This is the simplest pattern: checkout → setup-orchstep → run-orchstep.
-# The OrchStep workflow handles all logic. No inline bash, no multi-job
-# orchestration in GHA. The run-orchstep action passes the exit code back,
-# so GHA knows if the workflow passed or failed.
-#
-# Compare to the equivalent validate.yml (80+ lines, 5 jobs) — this is 12.
+# This demonstrates: actions/checkout@v4 replaced by @orchstep/github_action_git-checkout.
+# The OrchStep workflow's FIRST step clones the full repo using native func: git,
+# then runs 5 validations on the checked-out code.
 
 name: demo-orchstep-sequential
 on:
@@ -24,7 +22,18 @@ jobs:
     name: orchstep validate (sequential)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Bootstrap: download just the workflow + module files (3 small files).
+      # No actions/checkout@v4 — the git-checkout module does the real clone.
+      - name: Bootstrap workflow files
+        run: |
+          mkdir -p demos/11-orchestrated-validation
+          mkdir -p modules/@orchstep/github_action_git-checkout
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/demos/11-orchestrated-validation/sequential-workflow.yml \
+            -o demos/11-orchestrated-validation/sequential-workflow.yml
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep-module.yml \
+            -o modules/@orchstep/github_action_git-checkout/orchstep-module.yml
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep.yml \
+            -o modules/@orchstep/github_action_git-checkout/orchstep.yml
 
       - uses: orchstep/setup-orchstep@v1
         with:

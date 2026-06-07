@@ -1,15 +1,6 @@
-# Demo 3 — 5 Independent Workflow Mappings
-# Shows: 1 GHA job → 1 OrchStep orchestrator → 5 standalone workflow files
-#
-# This demonstrates the most advanced pattern: each validation check is its
-# own standalone OrchStep workflow file that can be run independently:
-#   orchstep run -f demos/11-orchestrated-validation/task-validate-registry.yml
-#
-# The orchestrator calls each one. You can also run them individually from
-# the command line, in any order, or substitute your own task for any step.
-#
-# The run-orchstep action calls the main orchestrator, which dispatches
-# to each task file. This is the "module pattern" for CI workflows.
+# Demo 3 — Orchestrated Validation (no actions/checkout@v4)
+# Bootstraps workflow + module via curl, then git-checkout module clones the
+# real repo. Runs 5 validation tasks via the orchestrator workflow.
 
 name: demo-orchstep-multi
 on:
@@ -24,10 +15,19 @@ permissions:
 
 jobs:
   orchstep-validate:
-    name: orchstep validate (5 workflows)
+    name: orchstep validate (orchestrated)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Bootstrap workflow files
+        run: |
+          mkdir -p demos/11-orchestrated-validation
+          mkdir -p modules/@orchstep/github_action_git-checkout
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/demos/11-orchestrated-validation/main-orchestrator.yml \
+            -o demos/11-orchestrated-validation/main-orchestrator.yml
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep-module.yml \
+            -o modules/@orchstep/github_action_git-checkout/orchstep-module.yml
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep.yml \
+            -o modules/@orchstep/github_action_git-checkout/orchstep.yml
 
       - uses: orchstep/setup-orchstep@v1
         with:

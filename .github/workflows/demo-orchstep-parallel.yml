@@ -1,11 +1,6 @@
-# Demo 2 — Parallel Validation
-# Shows: 1 GHA job → 1 OrchStep workflow → 5 validation tasks run in parallel
-#
-# Same pattern as Demo 1, but the OrchStep workflow uses `parallel:` instead
-# of sequential `task:` calls. The wall time is ~4× faster.
-#
-# The `run-orchstep` action still exits with the workflow's exit code. If
-# any of the 5 parallel tasks fails, the workflow fails.
+# Demo 2 — Parallel Validation (no actions/checkout@v4)
+# Bootstraps workflow + module via curl, then git-checkout module clones the
+# real repo. All 5 validation checks run in parallel via `parallel:`.
 
 name: demo-orchstep-parallel
 on:
@@ -23,7 +18,16 @@ jobs:
     name: orchstep validate (parallel)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Bootstrap workflow files
+        run: |
+          mkdir -p demos/11-orchestrated-validation
+          mkdir -p modules/@orchstep/github_action_git-checkout
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/demos/11-orchestrated-validation/parallel-workflow.yml \
+            -o demos/11-orchestrated-validation/parallel-workflow.yml
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep-module.yml \
+            -o modules/@orchstep/github_action_git-checkout/orchstep-module.yml
+          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/modules/@orchstep/github_action_git-checkout/orchstep.yml \
+            -o modules/@orchstep/github_action_git-checkout/orchstep.yml
 
       - uses: orchstep/setup-orchstep@v1
         with:
