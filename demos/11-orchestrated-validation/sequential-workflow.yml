@@ -1,0 +1,47 @@
+# Demo 1 — Sequential Validation Pipeline
+# Calls all 5 validation tasks one after another. Each task is a re-usable
+# workflow file that can also be called independently.
+#
+# Design rationale:
+# - Sequential execution guarantees ordering: registry validation first,
+#   then YAML linting, then links, then secrets last
+# - Each task uses its file as both the task name AND the step source
+# - The `on_error: fail` (default) ensures the pipeline stops at the first
+#   failure — no point checking links if YAML is broken
+
+name: orchstep-demo1-sequential
+desc: "OrchStep native validation — 5 checks in sequence"
+
+tasks:
+  main:
+    desc: "Run all 5 validation checks sequentially"
+    steps:
+      - name: validate_registry
+        desc: "Step 1 — Check modules/registry.json structure"
+        task: validate_registry
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-registry.yml
+
+      - name: validate_examples
+        desc: "Step 2 — Lint all example YAML files"
+        task: validate_examples
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-examples.yml
+
+      - name: validate_modules
+        desc: "Step 3 — Check module metadata structure"
+        task: validate_modules
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-modules.yml
+
+      - name: check_links
+        desc: "Step 4 — Scan docs for broken markdown links"
+        task: check_links
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-check-links.yml
+
+      - name: scan_secrets
+        desc: "Step 5 — Check for leaked Go source and license keys"
+        task: scan_secrets
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-scan-secrets.yml

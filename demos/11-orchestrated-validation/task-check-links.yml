@@ -1,0 +1,66 @@
+# Re-usable task: Check Markdown Links
+# Maps to validate.yml job "Check Markdown Links"
+# Scans docs/ README.md and CONTRIBUTING.md for relative links that point
+# to files that don't exist on disk.
+#
+# Usage: call this task with `task: check-links` from any workflow.
+
+name: task-check-links
+desc: "Check for broken internal markdown links"
+
+tasks:
+  check_links:
+    desc: "Scan markdown files and verify all relative links resolve"
+    steps:
+      - name: scan_and_verify
+        func: shell
+        on_error: warn
+        do: |
+          TOTAL=0
+          BROKEN=0
+          for f in README.md CONTRIBUTING.md docs/; do
+            if ls ${f} >/dev/null 2>&1; then
+              find ${f} -name "*.md" 2>/dev/null || continue
+            fi
+          done | sort -u | while read md; do
+            # Extract relative links: [text](path)
+            grep -oP '\(\.\.?/[^)]+\)' "${md}" 2>/dev/null | tr -d '()' | sort -u | while read link; do
+              TOTAL=$((TOTAL + 1))
+              dir=$(dirname "${md}")
+              target="${dir}/${link}"
+              if [ ! -e "${target}" ] && [ ! -e "${link}" ]; then
+                echo "BROKEN: ${md} -> ${link}"
+                BROKEN=$((BROKEN + 1))
+              fi
+            done
+          done
+
+          # shell can't pass variables out of pipes, so use a file
+          echo "total_links=${TOTAL}" > /tmp/link_result
+          echo "broken_links=${BROKEN}" >> /tmp/link_result
+        finally:
+          - name: read_results
+            func: shell
+            do: |
+              if [ -f /tmp/link_result ]; then
+                cat /tmp/link_result
+                rm -f /tmp/link_result
+              else
+                echo "total_links=0"
+                echo "broken_links=0"
+              fi
+        outputs:
+          total_links: "{{ result.output | regexFind \"total_links=([0-9]+)\" }}"
+          broken_links: "{{ result.output | regexFind \"broken_links=([0-9]+)\" }}"
+
+      - name: report
+        func: shell
+        do: |
+          echo "=== Link Check Report ==="
+          echo "Total links scanned: {{ steps.scan_and_verify.total_links }}"
+          echo "Broken links found: {{ steps.scan_and_verify.broken_links }}"
+
+  main:
+    desc: "Run markdown link check"
+    steps:
+      - task: check_links

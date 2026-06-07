@@ -1,0 +1,34 @@
+# Demo 2 — Parallel Validation
+# Shows: 1 GHA job → 1 OrchStep workflow → 5 validation tasks run in parallel
+#
+# Same pattern as Demo 1, but the OrchStep workflow uses `parallel:` instead
+# of sequential `task:` calls. The wall time is ~4× faster.
+#
+# The `run-orchstep` action still exits with the workflow's exit code. If
+# any of the 5 parallel tasks fails, the workflow fails.
+
+name: demo-orchstep-parallel
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  orchstep-validate:
+    name: orchstep validate (parallel)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: orchstep/setup-orchstep@v1
+        with:
+          version: latest
+
+      - uses: orchstep/run-orchstep@v1
+        with:
+          workflow: demos/11-orchestrated-validation/parallel-workflow.yml

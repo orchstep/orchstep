@@ -1,0 +1,35 @@
+# Demo 1 — Sequential Validation
+# Shows: 1 GHA job → 1 OrchStep workflow → 5 validation tasks run sequentially
+#
+# This is the simplest pattern: checkout → setup-orchstep → run-orchstep.
+# The OrchStep workflow handles all logic. No inline bash, no multi-job
+# orchestration in GHA. The run-orchstep action passes the exit code back,
+# so GHA knows if the workflow passed or failed.
+#
+# Compare to the equivalent validate.yml (80+ lines, 5 jobs) — this is 12.
+
+name: demo-orchstep-sequential
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  orchstep-validate:
+    name: orchstep validate (sequential)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: orchstep/setup-orchstep@v1
+        with:
+          version: latest
+
+      - uses: orchstep/run-orchstep@v1
+        with:
+          workflow: demos/11-orchestrated-validation/sequential-workflow.yml

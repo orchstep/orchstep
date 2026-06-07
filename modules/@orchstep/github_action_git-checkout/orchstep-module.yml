@@ -1,0 +1,77 @@
+metadata:
+  name: github_action_git-checkout
+  version: "1.0.0"
+  description: "Clone a Git repository and checkout a ref — OrchStep's answer to actions/checkout@v4. Use when you need to pull external repos into an OrchStep workflow."
+  author: "orchstep"
+  tags: ["git", "checkout", "clone", "github-actions", "module"]
+
+permissions:
+  shell: true
+  git: true
+
+config:
+  schema:
+    properties:
+      default_depth:
+        type: string
+        required: false
+        default: "1"
+        desc: "Default clone depth (1 = shallow, 0 = full)"
+
+exports:
+  checkout:
+    desc: "Clone a repository and checkout a specific ref (branch, tag, or SHA). Replace actions/checkout@v4 behavior inside an OrchStep workflow."
+    params:
+      - name: repository
+        type: string
+        required: true
+        desc: "Repository URL (SSH or HTTPS, e.g., github.com/org/repo or git@github.com:org/repo.git)"
+      - name: ref
+        type: string
+        required: false
+        default: "main"
+        desc: "Branch, tag, or SHA to checkout"
+      - name: path
+        type: string
+        required: false
+        default: "."
+        desc: "Directory to clone into (relative to workspace)"
+      - name: depth
+        type: string
+        required: false
+        default: "{{ config.default_depth }}"
+        desc: "Clone depth (1 = shallow, 0 = full). Ignored when ref is a SHA."
+      - name: token
+        type: string
+        required: false
+        desc: "GitHub token for authenticated cloning. Alternative to GITHUB_TOKEN env var."
+    returns:
+      type: object
+      properties:
+        commit_sha:
+          type: string
+          desc: "The checked-out commit SHA"
+        branch:
+          type: string
+          desc: "The checked-out branch (or tag name)"
+        clone_dir:
+          type: string
+          desc: "Absolute path to the cloned directory"
+
+  fetch:
+    desc: "Fetch updates for an already-cloned repo (git fetch + git reset)"
+    params:
+      - name: path
+        type: string
+        required: true
+        desc: "Path to the existing clone"
+      - name: ref
+        type: string
+        required: false
+        default: "main"
+        desc: "Ref to update to"
+    returns:
+      type: object
+      properties:
+        commit_sha:
+          type: string

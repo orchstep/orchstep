@@ -1,0 +1,38 @@
+# Demo 3 — 5 Independent Workflow Mappings
+# Shows: 1 GHA job → 1 OrchStep orchestrator → 5 standalone workflow files
+#
+# This demonstrates the most advanced pattern: each validation check is its
+# own standalone OrchStep workflow file that can be run independently:
+#   orchstep run -f demos/11-orchestrated-validation/task-validate-registry.yml
+#
+# The orchestrator calls each one. You can also run them individually from
+# the command line, in any order, or substitute your own task for any step.
+#
+# The run-orchstep action calls the main orchestrator, which dispatches
+# to each task file. This is the "module pattern" for CI workflows.
+
+name: demo-orchstep-multi
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  orchstep-validate:
+    name: orchstep validate (5 workflows)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: orchstep/setup-orchstep@v1
+        with:
+          version: latest
+
+      - uses: orchstep/run-orchstep@v1
+        with:
+          workflow: demos/11-orchestrated-validation/main-orchestrator.yml

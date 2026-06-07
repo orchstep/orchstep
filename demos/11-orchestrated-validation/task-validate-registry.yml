@@ -1,0 +1,50 @@
+# Re-usable task: Validate Module Registry
+# Maps to validate.yml job "Validate Module Registry"
+# Checks that modules/registry.json is valid JSON with correct structure.
+#
+# Usage: call this task with `task: validate-registry` from any workflow.
+
+name: task-validate-registry
+desc: "Validate modules/registry.json structure"
+
+tasks:
+  validate_registry:
+    desc: "Check that registry.json is valid JSON and has required fields"
+    steps:
+      - name: load_registry
+        func: shell
+        do: |
+          JSON_FILE="modules/registry.json"
+          if [ ! -f "${JSON_FILE}" ]; then
+            echo "ERROR: ${JSON_FILE} not found"
+            exit 1
+          fi
+          python3 -c "
+          import json, sys
+          reg = json.load(open('${JSON_FILE}'))
+          errors = []
+
+          assert 'version' in reg, 'Missing version field'
+          assert 'modules' in reg, 'Missing modules field'
+          for m in reg['modules']:
+              assert 'name' in m, f'Module missing name: {m}'
+              assert 'version' in m, f'Module missing version: {m}'
+              assert 'tier' in m, f'Module missing tier: {m}'
+              assert m['tier'] in ('official', 'community', 'ai'), f'Invalid tier: {m[\"tier\"]}'
+
+          print(f'Registry valid: {len(reg[\"modules\"])} modules')
+          f'Registry valid: {len(reg[\"modules\"])} modules'
+          "
+        outputs:
+          registry_summary: "{{ result.output | regexFind \"Registry valid: ([0-9]+) modules\" }}"
+
+      - name: report
+        func: assert
+        args:
+          condition: '{{ gt (int (steps.load_registry.registry_summary)) 0 }}'
+          desc: "Registry must have at least one module defined"
+
+  main:
+    desc: "Run registry validation"
+    steps:
+      - task: validate_registry

@@ -1,0 +1,49 @@
+# Demo 3 — 5 Independent Workflow Mappings
+# Each validation check is its own standalone workflow file that can be
+# run independently: `orchstep run -f demos/11-orchestrated-validation/task-X.yml`
+#
+# This orchestrator calls all 5. It demonstrates the pinnacle of re-usable
+# task design: each validation is decoupled, independently testable, and
+# callable from any orchestrator.
+#
+# Design rationale:
+# - Every task file is a valid self-contained workflow with its own `main`
+# - The orchestrator uses `task:` + `with:` to invoke them — no duplication
+# - Add a new check? Create task-validate-X.yml and add one line here
+
+name: orchstep-demo3-multi
+desc: "5 independent validation workflows, orchestrated together"
+
+tasks:
+  main:
+    desc: "Orchestrate all 5 independent validation workflows"
+    steps:
+      - name: validate_registry
+        desc: "Validate modules/registry.json"
+        task: validate_registry
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-registry.yml
+
+      - name: validate_examples
+        desc: "Lint example YAML files"
+        task: validate_examples
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-examples.yml
+
+      - name: validate_modules
+        desc: "Check module metadata"
+        task: validate_modules
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-modules.yml
+
+      - name: check_links
+        desc: "Scan for broken markdown links"
+        task: check_links
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-check-links.yml
+
+      - name: scan_secrets
+        desc: "Scan for leaked Go source and secrets"
+        task: scan_secrets
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-scan-secrets.yml

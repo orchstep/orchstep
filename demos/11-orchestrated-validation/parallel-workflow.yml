@@ -1,0 +1,87 @@
+# Demo 2 — Parallel Validation Pipeline
+# Calls all 5 validation tasks in parallel. Each task is independent —
+# none depends on the output of another — so they can safely run concurrently.
+#
+# Design rationale:
+# - Parallel cuts total wall time from ~45s to ~10s
+# - `finally:` ensures the summary always prints, even if one check fails
+# - Each task runs in its own context; failures are independent
+# - Perfect for CI where latency matters
+
+name: orchstep-demo2-parallel
+desc: "OrchStep native validation — 5 checks in parallel"
+
+tasks:
+  main:
+    desc: "Run all 5 validation checks in parallel (aggregate summary)"
+    steps:
+      - name: run_all_checks
+        desc: "Execute all validations concurrently. Each step is its own task call."
+        parallel:
+          - name: validate_registry
+            task: validate_registry
+            with:
+              orchstep_file: demos/11-orchestrated-validation/task-validate-registry.yml
+
+          - name: validate_examples
+            task: validate_examples
+            with:
+              orchstep_file: demos/11-orchestrated-validation/task-validate-examples.yml
+
+          - name: validate_modules
+            task: validate_modules
+            with:
+              orchstep_file: demos/11-orchestrated-validation/task-validate-modules.yml
+
+          - name: check_links
+            task: check_links
+            with:
+              orchstep_file: demos/11-orchestrated-validation/task-check-links.yml
+
+          - name: scan_secrets
+            task: scan_secrets
+            with:
+              orchstep_file: demos/11-orchestrated-validation/task-scan-secrets.yml
+
+      - name: summary
+        desc: "Aggregate report — runs even if some checks failed"
+        func: shell
+        do: |
+          echo "=== Validation Results ==="
+          echo "  validate_registry: {{ steps.run_all_checks.validate_registry.status }}"
+          echo "  validate_examples: {{ steps.run_all_checks.validate_examples.status }}"
+          echo "  validate_modules: {{ steps.run_all_checks.validate_modules.status }}"
+          echo "  check_links:      {{ steps.run_all_checks.check_links.status }}"
+          echo "  scan_secrets:     {{ steps.run_all_checks.scan_secrets.status }}"
+
+  # Called only by the parallel orchestrator above.
+  # Each called task loads from its own workflow file.
+  validate_registry:
+    steps:
+      - task: validate_registry
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-registry.yml
+
+  validate_examples:
+    steps:
+      - task: validate_examples
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-examples.yml
+
+  validate_modules:
+    steps:
+      - task: validate_modules
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-validate-modules.yml
+
+  check_links:
+    steps:
+      - task: check_links
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-check-links.yml
+
+  scan_secrets:
+    steps:
+      - task: scan_secrets
+        with:
+          orchstep_file: demos/11-orchestrated-validation/task-scan-secrets.yml
