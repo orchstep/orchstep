@@ -1,94 +1,49 @@
 name: github_action_git-checkout
-desc: "Clone Git repos and checkout refs — OrchStep's answer to actions/checkout@v4"
+desc: "Clone Git repos and checkout refs — replaces actions/checkout@v4 using OrchStep's native func: git"
 
 tasks:
   checkout:
-    desc: "Clone a repository and checkout a specific ref"
+    desc: "Clone a repository and checkout a specific ref (branch, tag, or SHA). Uses OrchStep's native go-git implementation, not shell git."
     steps:
-      - name: resolve_ref
-        desc: "Normalize the ref and determine clone directory"
-        func: shell
-        do: |
-          REF="{{ vars.ref | default "main" }}"
-          PATH="{{ vars.path | default "." }}"
-          DEPTH="{{ vars.depth | default config.default_depth | default "1" }}"
-          TOKEN="{{ vars.token | default "" }}"
-          REPO="{{ vars.repository }}"
-
-          echo "Cloning ${REPO} @ ${REF} into ${PATH}..."
-          echo "  depth: ${DEPTH}"
-
-          # Build clone URL with token if provided
-          CLONE_URL="${REPO}"
-          if [ -n "${TOKEN}" ]; then
-            # If HTTPS URL, inject token
-            CLONE_URL="https://x-access-token:${TOKEN}@${REPO#https://}"
-          fi
-
-          echo "clone_url_masked=true"
-          echo "ref=${REF}"
-          echo "clone_path=${PATH}"
-          echo "depth=${DEPTH}"
-        outputs:
-          clone_path: "{{ result.output | regexFind \"clone_path=([^\\s]+)\" }}"
-          ref: "{{ result.output | regexFind \"ref=([^\\s]+)\" }}"
-          depth: "{{ result.output | regexFind \"depth=([^\\s]+)\" }}"
-
       - name: git_clone
-        desc: "Clone the repository"
+        desc: "Clone via native OrchStep git function"
+        func: git
+        args:
+          url: "{{ vars.repository }}"
+          dest: "{{ vars.path | default '.' }}"
+          branch: "{{ vars.ref | default 'main' }}"
+          depth: "{{ vars.depth | default '1' | int }}"
+          single_branch: true
+          force: true
+          token: "{{ vars.token | default '' }}"
+
+      - name: get_commit_info
+        desc: "Report what was checked out"
         func: shell
         do: |
-          REPO="{{ vars.repository }}"
-          REF="{{ steps.resolve_ref.ref }}"
-          PATH="{{ steps.resolve_ref.clone_path }}"
-          DEPTH="{{ steps.resolve_ref.depth }}"
-          TOKEN="{{ vars.token | default "" }}"
-
-          # Build auth URL
-          CLONE_URL="${REPO}"
-          if [ -n "${TOKEN}" ]; then
-            CLONE_URL="https://x-access-token:${TOKEN}@${REPO#https://}"
-          fi
-
-          # Determine clone flags
-          DEPTH_FLAG=""
-          if [ "${DEPTH}" != "0" ] && [ "${DEPTH}" != "" ]; then
-            DEPTH_FLAG="--depth ${DEPTH}"
-          fi
-
-          # Clone
-          if [ "${PATH}" = "." ] || [ "${PATH}" = "" ]; then
-            # Clone into current directory
-            git init
-            git remote add origin "${CLONE_URL}"
-            git fetch ${DEPTH_FLAG} origin "${REF}"
-            git checkout -b "${REF}" FETCH_HEAD
-          else
-            mkdir -p "${PATH}"
-            git clone ${DEPTH_FLAG} --branch "${REF}" "${CLONE_URL}" "${PATH}"
-            cd "${PATH}"
-          fi
-
-          # Get the checked-out SHA
-          SHA=$(git rev-parse HEAD)
+          cd "{{ vars.path | default '.' }}"
+          SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+          BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "detached")
           echo "commit_sha=${SHA}"
-          echo "branch=${REF}"
+          echo "branch=${BRANCH}"
           echo "clone_dir=$(pwd)"
         outputs:
-          commit_sha: "{{ result.output | regexFind \"commit_sha=([a-f0-9]+)\" }}"
-          branch: "{{ result.output | regexFind \"branch=([^\\s]+)\" }}"
-          clone_dir: "{{ result.output | regexFind \"clone_dir=([^\\s]+)\" }}"
+          commit_sha: "{{ result.output | regexFind 'commit_sha=([a-f0-9]+)' }}"
+          branch: "{{ result.output | regexFind 'branch=([^\\s]+)' }}"
+          clone_dir: "{{ result.output | regexFind 'clone_dir=([^\\s]+)' }}"
 
   fetch:
     desc: "Fetch updates for an already-cloned repo"
     steps:
       - name: git_fetch
-        func: shell
-        do: |
-          cd "{{ vars.path }}"
-          REF="{{ vars.ref | default "main" }}"
-          git fetch origin "${REF}"
-          git reset --hard "origin/${REF}"
-          echo "commit_sha=$(git rev-parse HEAD)"
-        outputs:
-          commit_sha: "{{ result.output | regexFind \"commit_sha=([a-f0-9]+)\" }}"
+        func: git
+        args:
+          repo: "{{ vars.path }}"
+          remote: "origin"
+          depth: 1
+      - name: git_checkout
+        func: git
+        args:
+          repo: "{{ vars.path }}"
+          version: "{{ vars.ref | default 'main' }}"
+          force: true

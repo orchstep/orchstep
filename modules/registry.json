@@ -192,46 +192,6 @@
       "tier": "official",
       "source": "modules/@orchstep/github_action_git-checkout",
       "tags": ["git", "checkout", "clone", "ci"]
-    },
-    {
-      "name": "@orchstep/validate-json",
-      "version": "1.0.0",
-      "description": "Validate JSON files against structural schema rules",
-      "tier": "official",
-      "source": "modules/@orchstep/validate-json",
-      "tags": ["validate", "json", "schema", "ci"]
-    },
-    {
-      "name": "@orchstep/validate-yaml",
-      "version": "1.0.0",
-      "description": "Lint YAML files and report counts",
-      "tier": "official",
-      "source": "modules/@orchstep/validate-yaml",
-      "tags": ["validate", "yaml", "lint", "ci"]
-    },
-    {
-      "name": "@orchstep/validate-modules",
-      "version": "1.0.0",
-      "description": "Validate OrchStep module directory structure",
-      "tier": "official",
-      "source": "modules/@orchstep/validate-modules",
-      "tags": ["validate", "modules", "structure", "ci"]
-    },
-    {
-      "name": "@orchstep/check-links",
-      "version": "1.0.0",
-      "description": "Scan markdown files for broken relative links",
-      "tier": "official",
-      "source": "modules/@orchstep/check-links",
-      "tags": ["docs", "links", "validate", "ci"]
-    },
-    {
-      "name": "@orchstep/scan-secrets",
-      "version": "1.0.0",
-      "description": "Scan repository for leaked credentials and sensitive content",
-      "tier": "official",
-      "source": "modules/@orchstep/scan-secrets",
-      "tags": ["security", "secrets", "scan", "ci"]
     }
   ]
 }
