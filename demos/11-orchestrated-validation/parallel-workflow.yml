@@ -70,4 +70,4 @@ tasks:
 
       - name: summary
         func: shell
-        do: echo "=== orchstep-demo2: PARALLEL VALIDATION PASSED ==="
+        do: 'echo "=== orchstep-demo2: PARALLEL VALIDATION PASSED ==="'

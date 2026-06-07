@@ -72,4 +72,4 @@ tasks:
 
       - name: summary
         func: shell
-        do: echo "=== orchstep-demo1: SEQUENTIAL VALIDATION PASSED ==="
+        do: 'echo "=== orchstep-demo1: SEQUENTIAL VALIDATION PASSED ==="'

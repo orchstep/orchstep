@@ -68,4 +68,4 @@ tasks:
 
       - name: summary
         func: shell
-        do: echo "=== orchstep-demo3: ALL CHECKS PASSED ==="
+        do: 'echo "=== orchstep-demo3: ALL CHECKS PASSED ==="'
