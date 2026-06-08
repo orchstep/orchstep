@@ -1,0 +1,23 @@
+metadata:
+  name: demo-validate-json
+  version: "1.0.0"
+  description: "Validate registry JSON file structure (demo)"
+  author: "orchstep"
+  tags: ["validate", "json", "demo"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties: {}
+
+exports:
+  check:
+    desc: "Validate modules/registry.json has required fields and valid tiers"
+    params: []
+    returns:
+      type: object
+      properties:
+        status:
+          type: string

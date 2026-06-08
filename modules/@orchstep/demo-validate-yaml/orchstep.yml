@@ -1,0 +1,20 @@
+name: demo-validate-yaml
+desc: "Lint example YAML files (demo)"
+
+tasks:
+  check:
+    desc: "Lint all example YAML files with yamllint"
+    steps:
+      - name: lint
+        func: shell
+        do: |
+          cd ../../examples
+          pip install yamllint -q 2>/dev/null
+          find . -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
+          CNT=$(find . -name "*.yml" | wc -l)
+          echo "OK: ${CNT} YAML files"
+
+  main:
+    desc: "Run YAML lint"
+    steps:
+      - task: check

@@ -1,0 +1,21 @@
+metadata:
+  name: demo-check-modules
+  version: "1.0.0"
+  description: "Check OrchStep module metadata structure (demo)"
+  author: "orchstep"
+  tags: ["validate", "modules", "demo"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties: {}
+
+exports:
+  check:
+    desc: "Verify each module directory has a metadata file"
+    params: []
+    returns:
+      type: object
+      properties: {}

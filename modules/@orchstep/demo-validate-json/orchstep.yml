@@ -1,0 +1,17 @@
+name: demo-validate-json
+desc: "Validate registry JSON structure (demo)"
+
+tasks:
+  check:
+    desc: "Validate modules/registry.json"
+    steps:
+      - name: validate
+        func: shell
+        do: |
+          cd ../..
+          python3 -c "import json,sys; reg=json.load(open('modules/registry.json')); mods=reg['modules']; bad=[m.get('name','?') for m in mods if not all(k in m for k in ('name','version','tier')) or m['tier'] not in ('official','community','ai')]; sys.exit('Invalid modules: '+str(bad)) if bad else print(f'Registry OK: {len(mods)} modules')"
+
+  main:
+    desc: "Run JSON validation"
+    steps:
+      - task: check

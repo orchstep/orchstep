@@ -1,0 +1,25 @@
+name: demo-check-links
+desc: "Check markdown links (demo)"
+
+tasks:
+  check:
+    desc: "Scan for broken relative links in markdown files"
+    steps:
+      - name: scan
+        on_error: warn
+        func: shell
+        do: |
+          cd ../..
+          for f in README.md docs/; do
+            find "$f" -name "*.md" 2>/dev/null | while read md; do
+              dir=$(dirname "$md")
+              grep -oP '\(\.\.?/[^)]+\)' "$md" 2>/dev/null | tr -d '()' | while read l; do
+                full="$dir/$l"; [ -e "$full" ] || [ -e "$l" ] || echo "BROKEN: $md -> $l"
+              done
+            done 2>/dev/null
+          done || true
+
+  main:
+    desc: "Run link check"
+    steps:
+      - task: check

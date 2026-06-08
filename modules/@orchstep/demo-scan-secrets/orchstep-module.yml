@@ -1,0 +1,21 @@
+metadata:
+  name: demo-scan-secrets
+  version: "1.0.0"
+  description: "Scan for leaked Go source and secret keys (demo)"
+  author: "orchstep"
+  tags: ["security", "scan", "demo"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties: {}
+
+exports:
+  check:
+    desc: "Check for Go source leaks outside skills/ and ORCH- license key patterns"
+    params: []
+    returns:
+      type: object
+      properties: {}

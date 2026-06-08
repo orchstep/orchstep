@@ -299,6 +299,46 @@
         "clone",
         "ci"
       ]
+    },
+    {
+      "name": "@orchstep/demo-validate-json",
+      "version": "1.0.0",
+      "description": "Validate registry JSON file structure (demo)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-validate-json",
+      "tags": ["validate", "json", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-validate-yaml",
+      "version": "1.0.0",
+      "description": "Lint example YAML files (demo)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-validate-yaml",
+      "tags": ["validate", "yaml", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-check-modules",
+      "version": "1.0.0",
+      "description": "Check OrchStep module metadata structure (demo)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-check-modules",
+      "tags": ["validate", "modules", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-check-links",
+      "version": "1.0.0",
+      "description": "Scan markdown files for broken links (demo)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-check-links",
+      "tags": ["docs", "links", "demo"]
+    },
+    {
+      "name": "@orchstep/demo-scan-secrets",
+      "version": "1.0.0",
+      "description": "Scan for leaked Go source and secret keys (demo)",
+      "tier": "official",
+      "source": "modules/@orchstep/demo-scan-secrets",
+      "tags": ["security", "scan", "demo"]
     }
   ]
 }

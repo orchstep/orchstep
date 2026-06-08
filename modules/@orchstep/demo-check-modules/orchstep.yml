@@ -1,0 +1,23 @@
+name: demo-check-modules
+desc: "Check module metadata (demo)"
+
+tasks:
+  check:
+    desc: "Check every module has orchstep-module.yml or orchstep.yml"
+    steps:
+      - name: scan
+        func: shell
+        do: |
+          cd ../../modules/@orchstep
+          for d in */; do
+            m=$(basename "$d")
+            have=false
+            [ -f "${d}orchstep-module.yml" ] && have=true
+            [ -f "${d}orchstep.yml" ] && have=true
+            $have || echo "WARN: $m has no metadata"
+          done
+
+  main:
+    desc: "Run module metadata check"
+    steps:
+      - task: check

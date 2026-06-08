@@ -1,0 +1,23 @@
+metadata:
+  name: demo-validate-yaml
+  version: "1.0.0"
+  description: "Lint example YAML files (demo)"
+  author: "orchstep"
+  tags: ["validate", "yaml", "demo"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties: {}
+
+exports:
+  check:
+    desc: "Lint all example YAML files and report count"
+    params: []
+    returns:
+      type: object
+      properties:
+        file_count:
+          type: string

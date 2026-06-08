@@ -1,0 +1,21 @@
+metadata:
+  name: demo-check-links
+  version: "1.0.0"
+  description: "Scan markdown files for broken links (demo)"
+  author: "orchstep"
+  tags: ["docs", "links", "demo"]
+
+permissions:
+  shell: true
+
+config:
+  schema:
+    properties: {}
+
+exports:
+  check:
+    desc: "Scan README.md and docs/ for broken relative links"
+    params: []
+    returns:
+      type: object
+      properties: {}

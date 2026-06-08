@@ -1,58 +1,57 @@
-# Demo 3 — Orchestrated Validation (5 checks sequentially)
-# Runs from the repo root (cd ../.. from this file's parent directory).
-# Designed for CI where the repo is pre-cloned by the --module step.
+# Demo 3 — Module-Based Orchestration
+# Each validation check is a proper @orchstep/demo-* module imported via
+# the `modules:` block and invoked with the `module:` + `task:` keys.
+#
+# This is architecturally distinct from Demo 1 (inlined tasks) and
+# Demo 2 (parallel execution): the orchestrator owns no validation logic
+# of its own — it composes five independent, reusable modules. Each module
+# lives under modules/@orchstep/ (the official registry scope) and is
+# sourced here by path so the demo runs against the repo as cloned in CI.
 
-name: orchstep-demo3-orchestrated
-desc: "Validate orchstep repo — orchestrated"
+name: orchstep-demo3-modules
+desc: "Validate orchstep repo — module-based orchestration"
+
+modules:
+  - name: vjson
+    source: "../../modules/@orchstep/demo-validate-json"
+  - name: vyaml
+    source: "../../modules/@orchstep/demo-validate-yaml"
+  - name: vmods
+    source: "../../modules/@orchstep/demo-check-modules"
+  - name: vlinks
+    source: "../../modules/@orchstep/demo-check-links"
+  - name: vsecret
+    source: "../../modules/@orchstep/demo-scan-secrets"
 
 tasks:
   main:
-    desc: "Run 5 validations"
+    desc: "Orchestrate 5 demo validation modules"
     steps:
       - name: validate_registry
-        func: shell
-        do: "cd ../.. && python3 -c \"import json;n=len(json.load(open('modules/registry.json'))['modules']);print('OK: %d modules' % n)\""
+        desc: "Module: vjson.check"
+        module: vjson
+        task: check
 
       - name: lint_examples
-        func: shell
-        do: |
-          cd ../../examples
-          pip install yamllint -q 2>/dev/null
-          find . -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
-          echo "OK: $(find . -name '*.yml' | wc -l) files"
+        desc: "Module: vyaml.check"
+        module: vyaml
+        task: check
 
       - name: check_modules
-        func: shell
-        do: |
-          cd ../../modules/@orchstep
-          for d in */; do
-            m=$(basename "$d")
-            [ -f "${d}orchstep-module.yml" ] || [ -f "${d}orchstep.yml" ] || echo "WARN: $m no metadata"
-          done
+        desc: "Module: vmods.check"
+        module: vmods
+        task: check
 
       - name: check_links
-        on_error: warn
-        func: shell
-        do: |
-          cd ../..
-          for f in README.md docs/; do
-            find "$f" -name "*.md" 2>/dev/null | while read md; do
-              dir=$(dirname "$md")
-              grep -oP '\(\.\.?/[^)]+\)' "$md" 2>/dev/null | tr -d '()' | while read l; do
-                full="$dir/$l"; [ -e "$full" ] || [ -e "$l" ] || echo "BROKEN: $md -> $l"
-              done
-            done 2>/dev/null
-          done || true
+        desc: "Module: vlinks.check"
+        module: vlinks
+        task: check
 
       - name: scan_secrets
-        func: shell
-        do: |
-          cd ../..
-          F=$(find . -name "*.go" -not -path "./skills/*" | wc -l)
-          [ "$F" -eq 0 ] || { echo "ERROR: $F .go files outside skills/!"; find . -name "*.go" -not -path "./skills/*"; exit 1; }
-          FOUND=$(grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . --include="*.md" --include="*.yml" --include="*.json" 2>/dev/null | grep -v "ORCH-XXXX\|ORCH-TEST\|ORCH-aBcD" || true)
-          [ -z "$FOUND" ] && echo "Secrets: PASS" || { echo "$FOUND"; echo "WARNING"; }
+        desc: "Module: vsecret.check"
+        module: vsecret
+        task: check
 
       - name: summary
         func: shell
-        do: 'echo "=== orchstep-demo3: ALL CHECKS PASSED ==="'
+        do: 'echo "=== orchstep-demo3: MODULE-BASED ORCHESTRATION PASSED ==="'
