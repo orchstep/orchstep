@@ -1,6 +1,5 @@
-# Demo 3 — Orchestrated Validation (no actions/checkout@v4)
-# Bootstraps workflow + module via curl, then git-checkout module clones the
-# real repo. Runs 5 validation tasks via the orchestrator workflow.
+# Demo 3 — 5 Validations Orchestrated (no actions/checkout@v4, no curl)
+# Uses orchstep run --module to clone the repo, then runs all 5 validations.
 
 name: demo-orchstep-multi
 on:
@@ -18,16 +17,17 @@ jobs:
     name: orchstep validate (orchestrated)
     runs-on: ubuntu-latest
     steps:
-      - name: Bootstrap workflow file
-        run: |
-          mkdir -p demos/11-orchestrated-validation
-          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/demos/11-orchestrated-validation/main-orchestrator.yml \
-            -o demos/11-orchestrated-validation/main-orchestrator.yml
-
       - uses: orchstep/setup-orchstep@v1
         with:
           version: latest
 
+      - name: Clone repo via module
+        run: |
+          orchstep run --module @orchstep/github_action_git-checkout checkout \
+            --var repository="https://github.com/orchstep/orchstep.git" \
+            --var path=repo --var ref=main --var depth=1
+
       - uses: orchstep/run-orchstep@v1
         with:
           workflow: demos/11-orchestrated-validation/main-orchestrator.yml
+          working-directory: repo

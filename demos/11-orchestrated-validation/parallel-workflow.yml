@@ -1,45 +1,33 @@
-# Demo 2 — Parallel Validation (no actions/checkout@v4)
-# Uses OrchStep's native func: git to clone the repo.
-# All 5 checks run in parallel via `parallel:`.
+# Demo 2 — Parallel Validation (all 5 checks in parallel)
+# Runs from the repo root (cd ../.. from this file's parent directory).
+# Designed for CI where the repo is pre-cloned by the --module step.
 
 name: orchstep-demo2-parallel
-desc: "Validate orchstep repo — parallel (func: git replaces checkout)"
+desc: "Validate orchstep repo — parallel"
 
 tasks:
   main:
-    desc: "Clone via func: git, run 5 validations in parallel"
+    desc: "Run 5 validations in parallel"
     steps:
-      - name: clone_repo
-        desc: "Replaces actions/checkout@v4 — native func: git"
-        func: git
-        args:
-          operation: "clone"
-          url: "https://github.com/orchstep/orchstep.git"
-          dest: "/tmp/ws"
-          branch: "main"
-          depth: 1
-          single_branch: true
-          force: true
-
       - name: all_checks
         parallel:
           - name: validate_registry
             func: shell
-            do: "cd /tmp/ws && python3 -c \"import json;n=len(json.load(open('modules/registry.json'))['modules']);print('OK: %d modules' % n)\""
+            do: "cd ../.. && python3 -c \"import json;n=len(json.load(open('modules/registry.json'))['modules']);print('OK: %d modules' % n)\""
 
           - name: lint_examples
             func: shell
             do: |
-              cd /tmp/ws
+              cd ../../examples
               pip install yamllint -q 2>/dev/null
-              find examples -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
-              echo "OK: $(find examples -name '*.yml' | wc -l) files"
+              find . -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
+              echo "OK: $(find . -name '*.yml' | wc -l) files"
 
           - name: check_modules
             func: shell
             do: |
-              cd /tmp/ws
-              for d in modules/@orchstep/*/; do
+              cd ../../modules/@orchstep
+              for d in */; do
                 m=$(basename "$d")
                 [ -f "${d}orchstep-module.yml" ] || [ -f "${d}orchstep.yml" ] || echo "WARN: $m no metadata"
               done
@@ -48,7 +36,7 @@ tasks:
             on_error: warn
             func: shell
             do: |
-              cd /tmp/ws
+              cd ../..
               for f in README.md docs/; do
                 find "$f" -name "*.md" 2>/dev/null | while read md; do
                   dir=$(dirname "$md")
@@ -61,12 +49,10 @@ tasks:
           - name: scan_secrets
             func: shell
             do: |
-              cd /tmp/ws
+              cd ../..
               F=$(find . -name "*.go" -not -path "./skills/*" | wc -l)
               [ "$F" -eq 0 ] || { echo "ERROR: $F .go files outside skills/!"; find . -name "*.go" -not -path "./skills/*"; exit 1; }
-              FOUND=$(grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . \
-                --include="*.md" --include="*.yml" --include="*.json" 2>/dev/null | \
-                grep -v "ORCH-XXXX\|ORCH-TEST\|ORCH-aBcD" || true)
+              FOUND=$(grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . --include="*.md" --include="*.yml" --include="*.json" 2>/dev/null | grep -v "ORCH-XXXX\|ORCH-TEST\|ORCH-aBcD" || true)
               [ -z "$FOUND" ] && echo "Secrets: PASS" || { echo "$FOUND"; echo "WARNING"; }
 
       - name: summary
