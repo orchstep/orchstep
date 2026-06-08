@@ -16,7 +16,7 @@ tasks:
           depth: "{{ vars.depth | default '1' | int }}"
           single_branch: true
           force: true
-          token: "{{ vars.token | default '' }}"
+          token: "{{ vars.token | default \"\" }}"
 
       - name: get_commit_info
         desc: "Report what was checked out"
