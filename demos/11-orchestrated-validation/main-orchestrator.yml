@@ -1,9 +1,8 @@
 # Demo 3 — Module-Based Orchestration (remote modules)
 # Each validation check is a proper @orchstep/demo-* module pulled from the
-# registry over the network — not from local disk. The `registries:` block
-# points the @orchstep scope at the public module repo; the engine resolves
-# each `@orchstep/demo-*` source to a versioned tag, fetches it into the
-# module cache, and invokes its task via the `module:` + `task:` keys.
+# official registry over the network — not from local disk. The engine
+# resolves each `@orchstep/demo-*` source to a versioned tag, fetches it into
+# the module cache, and invokes its task via the `module:` + `task:` keys.
 #
 # This is architecturally distinct from Demo 1 (inlined tasks) and
 # Demo 2 (parallel execution): the orchestrator owns no validation logic of
@@ -12,13 +11,6 @@
 
 name: orchstep-demo3-modules
 desc: "Validate orchstep repo — module-based orchestration"
-
-# Resolve the @orchstep scope from the published module registry.
-# Modules live flat at modules/<name> and are tagged <name>/v<version>.
-registries:
-  orchstep:
-    url: github.com/orchstep/orchstep
-    tag: "{module}/v{version}"
 
 modules:
   - name: vjson

@@ -24,15 +24,8 @@ jobs:
           version: latest
 
       # Clone the repo with OrchStep, replacing actions/checkout@v4.
-      # The config points the @orchstep scope at this repo's module registry.
       - name: Clone repo via OrchStep module
         run: |
-          cat > orchstep_config.yml <<'YML'
-          registries:
-            orchstep:
-              url: github.com/orchstep/orchstep
-              tag: "{module}/v{version}"
-          YML
           orchstep run --module @orchstep/github_action_git-checkout checkout \
             --var repository="https://github.com/orchstep/orchstep.git" \
             --var path=repo --var ref=main --var depth=1
