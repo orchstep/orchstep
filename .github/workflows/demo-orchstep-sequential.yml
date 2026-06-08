@@ -30,12 +30,8 @@ jobs:
             --var repository="https://github.com/orchstep/orchstep.git" \
             --var path=repo --var ref=main --var depth=1
 
-      # Debug: verify the cloned structure
-      - name: Verify clone
-        run: |
-          ls repo/modules/registry.json repo/demos/11-orchestrated-validation/sequential-workflow.yml
-
-      # Run the validation workflow from the cloned subdirectory
+      # Run the validation workflow from the cloned repo.
+      # The workflow path is relative to the cloned repo root.
       - uses: orchstep/run-orchstep@v1
         with:
           workflow: demos/11-orchestrated-validation/sequential-workflow.yml

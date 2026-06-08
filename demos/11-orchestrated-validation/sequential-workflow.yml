@@ -12,21 +12,23 @@ tasks:
       - name: validate_registry
         desc: "Check modules/registry.json"
         func: shell
-        do: "python3 -c \"import json;n=len(json.load(open('modules/registry.json'))['modules']);print('Registry OK: %d modules' % n)\""
+        do: "python3 -c \"import json;n=len(json.load(open('../../modules/registry.json'))['modules']);print('Registry OK: %d modules' % n)\""
 
       - name: lint_examples
         desc: "Lint example YAML files"
         func: shell
         do: |
+          cd ../../examples
           pip install yamllint -q 2>/dev/null
-          find examples -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
-          echo "OK: $(find examples -name '*.yml' | wc -l) files"
+          find . -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
+          echo "OK: $(find . -name '*.yml' | wc -l) files"
 
       - name: check_modules
         desc: "Check module metadata"
         func: shell
         do: |
-          for d in modules/@orchstep/*/; do
+          cd ../../modules/@orchstep
+          for d in */; do
             m=$(basename "$d")
             [ -f "${d}orchstep-module.yml" ] || [ -f "${d}orchstep.yml" ] || echo "WARN: $m no metadata"
           done
@@ -36,6 +38,7 @@ tasks:
         on_error: warn
         func: shell
         do: |
+          cd ../..
           for f in README.md docs/; do
             find "$f" -name "*.md" 2>/dev/null | while read md; do
               dir=$(dirname "$md")
@@ -49,6 +52,7 @@ tasks:
         desc: "Scan for secrets"
         func: shell
         do: |
+          cd ../..
           F=$(find . -name "*.go" -not -path "./skills/*" | wc -l)
           [ "$F" -eq 0 ] || { echo "ERROR: $F .go files outside skills/!"; find . -name "*.go" -not -path "./skills/*"; exit 1; }
           FOUND=$(grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . \
