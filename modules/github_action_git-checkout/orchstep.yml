@@ -11,9 +11,9 @@ tasks:
         args:
           operation: "clone"
           url: "{{ vars.repository }}"
-          dest: "{{ vars.path | default '.' }}"
-          branch: "{{ vars.ref | default 'main' }}"
-          depth: "{{ vars.depth | default '1' | int }}"
+          dest: "{{ vars.path | default \".\" }}"
+          branch: "{{ vars.ref | default \"main\" }}"
+          depth: "{{ vars.depth | default \"1\" | int }}"
           single_branch: true
           force: true
           token: "{{ vars.token | default \"\" }}"
@@ -48,5 +48,5 @@ tasks:
         args:
           operation: "checkout"
           repo: "{{ vars.path }}"
-          version: "{{ vars.ref | default 'main' }}"
+          version: "{{ vars.ref | default \"main\" }}"
           force: true
