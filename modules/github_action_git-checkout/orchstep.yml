@@ -9,6 +9,7 @@ tasks:
         desc: "Clone via native OrchStep git function"
         func: git
         args:
+          operation: "clone"
           url: "{{ vars.repository }}"
           dest: "{{ vars.path | default '.' }}"
           branch: "{{ vars.ref | default 'main' }}"
@@ -38,12 +39,14 @@ tasks:
       - name: git_fetch
         func: git
         args:
+          operation: "fetch"
           repo: "{{ vars.path }}"
           remote: "origin"
           depth: 1
       - name: git_checkout
         func: git
         args:
+          operation: "checkout"
           repo: "{{ vars.path }}"
           version: "{{ vars.ref | default 'main' }}"
           force: true
