@@ -29,9 +29,9 @@ tasks:
           echo "branch=${BRANCH}"
           echo "clone_dir=$(pwd)"
         outputs:
-          commit_sha: "{{ result.output | regexFind 'commit_sha=([a-f0-9]+)' }}"
-          branch: "{{ result.output | regexFind 'branch=([^\\s]+)' }}"
-          clone_dir: "{{ result.output | regexFind 'clone_dir=([^\\s]+)' }}"
+          commit_sha: "{{ result.output | regexFind \"commit_sha=([a-f0-9]+)\" }}"
+          branch: "{{ result.output | regexFind \"branch=([^\\\\s]+)\" }}"
+          clone_dir: "{{ result.output | regexFind \"clone_dir=([^\\\\s]+)\" }}"
 
   fetch:
     desc: "Fetch updates for an already-cloned repo"
