@@ -1,8 +1,7 @@
-# Demo 1 — Sequential Validation (no actions/checkout@v4)
-# Bootstrap: 1 curl of the workflow YAML. The OrchStep workflow then imports
-# @orchstep/github_action_git-checkout natively — the engine resolves the
-# @orchstep/ scope to github.com/orchstep/orchstep and fetches the module
-# into its cache automatically. No module files need to be bootstrapped.
+# Demo 1 — Sequential Validation (no actions/checkout@v4, no curl)
+# Uses orchstep run --module to clone the repo via @orchstep/github_action_git-checkout,
+# then runs the validation workflow from the cloned repo.
+# The --module flag resolves, fetches, and executes a module task in one CLI command.
 
 name: demo-orchstep-sequential
 on:
@@ -20,16 +19,19 @@ jobs:
     name: orchstep validate (sequential)
     runs-on: ubuntu-latest
     steps:
-      - name: Bootstrap workflow file
-        run: |
-          mkdir -p demos/11-orchestrated-validation
-          curl -fsSL https://raw.githubusercontent.com/orchstep/orchstep/main/demos/11-orchestrated-validation/sequential-workflow.yml \
-            -o demos/11-orchestrated-validation/sequential-workflow.yml
-
       - uses: orchstep/setup-orchstep@v1
         with:
           version: latest
 
+      # Clone the repo using the git-checkout module — no actions/checkout@v4 needed.
+      # The module is resolved via @orchstep/ scope, fetched from github.com/orchstep/orchstep,
+      # then executes the checkout task with the provided vars.
+      - name: Clone repo via module
+        run: orchstep run --module @orchstep/github_action_git-checkout checkout \
+          --var repository="https://github.com/orchstep/orchstep.git" \
+          --var path=. --var ref=main --var depth=1
+
+      # Run the validation workflow from the now-cloned repo
       - uses: orchstep/run-orchstep@v1
         with:
           workflow: demos/11-orchestrated-validation/sequential-workflow.yml

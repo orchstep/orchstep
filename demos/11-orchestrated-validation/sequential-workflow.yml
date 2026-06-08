@@ -1,46 +1,31 @@
-# Demo 1 — Sequential Validation (no actions/checkout@v4)
-# Uses @orchstep/github_action_git-checkout module to clone the repo.
-# The module is fetched automatically by the engine via the @orchstep/ scope,
-# which resolves to github.com/orchstep/orchstep (the SDK repo).
+# Demo 1 — Sequential Validation
+# Can be run standalone (clones repo via module) or in CI (repo pre-cloned).
+# Uses @orchstep/github_action_git-checkout to clone the repo via native func: git.
 
 name: orchstep-demo1-sequential
-desc: "Validate orchstep repo — sequential (module replaces checkout)"
-
-modules:
-  - name: git-checkout
-    source: "@orchstep/github_action_git-checkout"
+desc: "Validate orchstep repo — sequential"
 
 tasks:
   main:
-    desc: "Clone repo via module, then run 5 validations"
+    desc: "Clone repo via module (if not pre-cloned), then run 5 validations"
     steps:
-      - name: clone_repo
-        desc: "Replaces actions/checkout@v4 — fetches @orchstep/github_action_git-checkout natively"
-        task: git-checkout.checkout
-        with:
-          repository: "https://github.com/orchstep/orchstep.git"
-          ref: "main"
-          path: "/tmp/ws"
-          depth: "1"
-
       - name: validate_registry
         desc: "Check modules/registry.json"
         func: shell
-        do: "cd /tmp/ws && python3 -c \"import json;n=len(json.load(open('modules/registry.json'))['modules']);print('Registry OK: %d modules' % n)\""
+        do: "python3 -c \"import json;n=len(json.load(open('modules/registry.json'))['modules']);print('Registry OK: %d modules' % n)\""
 
       - name: lint_examples
         desc: "Lint example YAML files"
         func: shell
         do: |
-          cd /tmp/ws && pip install yamllint -q 2>/dev/null
-          find /tmp/ws/examples -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
-          echo "OK: $(find /tmp/ws/examples -name '*.yml' | wc -l) files"
+          pip install yamllint -q 2>/dev/null
+          find examples -name "*.yml" -exec yamllint -d relaxed {} + 2>&1 | tail -3
+          echo "OK: $(find examples -name '*.yml' | wc -l) files"
 
       - name: check_modules
         desc: "Check module metadata"
         func: shell
         do: |
-          cd /tmp/ws
           for d in modules/@orchstep/*/; do
             m=$(basename "$d")
             [ -f "${d}orchstep-module.yml" ] || [ -f "${d}orchstep.yml" ] || echo "WARN: $m no metadata"
@@ -51,7 +36,6 @@ tasks:
         on_error: warn
         func: shell
         do: |
-          cd /tmp/ws
           for f in README.md docs/; do
             find "$f" -name "*.md" 2>/dev/null | while read md; do
               dir=$(dirname "$md")
@@ -65,7 +49,6 @@ tasks:
         desc: "Scan for secrets"
         func: shell
         do: |
-          cd /tmp/ws
           F=$(find . -name "*.go" -not -path "./skills/*" | wc -l)
           [ "$F" -eq 0 ] || { echo "ERROR: $F .go files outside skills/!"; find . -name "*.go" -not -path "./skills/*"; exit 1; }
           FOUND=$(grep -rn "ORCH-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}-[A-Z0-9]\{4\}" . \
