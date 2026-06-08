@@ -23,16 +23,16 @@ jobs:
         with:
           version: latest
 
-      # Clone the repo using the git-checkout module — no actions/checkout@v4 needed.
-      # The module is resolved via @orchstep/ scope, fetched from github.com/orchstep/orchstep,
-      # then executes the checkout task with the provided vars.
+      # Clone the repo into a subdirectory using the git-checkout module.
+      # The module is resolved via @orchstep/ scope, fetched from github.com/orchstep/orchstep.
       - name: Clone repo via module
         run: |
           orchstep run --module @orchstep/github_action_git-checkout checkout \
             --var repository="https://github.com/orchstep/orchstep.git" \
-            --var path=. --var ref=main --var depth=1
+            --var path=repo --var ref=main --var depth=1
 
-      # Run the validation workflow from the now-cloned repo
+      # Run the validation workflow from the cloned subdirectory
       - uses: orchstep/run-orchstep@v1
         with:
           workflow: demos/11-orchestrated-validation/sequential-workflow.yml
+          working-directory: repo
