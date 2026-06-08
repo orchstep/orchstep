@@ -1,5 +1,6 @@
 # Demo 2 — Parallel Validation (no actions/checkout@v4, no curl)
-# Uses orchstep run --module to clone the repo, then runs validations in parallel.
+# A tiny inline bootstrap workflow clones the repo via the git-checkout
+# module, then run-orchstep runs the parallel validation workflow.
 
 name: demo-orchstep-parallel
 on:
@@ -21,11 +22,32 @@ jobs:
         with:
           version: latest
 
-      - name: Clone repo via module
+      # Clone the repo using OrchStep itself (replaces actions/checkout@v4).
+      - name: Clone repo via OrchStep module
         run: |
-          orchstep run --module @orchstep/github_action_git-checkout checkout \
-            --var repository="https://github.com/orchstep/orchstep.git" \
-            --var path=repo --var ref=main --var depth=1
+          cat > bootstrap.yml <<'YML'
+          name: bootstrap
+          registries:
+            orchstep:
+              url: github.com/orchstep/orchstep
+              tag: "{module}/v{version}"
+          modules:
+            - name: gc
+              source: "@orchstep/github_action_git-checkout"
+              version: "^1.0.0"
+          tasks:
+            main:
+              steps:
+                - name: clone
+                  module: gc
+                  task: checkout
+                  with:
+                    repository: "https://github.com/orchstep/orchstep.git"
+                    path: repo
+                    ref: main
+                    depth: "1"
+          YML
+          orchstep run -f bootstrap.yml main
 
       - uses: orchstep/run-orchstep@v1
         with:
