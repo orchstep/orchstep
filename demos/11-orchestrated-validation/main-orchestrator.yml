@@ -1,27 +1,41 @@
-# Demo 3 — Module-Based Orchestration
-# Each validation check is a proper @orchstep/demo-* module imported via
-# the `modules:` block and invoked with the `module:` + `task:` keys.
+# Demo 3 — Module-Based Orchestration (remote modules)
+# Each validation check is a proper @orchstep/demo-* module pulled from the
+# registry over the network — not from local disk. The `registries:` block
+# points the @orchstep scope at the public module repo; the engine resolves
+# each `@orchstep/demo-*` source to a versioned tag, fetches it into the
+# module cache, and invokes its task via the `module:` + `task:` keys.
 #
 # This is architecturally distinct from Demo 1 (inlined tasks) and
-# Demo 2 (parallel execution): the orchestrator owns no validation logic
-# of its own — it composes five independent, reusable modules. Each module
-# lives under modules/@orchstep/ (the official registry scope) and is
-# sourced here by path so the demo runs against the repo as cloned in CI.
+# Demo 2 (parallel execution): the orchestrator owns no validation logic of
+# its own and ships no module files — it composes five independent, remotely
+# distributed, versioned modules.
 
 name: orchstep-demo3-modules
 desc: "Validate orchstep repo — module-based orchestration"
 
+# Resolve the @orchstep scope from the published module registry.
+# Modules live flat at modules/<name> and are tagged <name>/v<version>.
+registries:
+  orchstep:
+    url: github.com/orchstep/orchstep
+    tag: "{module}/v{version}"
+
 modules:
   - name: vjson
-    source: "../../modules/@orchstep/demo-validate-json"
+    source: "@orchstep/demo-validate-json"
+    version: "^1.0.0"
   - name: vyaml
-    source: "../../modules/@orchstep/demo-validate-yaml"
+    source: "@orchstep/demo-validate-yaml"
+    version: "^1.0.0"
   - name: vmods
-    source: "../../modules/@orchstep/demo-check-modules"
+    source: "@orchstep/demo-check-modules"
+    version: "^1.0.0"
   - name: vlinks
-    source: "../../modules/@orchstep/demo-check-links"
+    source: "@orchstep/demo-check-links"
+    version: "^1.0.0"
   - name: vsecret
-    source: "../../modules/@orchstep/demo-scan-secrets"
+    source: "@orchstep/demo-scan-secrets"
+    version: "^1.0.0"
 
 tasks:
   main:
