@@ -26,6 +26,8 @@ orchstep run <task-name> [flags]
 | `--format json` | Output as structured JSON | For agent consumption |
 | `--log-level level` | Log verbosity | `debug`, `info`, `warn`, `error` |
 | `--dry-run` | Validate without executing | Check before running |
+| `--module @scope/name` | Run a task from a module (no workflow file needed) | `--module @orchstep/github_action_git-checkout checkout` |
+| `--list-tasks` | List exported tasks from a module (with `--module`) | `--module @orchstep/xxx --list-tasks` |
 
 **Examples:**
 
