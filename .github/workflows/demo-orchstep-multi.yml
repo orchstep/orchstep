@@ -24,11 +24,11 @@ jobs:
           version: latest
 
       # Clone the repo with OrchStep, replacing actions/checkout@v4.
-      # `run --module` resolves the @orchstep/github_action_git-checkout module
-      # from the official registry and runs its checkout task in one command.
+      # `run --module` resolves the @community/github_action_git-checkout module
+      # from the registry and runs its checkout task in one command.
       - name: Clone repo via OrchStep module
         run: |
-          orchstep run --module @orchstep/github_action_git-checkout checkout \
+          orchstep run --module @community/github_action_git-checkout checkout \
             --var repository="https://github.com/orchstep/orchstep.git" \
             --var path=repo --var ref=main --var depth=1
 

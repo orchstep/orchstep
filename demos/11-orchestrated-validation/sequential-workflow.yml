@@ -1,6 +1,6 @@
 # Demo 1 — Sequential Validation
 # Can be run standalone (clones repo via module) or in CI (repo pre-cloned).
-# Uses @orchstep/github_action_git-checkout to clone the repo via native func: git.
+# Uses @community/github_action_git-checkout to clone the repo via native func: git.
 
 name: orchstep-demo1-sequential
 desc: "Validate orchstep repo — sequential"

@@ -1,5 +1,5 @@
 # Demo 2 — Parallel Validation (no actions/checkout@v4, no curl)
-# `orchstep run --module @orchstep/github_action_git-checkout` clones the
+# `orchstep run --module @community/github_action_git-checkout` clones the
 # repo in one CLI command, then run-orchstep runs the parallel workflow.
 
 name: demo-orchstep-parallel
@@ -25,7 +25,7 @@ jobs:
       # Clone the repo with OrchStep, replacing actions/checkout@v4.
       - name: Clone repo via OrchStep module
         run: |
-          orchstep run --module @orchstep/github_action_git-checkout checkout \
+          orchstep run --module @community/github_action_git-checkout checkout \
             --var repository="https://github.com/orchstep/orchstep.git" \
             --var path=repo --var ref=main --var depth=1
 
