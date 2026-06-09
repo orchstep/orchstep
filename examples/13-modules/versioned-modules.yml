@@ -2,64 +2,63 @@
 # Use semantic version constraints to pin module versions.
 # Supported: ^1.0.0, ~1.2.0, >=1.0.0, 1.2.0 (exact), * (any)
 #
-# Version constraints let you balance stability with updates.
-# Combined with the lockfile (orchstep-lock.yml), you get
-# reproducible builds even with flexible constraints.
+# Constraints are matched against the repo's git tags. This example
+# imports the same real module (tags: v1.1.0, v2.0.0) under different
+# constraints so you can see which version each one selects.
 #
 # Try: orchstep run
+#  ->  'compatible' (^1.0.0) resolves to v1.1.0
+#  ->  'latest'     (*)      resolves to v2.0.0
 
 name: versioned-modules-demo
 desc: "Semantic version constraints for module imports"
 
 modules:
-  # Caret (^): compatible with major version
-  # ^1.2.0 matches >=1.2.0 and <2.0.0
-  - name: auth
-    source: "git:https://github.com/orchstep/modules.git#auth"
-    version: "^1.2.0"
+  # Caret (^1.0.0): highest compatible 1.x  -> v1.1.0 (not v2.0.0)
+  - name: compatible
+    source: "github.com/orchstep/test-module-single"
+    version: "^1.0.0"
 
-  # Tilde (~): compatible with minor version
-  # ~1.2.0 matches >=1.2.0 and <1.3.0
-  - name: logging
-    source: "git:https://github.com/orchstep/modules.git#logging"
-    version: "~1.2.0"
+  # Exact: pin to a specific version -> v1.1.0 only
+  - name: pinned
+    source: "github.com/orchstep/test-module-single"
+    version: "1.1.0"
 
-  # Exact: pin to a specific version
-  # 1.2.0 matches only 1.2.0
-  - name: database
-    source: "git:https://github.com/orchstep/modules.git#database"
-    version: "1.2.0"
-
-  # Range: minimum version requirement
-  # >=1.0.0 matches any version 1.0.0 or higher
-  - name: cache
-    source: "git:https://github.com/orchstep/modules.git#cache"
-    version: ">=1.0.0"
-
-  # Wildcard: accept any version (lockfile pins the actual version)
-  # * matches any version
-  - name: utils
-    source: "git:https://github.com/orchstep/modules.git#utils"
+  # Wildcard: accept any version -> highest available, v2.0.0
+  - name: latest
+    source: "github.com/orchstep/test-module-single"
     version: "*"
 
 tasks:
   main:
-    desc: "Show version constraint patterns"
+    desc: "Show how each constraint resolves to a concrete version"
     steps:
+      - name: from_compatible
+        module: compatible
+        task: hello
+        with:
+          name: "caret ^1.0.0"
+
+      - name: from_latest
+        module: latest
+        task: hello
+        with:
+          name: "wildcard *"
+
       - name: explain_versions
         func: shell
         do: |
-          echo "=== Semantic Version Constraints ==="
           echo ""
+          echo "=== Semantic Version Constraints ==="
           echo "Constraint    Example     Matches"
           echo "----------    -------     -------"
-          echo "^1.2.0        caret       >=1.2.0, <2.0.0  (compatible releases)"
+          echo "^1.0.0        caret       >=1.0.0, <2.0.0  (compatible releases)"
           echo "~1.2.0        tilde       >=1.2.0, <1.3.0  (patch updates only)"
-          echo "1.2.0         exact       1.2.0 only        (fully pinned)"
+          echo "1.1.0         exact       1.1.0 only        (fully pinned)"
           echo ">=1.0.0       range       1.0.0 and above   (minimum version)"
-          echo "*             wildcard    any version        (lockfile pins it)"
+          echo "*             wildcard    highest available (lockfile pins it)"
           echo ""
           echo "Recommendation:"
-          echo "  Use ^x.y.z for libraries (accept compatible updates)"
+          echo "  Use ^x.y.z for most imports (accept compatible updates)"
           echo "  Use exact for production-critical modules"
-          echo "  Always commit orchstep-lock.yml for reproducibility"
+          echo "  Commit orchstep.lock for reproducibility (orchstep module lock)"

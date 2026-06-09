@@ -2,54 +2,51 @@
 # Pin module versions for reproducible builds.
 # Even with version: *, the lockfile ensures consistent versions.
 #
-# When you run orchstep with modules, it resolves versions and
-# writes orchstep-lock.yml. Subsequent runs use the locked
-# versions instead of re-resolving.
+# Run `orchstep module lock` to resolve every imported module and write
+# orchstep.lock. Commit that file so every teammate and CI run uses the
+# exact same versions.
 #
-# Commands:
-#   orchstep run           -- uses locked versions
-#   orchstep update        -- re-resolves and updates the lockfile
-#
-# Try: orchstep run
+# Try:
+#   orchstep module lock     # resolve + write orchstep.lock
+#   cat orchstep.lock        # inspect the pinned versions
+#   orchstep run             # run using the imported modules
 
 name: module-lockfile-demo
-desc: "Reproducible builds with orchstep-lock.yml"
+desc: "Reproducible builds with orchstep.lock"
 
 modules:
-  - name: deploy
-    source: "git:https://github.com/orchstep/modules.git#deploy"
-    version: "^1.0.0"    # Flexible constraint
-
-  - name: notify
-    source: "git:https://github.com/orchstep/modules.git#notify"
-    version: "*"          # Any version -- lockfile pins it
+  - name: greeter
+    source: "github.com/orchstep/test-module-single"
+    version: "^1.0.0"    # flexible constraint — the lock pins the exact version
 
 tasks:
   main:
     desc: "Explain the lockfile workflow"
     steps:
+      - name: greet
+        module: greeter
+        task: hello
+        with:
+          name: "locked build"
+
       - name: explain_lockfile
         func: shell
         do: |
-          echo "=== Module Lockfile (orchstep-lock.yml) ==="
           echo ""
-          echo "The lockfile records the exact versions resolved for"
-          echo "each module, ensuring every team member and CI server"
-          echo "uses the same versions."
+          echo "=== Module Lockfile (orchstep.lock) ==="
+          echo "'orchstep module lock' records the exact version resolved for"
+          echo "each module so every run is reproducible."
           echo ""
-          echo "Example orchstep-lock.yml:"
+          echo "Example orchstep.lock:"
           echo "  modules:"
-          echo "    deploy:"
-          echo "      version: 1.2.3"
-          echo "      resolved: git:https://github.com/orchstep/modules.git#deploy/v1.2.3"
-          echo "      integrity: sha256:abc123..."
-          echo "    notify:"
-          echo "      version: 2.0.1"
-          echo "      resolved: git:https://github.com/orchstep/modules.git#notify/v2.0.1"
-          echo "      integrity: sha256:def456..."
+          echo "    greeter:"
+          echo "      source: github.com/orchstep/test-module-single"
+          echo "      version: 1.1.0"
+          echo "      tag: v1.1.0"
+          echo "      commit: \"\""
           echo ""
           echo "Workflow:"
-          echo "  1. orchstep run        -- resolves and creates lockfile"
-          echo "  2. Commit orchstep-lock.yml to version control"
-          echo "  3. Future runs use locked versions automatically"
-          echo "  4. orchstep update     -- re-resolves to latest matching"
+          echo "  1. orchstep module lock   -- resolve + write orchstep.lock"
+          echo "  2. commit orchstep.lock   -- to version control"
+          echo "  3. teammates/CI           -- get identical versions"
+          echo "  4. orchstep module lock   -- re-run to bump within constraints"

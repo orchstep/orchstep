@@ -1,59 +1,60 @@
-# Example: Monorepo Module Scope
-# Import specific modules from a monorepo using scope.
+# Example: Monorepo Modules via a Custom Registry Scope
+# When one Git repository hosts many modules, register it as a scope and
+# import each module with @scope/name. The engine resolves @scope/name to
+# modules/@<scope>/<name> inside that repo and versions it by the tag
+# <name>/vX.Y.Z — so modules in one monorepo are imported and versioned
+# independently.
 #
-# When a Git repository contains multiple modules, use the scope
-# field to specify which sub-module to import. This is common in
-# monorepos where one repository hosts many reusable modules.
+# This is the same mechanism the built-in scopes use:
+#   @orchstep | @community | @ai  ->  github.com/orchstep/orchstep
+# Define your own with a `registries:` block (illustrative repo below).
 #
-# Try: orchstep run
+# Try: orchstep run   (illustrative — points at a hypothetical org repo)
 
 name: monorepo-scope-demo
-desc: "Import scoped modules from a monorepo"
+desc: "Import scoped modules from a monorepo via a custom registry"
+
+# Map a scope name to the monorepo that hosts the modules.
+registries:
+  acme:
+    url: github.com/acme-corp/platform-modules
+    # tag template is optional; defaults to "{module}/v{version}"
 
 modules:
-  # Import from an organization's monorepo using scope
   - name: auth
-    source: "git:https://github.com/acme-corp/platform-modules.git"
-    scope: "@acme/auth"
+    source: "@acme/auth"            # -> modules/@acme/auth, tag auth/vX.Y.Z
     version: "^1.0.0"
 
   - name: billing
-    source: "git:https://github.com/acme-corp/platform-modules.git"
-    scope: "@acme/billing"
+    source: "@acme/billing"         # -> modules/@acme/billing, tag billing/vX.Y.Z
     version: "^2.1.0"
 
   - name: notifications
-    source: "git:https://github.com/acme-corp/platform-modules.git"
-    scope: "@acme/notifications"
+    source: "@acme/notifications"
     version: "~1.5.0"
 
 tasks:
   main:
-    desc: "Show how scoped module imports work"
+    desc: "Show how scoped monorepo imports work"
     steps:
       - name: explain_scope
         func: shell
         do: |
-          echo "=== Monorepo Module Scope ==="
+          echo "=== Monorepo Modules via Scope ==="
           echo ""
-          echo "A single Git repository can host multiple modules."
-          echo "Use 'scope' to select which module to import."
-          echo ""
-          echo "Repository layout:"
-          echo "  platform-modules/"
-          echo "    @acme/auth/"
-          echo "      orchstep.yml"
-          echo "    @acme/billing/"
-          echo "      orchstep.yml"
-          echo "    @acme/notifications/"
-          echo "      orchstep.yml"
+          echo "Repository layout (github.com/acme-corp/platform-modules):"
+          echo "  modules/@acme/auth/          orchstep.yml + orchstep-module.yml"
+          echo "  modules/@acme/billing/       ..."
+          echo "  modules/@acme/notifications/ ..."
+          echo "  tags: auth/v1.0.0, billing/v2.1.0, notifications/v1.5.0"
           echo ""
           echo "Import syntax:"
+          echo "  registries:"
+          echo "    acme: { url: github.com/acme-corp/platform-modules }"
           echo "  modules:"
           echo "    - name: auth"
-          echo "      source: git:https://github.com/org/repo.git"
-          echo "      scope: \"@acme/auth\""
+          echo "      source: \"@acme/auth\""
           echo "      version: \"^1.0.0\""
           echo ""
-          echo "All three modules share one source repository but"
-          echo "are versioned and imported independently."
+          echo "Built-in scopes @orchstep / @community / @ai work the same way,"
+          echo "resolving to github.com/orchstep/orchstep with no config."
