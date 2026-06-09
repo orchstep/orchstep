@@ -7,7 +7,7 @@
 curl -fsSL https://orchstep.dev/install.sh | sh
 
 # Homebrew
-brew tap orchstep/homebrew-tap && brew install orchstep
+brew tap orchstep/tap && brew install orchstep
 
 # npm
 npm install -g orchstep

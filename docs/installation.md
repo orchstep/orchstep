@@ -5,7 +5,7 @@
 | Method | Command |
 |--------|---------|
 | Quick install | `curl -fsSL https://orchstep.dev/install.sh \| sh` |
-| Homebrew | `brew tap orchstep/homebrew-tap && brew install orchstep` |
+| Homebrew | `brew tap orchstep/tap && brew install orchstep` |
 | npm | `npm install -g orchstep` |
 | pip | `pip install orchstep` |
 | Docker | `docker pull orchstep/orchstep:latest` |
