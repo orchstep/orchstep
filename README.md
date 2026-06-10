@@ -26,6 +26,47 @@ OrchStep orchestrates multi-step workflows defined in YAML. It delegates to your
 >
 > The `@orchstep/workflow-viewer` package powers the visualizer — an interactive React component that renders OrchStep workflows as directed graphs. Features include Smart/Vertical/Horizontal layouts, dark mode, collapsible tasks, search, export to PNG, and copy to clipboard. Available at [`packages/workflow-viewer`](packages/workflow-viewer).
 
+## 🎬 Capture agent work → replay with zero tokens
+
+When an AI coding agent (Claude Code, Cursor, …) solves a real task for you —
+running a test suite, a deploy, a multi-step shell sequence — that reasoning
+costs tokens **every single time you run it**. With OrchStep you capture the
+solved session **once** into a replayable `orchstep.yml`. Every run after that
+executes the *same business logic* deterministically — **no LLM, no tokens, no
+drift.**
+
+For repeated testing and operational work that's **up to ~80% less agent token
+spend**: the first run pays for the reasoning; every run after is just
+`orchstep run`.
+
+![Capture a Claude Code session into a replayable OrchStep workflow](docs/images/capture-demo.gif)
+
+```bash
+# In Claude Code, right after the agent finishes the task:
+/orchstep-capture                       # compress the session into orchstep.yml
+
+# Forever after — same result, no model in the loop:
+orchstep run -f captured.orchstep.yml
+```
+
+> Record your test steps or shell scripts as a workflow once, and re-running the
+> same logic never touches an LLM again. The [`orchstep-capture`](skills/orchstep-capture/)
+> skill turns "the agent already did this once" into a permanent, shareable,
+> deterministic workflow.
+
+### 🧠 Design workflows with your agent
+
+The [`orchstep-workflow-design`](skills/orchstep-workflow-design/) skill teaches
+Claude (and any MCP-capable agent) to author **production-grade** OrchStep YAML —
+real failure handling, not just the happy path. It ships dense references,
+annotated examples, and a guided wizard:
+
+- **Quick mode** — give a concrete task, get a correct workflow, no questions.
+- **Wizard mode** — "help me design this" → 2–4 intent questions → a tailored workflow.
+
+Install it from [`skills/orchstep-workflow-design/`](skills/orchstep-workflow-design/)
+and your agent designs reusable workflows that are right the first time.
+
 ## Quick Start
 
 ```bash
@@ -116,7 +157,7 @@ OrchStep is designed for AI agent integration:
 
 - **CLI:** `orchstep run task --format json` for structured output
 - **MCP Server:** `orchstep mcp serve` for native tool_call integration
-- **Skills:** Install skill documents from `skills/` to teach agents OrchStep patterns
+- **Skills:** Install skill documents from `skills/` to teach agents OrchStep patterns — including [`orchstep-capture`](skills/orchstep-capture/) (turn a solved session into a replayable, zero-token workflow) and [`orchstep-workflow-design`](skills/orchstep-workflow-design/) (author production-grade workflows)
 - **Prompts:** Interactive input for humans, auto-skipped for CI/agents with `ORCHSTEP_NON_INTERACTIVE=true`
 
 ## Cross-Platform
