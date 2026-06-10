@@ -1,0 +1,27 @@
+# Many modules in ONE repo, under a custom registry scope (@mycompany).
+# Modules live at modules/@mycompany/<name>/ and are tagged <name>/vX.Y.Z.
+# Try: orchstep run
+name: custom-registry-monorepo-demo
+desc: "Import multiple modules from one monorepo via a custom @scope"
+
+registries:
+  mycompany:
+    url: github.com/orchstep/monorepo-multi-modules
+
+modules:
+  - name: greet
+    source: "@mycompany/module1"
+    version: "^1.0.0"
+  - name: calc
+    source: "@mycompany/module2"
+    version: "^1.0.0"
+  - name: fmt
+    source: "@mycompany/module3"
+    version: "^1.0.0"
+
+tasks:
+  main:
+    steps:
+      - { name: a, module: greet, task: greet, with: { name: "OrchStep" } }
+      - { name: b, module: calc,  task: add,   with: { a: "2", b: "3" } }
+      - { name: c, module: fmt,   task: upper, with: { text: "hello" } }

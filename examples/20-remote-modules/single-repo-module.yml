@@ -1,0 +1,19 @@
+# Remote module from a single-module repo (the whole repo IS the module).
+# Files live at the repo root; versions come from vX.Y.Z tags.
+# Try: orchstep run
+name: single-repo-module-demo
+desc: "Import a module directly from a Git URL"
+
+modules:
+  - name: greeter
+    source: "github.com/orchstep/test-module-single"   # tags: v1.0.0, v1.1.0, v2.0.0
+    version: "^1.0.0"                                   # -> v1.1.0
+
+tasks:
+  main:
+    steps:
+      - name: greet
+        module: greeter
+        task: hello
+        with:
+          name: "OrchStep"

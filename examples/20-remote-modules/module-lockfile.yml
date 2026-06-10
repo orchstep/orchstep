@@ -1,0 +1,21 @@
+# Pin exact versions for reproducible builds.
+# Run:
+#   orchstep module lock     # resolve + write orchstep.lock
+#   cat orchstep.lock        # inspect pinned versions
+#   orchstep run
+name: module-lockfile-demo
+desc: "Reproducible builds with orchstep.lock"
+
+modules:
+  - name: greeter
+    source: "github.com/orchstep/test-module-single"
+    version: "^1.0.0"    # flexible; the lock pins the exact version (v1.1.0)
+
+tasks:
+  main:
+    steps:
+      - name: greet
+        module: greeter
+        task: hello
+        with:
+          name: "locked build"

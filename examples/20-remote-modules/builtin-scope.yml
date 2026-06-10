@@ -1,0 +1,25 @@
+# Built-in @community scope — resolves from the official registry with no config.
+# This module is OrchStep's answer to actions/checkout@v4.
+# Try: orchstep run   (clones a small public repo into ./repo)
+name: builtin-scope-demo
+desc: "Import a module from a built-in registry scope (@community)"
+
+modules:
+  - name: clone
+    source: "@community/github_action_git-checkout"
+    version: "^1.0.0"
+
+tasks:
+  main:
+    steps:
+      - name: checkout
+        module: clone
+        task: checkout
+        with:
+          repository: "https://github.com/orchstep/test-module-single.git"
+          path: repo
+          ref: main
+          depth: "1"
+      - name: show
+        func: shell
+        do: "ls repo && echo '✓ cloned via @community/github_action_git-checkout'"

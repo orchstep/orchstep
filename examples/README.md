@@ -28,13 +28,14 @@ orchstep list           # List all available tasks
 | 10 | [Environment Management](10-environment-management/) | 4 | Env vars, scoping, groups, .env file loading |
 | 11 | [Configuration](11-configuration/) | 3 | Config defaults, inline config, task discovery |
 | 12 | [Assertions](12-assertions/) | 3 | Conditions, multi-assert, helper functions |
-| 13 | [Modules](13-modules/) | 10 | Reusable components, config, overrides, nesting |
+| 13 | [Modules](13-modules/) | 6 | Local reusable components: config, overrides, scoping, nesting |
 | 14 | [Real-World Patterns](14-real-world-patterns/) | 4 | Deploy pipeline, promotion, incident response, releases |
 | 15 | [Parallel Execution](15-parallel-execution/) | 2 | Concurrent steps, fan-out/fan-in, parallel health checks |
 | 16 | [User Prompts](16-user-prompts/) | 4 | Interactive input, select/confirm/text/password/multiselect, non-interactive mode |
 | 17 | [Task Discovery](17-task-discovery/) | 4 | Auto-discovery, naming, precedence, exclusion |
 | 18 | [Nested Patterns](18-nested-patterns/) | 3 | Nested conditionals, switch-in-loop, deep elif |
 | 19 | [Stdin & Pipes](19-stdin-pipe/) | 3 | Pipe data in, auto-detect JSON/YAML, --stdin-var |
+| 20 | [Remote Modules](20-remote-modules/) | 5 | Import over the network: Git URL, custom registry, built-in scope, versioning, lockfile |
 
 ---
 
@@ -162,10 +163,10 @@ orchstep list           # List all available tasks
 | [module-variable-scoping.yml](13-modules/module-variable-scoping.yml) | Scope isolation: consumer vs module variables |
 | [self-contained-module.yml](13-modules/self-contained-module.yml) | Single-file module with metadata, schema, and exports |
 | [nested-modules.yml](13-modules/nested-modules.yml) | Modules that import other modules (dependency chains) |
-| [remote-registry-import.yml](13-modules/remote-registry-import.yml) | Import modules from a Git registry with tag versioning |
-| [versioned-modules.yml](13-modules/versioned-modules.yml) | Semantic version constraints: ^, ~, >=, exact, wildcard |
-| [module-lockfile.yml](13-modules/module-lockfile.yml) | Reproducible builds with orchstep-lock.yml version pinning |
-| [monorepo-scope.yml](13-modules/monorepo-scope.yml) | Import scoped modules from monorepos |
+
+> These all use local `./modules/` sources. For importing modules over the
+> network (Git URL, custom registry, built-in scope, versioning, lockfile) see
+> [20 - Remote Modules](20-remote-modules/).
 
 Module directory structure:
 ```
@@ -296,3 +297,15 @@ contains(vars.tags, "critical")        # Array/string search
 matches("^v\\d+", vars.version)        # Regex match
 get("vars.config.db.host")             # Safe nested access
 ```
+
+## 20 - Remote Modules
+
+Importing modules over the network (all repos are real and public, so these run as-is):
+
+| File | What it shows |
+|------|---------------|
+| [single-repo-module.yml](20-remote-modules/single-repo-module.yml) | Full Git URL — the whole repo is one module (`orchstep/test-module-single`) |
+| [versioned-modules.yml](20-remote-modules/versioned-modules.yml) | Semver constraints against real tags (`^1.0.0` → v1.1.0, `*` → v2.0.0) |
+| [custom-registry-monorepo.yml](20-remote-modules/custom-registry-monorepo.yml) | `registries:` + `@mycompany/<name>` from one monorepo (`orchstep/monorepo-multi-modules`) |
+| [builtin-scope.yml](20-remote-modules/builtin-scope.yml) | Built-in `@community` scope (no config) — git-checkout module |
+| [module-lockfile.yml](20-remote-modules/module-lockfile.yml) | Pin versions with `orchstep module lock` → `orchstep.lock` |
