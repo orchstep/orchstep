@@ -99,9 +99,9 @@ tasks:
           http_status: 200
           response: '{"status":"healthy","version":"{{ vars.version }}"}'
         retry:
-          max: 5
-          delay: 3
-          backoff: 2
+          max_attempts: 5
+          interval: "3s"
+          backoff_rate: 2.0
 
       - name: validate_health
         func: assert
