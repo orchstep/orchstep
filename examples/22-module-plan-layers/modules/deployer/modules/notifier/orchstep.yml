@@ -1,0 +1,14 @@
+name: notifier
+desc: Notification module (layer 3)
+
+defaults:
+  channel: "#general"
+  text: "(no message)"
+
+tasks:
+  send:
+    desc: Send a notification
+    steps:
+      - name: post
+        func: shell
+        do: 'echo "[{{ vars.channel }}] {{ vars.text }}"'

@@ -1,0 +1,39 @@
+name: platform-deployer
+desc: Org-standard deploy module (layer 2)
+
+defaults:
+  strategy: "rolling"
+  replicas: "2"
+  service: "unset"
+  tag: "latest"
+
+modules:
+  - name: notifier
+    source: "./modules/notifier"
+    config:
+      channel: "#deploys"
+
+tasks:
+  deploy:
+    desc: Deploy a service with the configured strategy
+    steps:
+      - name: validate
+        func: shell
+        do: 'echo "validating {{ vars.service }}:{{ vars.tag }}"'
+
+      - name: strategy_gate
+        if: '{{ eq vars.strategy "canary" }}'
+        then:
+          - name: canary
+            func: shell
+            do: 'echo "canary rollout for {{ vars.service }} ({{ vars.replicas }} replicas)"'
+        else:
+          - name: rolling
+            func: shell
+            do: 'echo "rolling deploy for {{ vars.service }}"'
+
+      - name: announce
+        module: notifier
+        task: send
+        with:
+          text: "deployed {{ vars.service }}:{{ vars.tag }}"

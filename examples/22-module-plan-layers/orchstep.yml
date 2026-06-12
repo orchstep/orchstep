@@ -1,0 +1,34 @@
+name: storefront-platform-release
+desc: App release through a platform module that itself uses a notifier module
+
+defaults:
+  app: "storefront"
+  version: "5.1.0"
+
+modules:
+  - name: deployer
+    source: "./modules/deployer"
+    config:
+      strategy: "canary"
+      replicas: "6"
+
+tasks:
+  release:
+    desc: Release the app via the platform deployer module (layer 1)
+    steps:
+      - name: build
+        func: shell
+        do: 'echo "built {{ vars.app }}:{{ vars.version }}"'
+        outputs:
+          artifact: '{{ result.output | regexFind "[a-z]+:[0-9.]+" }}'
+
+      - name: ship
+        module: deployer
+        task: deploy
+        with:
+          service: "{{ vars.app }}"
+          tag: "{{ vars.version }}"
+
+      - name: confirm
+        func: shell
+        do: 'echo "release {{ vars.version }} confirmed"'
