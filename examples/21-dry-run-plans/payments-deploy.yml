@@ -7,6 +7,7 @@ defaults:
   replicas: "2"
   mode: "standard"
   registry: "registry.local"
+  notify_list: ["alice", "bob"]
 
 env_groups:
   prod:
@@ -61,7 +62,7 @@ tasks:
       - name: notify_each
         func: shell
         loop:
-          items: '["alice", "bob"]'
+          items: '{{ vars.notify_list }}'
         do: 'echo "notify {{ loop.item }}: {{ vars.app }} {{ vars.version }} is live"'
     finally:
       - name: cleanup
