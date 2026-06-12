@@ -1,0 +1,174 @@
+name: release-orchestrator
+desc: Four task layers - gates, test matrix, registry fanout, rollback path
+
+defaults:
+  app: "checkout-api"
+  version: "2.3.0"
+  release_type: "minor"        # major | minor | hotfix
+  scan_enabled: "true"
+  test_suites: ["unit", "integration", "contract"]
+  registries: ["ghcr.io/acme", "registry.internal"]
+  replicas: "2"
+  canary_percent: "10"
+  cluster: "dev-local"
+
+env_groups:
+  prod:
+    vars:
+      replicas: "8"
+      canary_percent: "5"
+
+environments:
+  staging:
+    vars:
+      cluster: "staging-east"
+  production:
+    group: prod
+    vars:
+      cluster: "prod-east"
+
+tasks:
+  release:
+    desc: Orchestrate a full release (layer 1, entry point)
+    steps:
+      - name: preflight
+        func: shell
+        do: 'echo "preflight {{ vars.app }} v{{ vars.version }} -> {{ vars.cluster }}"'
+
+      - name: strategy
+        switch:
+          value: '{{ vars.release_type }}'
+          cases:
+            - when: ["major", "minor"]
+              then:
+                - name: full_pipeline
+                  task: build_and_verify
+            - when: hotfix
+              then:
+                - name: fast_build
+                  func: shell
+                  do: 'echo "hotfix fast path: build only, no matrix"'
+          default:
+            - name: unknown_type
+              func: shell
+              do: 'echo "unknown release_type {{ vars.release_type }}"; exit 1'
+
+      - name: rollout_strategy
+        if: '{{ eq vars.release_type "hotfix" }}'
+        then:
+          - name: direct_rollout
+            func: shell
+            do: 'echo "hotfix: direct rollout to {{ vars.cluster }}"'
+        elif:
+          - if: '{{ eq vars.canary_percent "0" }}'
+            then:
+              - name: blue_green
+                func: shell
+                do: 'echo "blue-green switch on {{ vars.cluster }}"'
+        else:
+          - name: canary_rollout
+            func: shell
+            do: 'echo "canary {{ vars.canary_percent }}% on {{ vars.cluster }} ({{ vars.replicas }} replicas)"'
+
+      # NOTE: references a TOP-LEVEL step - steps nested inside another
+      # step's branches do not register in the task namespace.
+      - name: health_gate
+        if: 'steps.preflight.status === "success"'
+        then:
+          - name: promote
+            func: shell
+            do: 'echo "gates green: promote rollout to 100%"'
+        else:
+          - name: hold
+            func: shell
+            do: 'echo "preflight unhealthy: holding rollout"'
+
+      - name: announce
+        parallel:
+          - name: slack
+            func: shell
+            do: 'echo "slack: {{ vars.app }} v{{ vars.version }} live on {{ vars.cluster }}"'
+          - name: email
+            func: shell
+            do: 'echo "email: release notes sent"'
+          - name: status_page
+            func: shell
+            do: 'echo "status page updated"'
+    catch:
+      - name: emergency_rollback
+        task: incident_rollback
+    finally:
+      - name: cleanup
+        func: shell
+        do: 'echo "workspace + release lock cleaned"'
+
+  build_and_verify:
+    desc: Build, test matrix, scan, package (layer 2)
+    steps:
+      - name: build
+        func: shell
+        do: 'echo "built {{ vars.app }}:{{ vars.version }}"'
+        outputs:
+          artifact: '{{ result.output | regexFind "[a-z-]+:[0-9.]+" }}'
+        retry:
+          max_attempts: 2
+          interval: 5s
+
+      - name: test_matrix
+        func: shell
+        loop:
+          items: 'vars.test_suites'
+        do: 'echo "suite {{ loop.item }}: passed"'
+
+      - name: security_scan
+        if: '{{ eq vars.scan_enabled "true" }}'
+        then:
+          - name: scan
+            func: shell
+            do: 'echo "scanned {{ steps.build.artifact }}: 0 critical"'
+            timeout: 60s
+        else:
+          - name: scan_skipped
+            func: shell
+            do: 'echo "scan disabled by config"'
+
+      - name: package
+        func: shell
+        do: 'echo "packaged {{ steps.build.artifact }} -> dist/{{ vars.app }}-{{ vars.version }}.tgz"'
+
+      - name: publish
+        task: publish_artifacts
+
+  publish_artifacts:
+    desc: Push to every registry and verify (layer 3)
+    steps:
+      - name: push_all
+        func: shell
+        loop:
+          items: 'vars.registries'
+        do: 'echo "pushed {{ loop.item }}/{{ vars.app }}:{{ vars.version }}"'
+        on_error: warn
+
+      - name: verify_digests
+        func: shell
+        do: 'echo "registry digests verified"'
+
+      - name: metrics
+        task: _record_metrics
+
+  _record_metrics:
+    desc: "Internal: emit release metrics (layer 4)"
+    steps:
+      - name: emit
+        func: shell
+        do: 'echo "metrics: release_duration=42s suites=3 registries=2"'
+
+  incident_rollback:
+    desc: Roll back and page on-call (failure path)
+    steps:
+      - name: rollback
+        func: shell
+        do: 'echo "rolled back {{ vars.app }} to previous version"'
+      - name: page_oncall
+        func: shell
+        do: 'echo "paged on-call (sev2)"'

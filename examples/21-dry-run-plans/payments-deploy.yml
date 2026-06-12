@@ -1,0 +1,69 @@
+name: payments-deploy
+desc: Deploy pipeline with gates
+
+defaults:
+  app: "payments"
+  version: "1.4.0"
+  replicas: "2"
+  mode: "standard"
+  registry: "registry.local"
+
+env_groups:
+  prod:
+    vars:
+      replicas: "6"
+
+environments:
+  production:
+    group: prod
+    vars:
+      registry: "registry.prod.internal"
+
+tasks:
+  deploy:
+    desc: Build, push, roll out
+    steps:
+      - name: build
+        func: shell
+        do: 'echo "built {{ vars.app }}:{{ vars.version }}"'
+        outputs:
+          image_tag: '{{ result.output | regexFind "[a-z]+:[0-9.]+" }}'
+
+      - name: push
+        func: shell
+        do: 'echo "docker push {{ vars.registry }}/{{ steps.build.image_tag }}"'
+        retry:
+          max_attempts: 3
+          interval: 2s
+
+      - name: gate
+        if: 'steps.push.status === "success"'
+        then:
+          - name: rollout
+            func: shell
+            do: 'echo "kubectl scale deploy/{{ vars.app }} --replicas={{ vars.replicas }}"'
+        else:
+          - name: alert
+            func: shell
+            do: 'echo "ALERT: push failed for {{ vars.app }}"'
+
+      - name: mode_gate
+        if: '{{ eq vars.mode "canary" }}'
+        then:
+          - name: canary
+            func: shell
+            do: 'echo "canary rollout 10% for {{ vars.version }}"'
+        else:
+          - name: full
+            func: shell
+            do: 'echo "full rollout {{ vars.version }}"'
+
+      - name: notify_each
+        func: shell
+        loop:
+          items: '["alice", "bob"]'
+        do: 'echo "notify {{ loop.item }}: {{ vars.app }} {{ vars.version }} is live"'
+    finally:
+      - name: cleanup
+        func: shell
+        do: 'rm -f deploy.lock'
