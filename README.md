@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/images/logo.png" alt="OrchStep — Automate, Orchestrate, Reuse for Human & AI Agents" width="720">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png">
+    <img src="docs/images/logo-light.png" alt="OrchStep — orchestrate, automate, replay" width="420">
+  </picture>
 </p>
 
 # OrchStep
