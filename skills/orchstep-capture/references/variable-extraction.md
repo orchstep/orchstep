@@ -118,6 +118,25 @@ defaults:
 
 This way the workflow runs out-of-the-box with `orchstep run`. Users can override with `--var env=production`.
 
+## Value Formats: Declare Structured Vars in YAML
+
+`--var key=value` values are **always plain strings** — there is no JSON parsing. `--var cfg='{"port":8080}'` yields the literal string, not an object, and `{{ vars.cfg.port }}` won't resolve.
+
+So when a captured value is structured (a nested map, a list, or multiline text), declare it in YAML `defaults:` rather than expecting it via `--var`:
+
+```yaml
+defaults:
+  region: us-east-1            # simple scalar — fine as a string / --var override
+  db:                          # structured — MUST live in YAML (or --vars-file / stdin), not --var
+    host: db.internal
+    port: 5432
+  banner: |                    # multiline — YAML block scalar
+    Deploying service
+    Please wait...
+```
+
+Read them as `{{ vars.db.host }}`, `{{ index vars.db.replicas 0 }}`, `{{ vars.banner }}`. Convert at the boundary with `{{ vars.obj | toJson }}`, `{{ toObj vars.s }}`, or `{{ vars.s | fromJson }}`. Structured data may also arrive via `--vars-file file.yml` or piped stdin (`--stdin-var X`, which auto-detects JSON/YAML).
+
 ## Comments Marking Extracted Vars
 
 Add a comment when extracting from a hardcoded value, so the user knows what changed:

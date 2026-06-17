@@ -109,12 +109,21 @@ If the second validation also fails, write the YAML to disk anyway with a header
 
 Then report the issue to the user clearly. Don't pretend success.
 
+## Preview and Inspect Before Replay (optional tools)
+
+Beyond static `validate`, these read-only tools help confirm the captured workflow behaves as intended — useful to mention to the user, or to self-check during the plain-English preview:
+
+- **`orchstep run --dry-run <name>`** — plans the run without executing. Shows rendered commands, condition verdicts, and var provenance; secrets appear as `⟨secret:NAME⟩` (resolvers never run, so no credentials needed). Add `--open` for the visual plan.
+- **`orchstep eval '<expr>'`** — evaluate a template or JS expression against the workflow's variable context (e.g. `orchstep eval '{{ vars.env }}'`). Uses the same `-f`/`--env`/`--var`/`--vars-file` flags a run would.
+- **`orchstep eval --explain`** — show variable provenance: which precedence layer won for each var, and the OS env the workflow's `env:` sets (values masked). Great for "why is this var set to that?".
+- **Breakpoints** — `flags: [breakpoint]` on a step, or `--break-before <step>` at run time, pauses before the step in an interactive read-only inspector. No-op in CI / non-TTY / `--dry-run`, so it never hangs an unattended run.
+
 ## Sanity Checks Beyond Static Validation
 
 These are NOT done by `orchstep validate` but the skill should mentally check them:
 
 - **At least one assert step exists** (or warn the user that the workflow has no success criteria)
-- **All `{{ env.X }}` references appear in `.envrc.example`**
+- **All `{{ env.X }}` and `{{ secrets.X }}` references are documented in `.envrc.example`**, and every `{{ secrets.X }}` has a matching `secrets:` declaration (referencing an undeclared secret fails fast at run time)
 - **All `{{ vars.X }}` references resolve** — i.e., `X` is defined in workflow-top-level `defaults:`, a task-level `vars:`, a step-level `vars:`, or passed via `--var` at runtime (all four scopes merge into the `vars` namespace)
 - **Step names are descriptive** (not `step1`, `step2`)
 - **Long shell scripts are readable** (heredoc or script file vs. one giant line)

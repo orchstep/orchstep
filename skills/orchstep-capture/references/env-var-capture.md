@@ -1,6 +1,18 @@
 # Env Var and Secret Capture
 
-How to detect env vars referenced in captured commands and generate the `.envrc.example` template safely.
+How to detect env vars referenced in captured commands, route secrets through the `secrets:` namespace, and generate a safe `.envrc.example` companion.
+
+## Two namespaces — pick the right one
+
+| | Non-secret OS env var | Secret / credential |
+|---|---|---|
+| Declared with | `env:` (optional) | `secrets:` (required to reference) |
+| Referenced as | `{{ env.X }}` | `{{ secrets.X }}` |
+| In logs/output | visible (unless name matches a mask pattern) | always `***` |
+| In run history | stored | **excluded entirely** |
+| Resolved | at load | lazily, once, on first reference |
+
+**Rule:** if a captured var is a secret → emit a `secrets:` declaration and reference `{{ secrets.X }}`. If it is an ordinary config env var → keep `{{ env.X }}`.
 
 ## Detection Sources (in order of confidence)
 
@@ -34,31 +46,44 @@ If EITHER A or B matches → secret. (Belt and suspenders.)
 
 ## Treatment Rules
 
-### For secrets
+### For secrets — route through `secrets:`
 
-- **Never** capture the actual value
-- In `.envrc.example`: write a placeholder
-- In the YAML: replace usage with `{{ env.VAR_NAME }}`
+The capture skill does NOT know where the user keeps their secrets, so the safe default is to **promote the OS env var** the session already used. This is leak-safe: the value is masked everywhere and never enters the run history.
 
-```bash
-# .envrc.example
-export GITHUB_TOKEN="<your-token-here>"
-export DB_PASSWORD="<set-this>"
+- In the YAML: declare a `secrets:` resolver and reference `{{ secrets.VAR_NAME }}`
+- In `.envrc.example`: a placeholder documenting that the user must provide the var in their environment (NEVER the actual value)
+
+```yaml
+# In the workflow
+secrets:
+  GITHUB_TOKEN: { env: GITHUB_TOKEN }     # promote the existing OS env var
+  DB_PASSWORD:  { env: DB_PASSWORD }
 ```
 
-### For non-secrets
+```yaml
+# Used downstream, masked everywhere
+- name: clone
+  func: shell
+  do: git clone "https://x-access-token:{{ secrets.GITHUB_TOKEN }}@github.com/owner/repo.git"
+```
 
-- Capture the actual value as the default
-- In the YAML: still use `{{ env.VAR_NAME }}` for portability
+A power user can later swap the resolver to fetch directly from their tool without touching the env (`{ cmd: "op read op://prod/db/password" }`, `{ cmd: "vault kv get -field=token secret/api" }`, or `{ task: NAME, field: "..." }`). The capture skill stays with `{ env: VAR }` because it is the zero-config form that matches what the session actually did.
 
-```bash
-# .envrc.example
-export ENV="staging"
-export AWS_REGION="us-east-1"
-export LOG_LEVEL="info"
+### For non-secrets — keep `{{ env.X }}`
+
+- Capture the actual value as the documented default in `.envrc.example`
+- In the YAML: use `{{ env.VAR_NAME }}` (optionally declare under `env:` for portability)
+
+```yaml
+# Optional explicit declaration
+env:
+  ENV: "{{ env.ENV }}"
+  AWS_REGION: "{{ env.AWS_REGION }}"
 ```
 
 ## .envrc.example File Format
+
+The `.envrc.example` still documents everything the user must provide before replay — secrets (as placeholders) AND non-secrets (as captured values). At run time, `secrets: { env: X }` promotes those env vars into the masked namespace.
 
 ```bash
 # .envrc.example — env vars required to replay this workflow
@@ -69,36 +94,40 @@ export LOG_LEVEL="info"
 #
 # IMPORTANT: Add `.envrc` to your .gitignore so secrets don't get committed.
 
-# --- Non-secrets (captured values) ---
+# --- Non-secrets (captured values, read as {{ env.X }}) ---
 export ENV="staging"
 export AWS_REGION="us-east-1"
 
-# --- Secrets (placeholders only — fill in your own) ---
+# --- Secrets (placeholders only — promoted into secrets: as {{ secrets.X }}) ---
 export GITHUB_TOKEN="<your-token-here>"
 export DB_PASSWORD="<set-this>"
 ```
 
-## In the YAML — How Env Vars Appear
-
-Replace direct env references with `{{ env.NAME }}`:
+## In the YAML — How Vars Appear
 
 ```yaml
-# Captured
-- name: clone
-  func: shell
-  do: git clone "https://x-access-token:{{ env.GITHUB_TOKEN }}@github.com/owner/repo.git"
+secrets:
+  GITHUB_TOKEN: { env: GITHUB_TOKEN }
+  NOTIFICATION_TOKEN: { env: NOTIFICATION_TOKEN }
 
-- name: deploy
-  func: shell
-  do: |
-    aws s3 sync ./build s3://my-bucket/{{ env.ENV }}/
+tasks:
+  main:
+    steps:
+      - name: clone
+        func: shell
+        do: git clone "https://x-access-token:{{ secrets.GITHUB_TOKEN }}@github.com/owner/repo.git"
 
-- name: notify
-  func: http
-  args:
-    url: "https://api.example.com/notify"
-    headers:
-      Authorization: "Bearer {{ env.NOTIFICATION_TOKEN }}"
+      - name: deploy
+        func: shell
+        do: |
+          aws s3 sync ./build s3://my-bucket/{{ env.ENV }}/      # non-secret env var
+
+      - name: notify
+        func: http
+        args:
+          url: "https://api.example.com/notify"
+          headers:
+            Authorization: "Bearer {{ secrets.NOTIFICATION_TOKEN }}"
 ```
 
 ## Edge Cases
@@ -114,10 +143,10 @@ Built-ins to skip:
 
 ### Value looks like a secret but isn't
 **Example:** A user-provided commit hash `1a2b3c4d5e6f...` (40 hex chars) is a hash, not a secret.
-**Treatment:** When the var name has NO secret-pattern match AND the value is a known-shape (commit hash, UUID), prefer non-secret. When in doubt, treat as secret (safer).
+**Treatment:** When the var name has NO secret-pattern match AND the value is a known-shape (commit hash, UUID), prefer non-secret (`{{ env.X }}`). When in doubt, treat as secret (route through `secrets:`).
 
 ### Var exists but value is empty in session
-**Treatment:** Mark as secret with placeholder. User knows their setup.
+**Treatment:** Treat as secret, promote via `secrets: { env: X }`, with a placeholder in `.envrc.example`. User knows their setup.
 
 ### `.envrc` file already exists
 **Treatment:** Do NOT touch the existing `.envrc`. Always emit `.envrc.example` next to it. The user merges manually if they want.
@@ -133,8 +162,8 @@ Optionally check `.gitignore` and report whether `.envrc` is already listed. Do 
 ## Anti-Patterns
 
 - Capturing actual secret values (NEVER, even "by accident")
+- Putting a secret in `{{ env.X }}` when it should be `{{ secrets.X }}` (env values can leak into output/history; secrets cannot)
+- Hardcoding a secret value in a `secrets:` block — secrets are always references (`{ env: X }` / `{ cmd: ... }` / `{ task: ... }`), never literals
 - Including built-in shell vars in `.envrc.example` (clutter)
 - Including the user's full env (privacy + relevance)
-- Putting secrets in the workflow YAML directly (always `{{ env.X }}`)
 - Modifying `.gitignore` automatically (presumptuous)
-- Using `{{ vars.X }}` for env vars instead of `{{ env.X }}` (wrong scope)

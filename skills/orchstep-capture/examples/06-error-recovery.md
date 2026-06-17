@@ -43,6 +43,9 @@ defaults:
   namespace: "staging"
   image_tag: "2.0.0"
 
+secrets:
+  SLACK_WEBHOOK: { env: SLACK_WEBHOOK }   # value pattern (opaque webhook token) -> secret
+
 tasks:
   main:
     desc: "Upgrade with rollback safety net"
@@ -71,7 +74,7 @@ tasks:
           - name: notify_slack
             func: http
             args:
-              url: "{{ env.SLACK_WEBHOOK }}"
+              url: "{{ secrets.SLACK_WEBHOOK }}"
               method: POST
               headers:
                 Content-Type: "application/json"

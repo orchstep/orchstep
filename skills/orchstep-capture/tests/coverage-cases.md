@@ -30,8 +30,8 @@ Each case includes:
 
 ### Case 1.4 — Git Workflow
 **Input:** Session creates branch, commits 3 files, pushes, opens PR. User: `/orchstep-capture submit_changes`
-**Expected output:** Workflow with git ops via `func: shell` (no fake `func: git`). PR step with retry. GITHUB_TOKEN as secret.
-**Pass:** No `func: git` anywhere. envrc.example lists GITHUB_TOKEN.
+**Expected output:** Common git ops (checkout/push) via first-class `func: git`; PR creation (`gh pr create`) via `func: shell`. PR step with retry. GITHUB_TOKEN routed through `secrets:` and referenced as `{{ secrets.GITHUB_TOKEN }}`.
+**Pass:** git operations use `func: git` (or `func: shell` for `gh`). `secrets: { GITHUB_TOKEN: { env: GITHUB_TOKEN } }` present; envrc.example lists GITHUB_TOKEN as a placeholder.
 
 ### Case 1.5 — Smoke Test
 **Input:** Session checks 5 endpoints with curl, all should return 200. User: `/orchstep-capture smoke`
@@ -160,23 +160,23 @@ Each case includes:
 
 ### Case 8.1 — Token = Secret
 **Input:** Session uses `$GITHUB_TOKEN` in git push command. User: `/orchstep-capture git_push`
-**Expected output:** YAML uses `{{ env.GITHUB_TOKEN }}`. envrc.example has `export GITHUB_TOKEN="<your-token-here>"`.
-**Pass:** Placeholder, not actual value. Detected by name pattern.
+**Expected output:** YAML declares `secrets: { GITHUB_TOKEN: { env: GITHUB_TOKEN } }` and references `{{ secrets.GITHUB_TOKEN }}`. envrc.example has `export GITHUB_TOKEN="<your-token-here>"`.
+**Pass:** Secret routed through `secrets:`, not `{{ env.X }}`. Placeholder, not actual value. Detected by name pattern.
 
 ### Case 8.2 — DB URL = Secret (by value pattern)
 **Input:** Session uses `$DATABASE_URL=postgres://user:pass123!@host:5432/db`. User: `/orchstep-capture db_migrate`
-**Expected output:** envrc.example has `<your-database-url>` placeholder. NOT actual URL.
-**Pass:** Placeholder, not actual value. Detected by value pattern (URL with embedded credentials).
+**Expected output:** `secrets: { DATABASE_URL: { env: DATABASE_URL } }`, referenced `{{ secrets.DATABASE_URL }}`. envrc.example has `<your-database-url>` placeholder. NOT actual URL.
+**Pass:** Routed through `secrets:`. Placeholder, not actual value. Detected by value pattern (URL with embedded credentials).
 
 ### Case 8.3 — ENV = Non-secret
 **Input:** Session uses `$ENV=staging`. User: `/orchstep-capture env_check`
-**Expected output:** envrc.example has `export ENV="staging"` (actual value captured).
-**Pass:** Actual value present. Not classified as secret (no pattern match).
+**Expected output:** YAML keeps `{{ env.ENV }}`. envrc.example has `export ENV="staging"` (actual value captured).
+**Pass:** Stays in the `env` namespace (not `secrets:`). Actual value present. Not classified as secret (no pattern match).
 
 ### Case 8.4 — Mixed Bag
 **Input:** Session uses 5 env vars: `$GITHUB_TOKEN`, `$AWS_ACCESS_KEY_ID`, `$ENV`, `$AWS_REGION`, `$LOG_LEVEL`. User: `/orchstep-capture deploy`
-**Expected output:** envrc.example has 2 secrets (GITHUB_TOKEN, AWS_ACCESS_KEY_ID) as placeholders, 3 non-secrets (ENV, AWS_REGION, LOG_LEVEL) with actual values.
-**Pass:** Correct classification of all 5. envrc.example file is sectioned (secrets + non-secrets clearly delineated).
+**Expected output:** 2 secrets (GITHUB_TOKEN, AWS_ACCESS_KEY_ID) declared under `secrets: { env: ... }` and referenced as `{{ secrets.X }}`; 3 non-secrets (ENV, AWS_REGION, LOG_LEVEL) stay `{{ env.X }}`. envrc.example lists secrets as placeholders, non-secrets with actual values.
+**Pass:** Correct routing of all 5 (secrets → `secrets:`, non-secrets → `env`). envrc.example is sectioned (secrets + non-secrets clearly delineated).
 
 ## Mental Walkthrough Procedure
 
@@ -195,7 +195,7 @@ For each case:
 | 1.1 | Simple Deploy | ✅ | Matches example 01 |
 | 1.2 | Data Fetch + Transform | ✅ | Matches example 02 |
 | 1.3 | File Refactor | ✅ | Skill prompts for verify step |
-| 1.4 | Git Workflow | ✅ | No `func: git` |
+| 1.4 | Git Workflow | ✅ | `func: git` for clone/checkout/push; secret via `secrets:` |
 | 1.5 | Smoke Test | ✅ | Uses loop + all() |
 | 2.1 | Conditional | ✅ | Both branches captured |
 | 2.2 | Switch/Case | ✅ | Default branch present |

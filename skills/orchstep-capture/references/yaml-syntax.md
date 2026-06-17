@@ -20,9 +20,10 @@ tasks:                           # required, at least one task
       timeout: 30s
     steps:                       # required, at least one step
       - name: step1              # required name (snake_case or kebab-case)
-        func: shell              # required: shell|http|assert|transform|render|prompt|wait
+        func: shell              # required: shell|http|assert|transform|render|prompt|wait|git
         do: |
           echo "hello"
+        flags: [log_result]      # optional: log_result|log_outputs|log_context|breakpoint
         outputs:                 # optional output extraction
           message: '{{ result.output }}'
 ```
@@ -38,8 +39,9 @@ tasks:                           # required, at least one task
 | `render` | `args.template` | `args.output`, `args.data` | Render Go/Sprig template |
 | `prompt` | `args.message` | `args.type`, `args.default`, `args.options` | Interactive input (auto-skips in non-interactive mode) |
 | `wait` | `args.duration` | — | Pause execution (e.g., `30s`, `5m`) |
+| `git` | `do` shortcut OR `args.operation` | `args.url`, `args.dest`, `args.branch`, `args.token`, `outputs` | First-class git: clone/checkout/fetch/push/list-tags/list-branches/commit-info |
 
-**Important:** `git` is NOT a dedicated function. All git operations use `func: shell`.
+**git** is a first-class function for common operations (`func: git`, structured outputs like `result.commit_sha`, `result.tags`). Arbitrary git plumbing (`git rebase`, `git config`, inline `$(git ...)`) stays `func: shell`. See `function-classification.md` for both arg forms.
 
 ## Task Calling (Not a Function)
 
@@ -55,7 +57,8 @@ tasks:                           # required, at least one task
 | Reference | Source |
 |---|---|
 | `{{ vars.x }}` | file/task/step vars (4-level precedence) |
-| `{{ env.X }}` | environment variable (loaded from `.envrc` or shell) |
+| `{{ env.X }}` | OS environment variable (from the shell, `dotenv:`, or `env:`) |
+| `{{ secrets.X }}` | credential resolved lazily from your own tool; masked everywhere, kept out of run history |
 | `{{ steps.step_name.field }}` | output of a previous step |
 | `{{ result.output }}` | current step's stdout |
 | `{{ result.status_code }}` | http step status |
@@ -73,6 +76,37 @@ tasks:                           # required, at least one task
 - **Go templates** (default): `{{ }}` syntax with `eq`, `ne`, `gt`, `lt`, `and`, `or`, `not`
 - **Sprig v3** (extensions to Go templates): `{{ upper .name }}`, `{{ regexFind "pattern" .input }}`, etc.
 - **JavaScript** (in conditions only): `if:`, `retry.when`, `loop.until`, `assert.condition` accept BARE JS — no `{{ }}` wrapper
+
+## Environment Variables and Secrets
+
+Three declarative blocks, valid at workflow / task / step level (later scope wins):
+
+```yaml
+env:                              # set OS env vars for external tools (templated, masked by name pattern)
+  AWS_REGION: "{{ vars.region }}"
+  DATABASE_URL: <required>        # sentinel: must be provided externally; fail fast if missing
+
+dotenv:                          # load .env / .envrc files (suffix picks parser; trailing ? = optional)
+  - .env
+  - "{{ vars.environment }}.env"
+  - "secrets.local.env?"
+
+secrets:                         # credentials resolved lazily from your own tool; referenced as {{ secrets.X }}
+  GITHUB_TOKEN: { env: GITHUB_TOKEN }                        # promote an existing OS env var (consumed by default)
+  DB_PASSWORD:  { cmd: "op read op://prod/db/password" }     # trimmed stdout of a command
+  API_TOKEN:    { cmd: "vault kv get -format=json secret/api", field: "{{ result.data.token }}" }  # extract a field
+  DEPLOY_KEY:   { task: fetch_creds, field: "{{ steps.fetch.key }}" }  # run a task/module producer
+```
+
+- `env:` sets OS env vars; name patterns (`*token*`, `*secret*`, `*password*`, `*key*`, ...) are masked automatically. Tune with `config.env_policy: { safe: [...], sensitive: [...] }`.
+- `{{ env.X }}` reads an OS env var (unchanged). `{{ secrets.X }}` reads a resolved secret — masked in logs/output/context and **excluded** from the run history; identical `cmd:` producers run once per run.
+- Secrets are **always references, never literals** — you cannot hardcode one in YAML. Referencing an undeclared `{{ secrets.X }}` fails fast.
+
+## Value Formats (vars)
+
+- `--var key=value` values are **always plain strings** — no JSON parsing. `--var cfg='{"port":8080}'` gives the literal string, not an object.
+- Structured / multiline data comes from YAML `defaults:` (nested maps, block scalars), `--vars-file`, or stdin (`--stdin-var`, which auto-detects JSON/YAML).
+- Convert in templates: `{{ vars.obj | toJson }}`, `{{ toObj vars.s }}`, `{{ vars.s | fromJson }}`. Captured workflows should declare structured vars in YAML `defaults:`, never expect `--var` to carry an object.
 
 ## Control Flow
 
@@ -231,13 +265,13 @@ Aggregation helpers usable in assert:
 
 - DON'T use `func: task` — task calling is `task: name` + `with:` params
 - DON'T wrap JS conditions in `{{ }}` — JS in if/retry.when/loop.until/assert is bare
-- DON'T put secrets in YAML — use `{{ env.VAR }}` and capture in `.envrc.example`
+- DON'T put secret VALUES in YAML — declare a `secrets:` resolver and reference `{{ secrets.VAR }}`; non-secret env vars use `{{ env.VAR }}`
 - DON'T deeply nest tasks — max 2 levels, flatten with task delegation instead
 - DON'T omit `desc:` on workflows or tasks — it documents intent for replay
 
 ## Source of Truth
 
-This reference reflects orchstep engine state as of 2026-04-23. Source files:
+This reference reflects orchstep engine state as of 2026-06-18 (git first-class, secrets namespace, env:/dotenv: redesign, step flags). Source files:
 - `orchstep/spec/` — language spec
 - `orchstep/spec/functions/` — per-function docs
 - `orchstep-core/tests/spec/` — 431 regression test specs (real usage patterns)

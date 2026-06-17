@@ -68,7 +68,7 @@ Read `references/function-classification.md`.
 For each captured event, decide which OrchStep `func:` it maps to. Most common mappings:
 - `bash <cmd>` → `func: shell`
 - `curl ...` → `func: http` (for clean structure) or `func: shell` (for compatibility)
-- `git ...` → `func: shell` (git is shell-wrapped in OrchStep, not a dedicated function)
+- `git clone/checkout/fetch/push/list-tags` → `func: git` (first-class function with structured outputs); arbitrary git plumbing stays `func: shell`
 - A verification step → `func: assert`
 - A pause/sleep → `func: wait`
 
@@ -92,10 +92,16 @@ Read `references/env-var-capture.md`.
 Scan captured commands for `$VAR_NAME` and `${VAR_NAME}` references. For each:
 - Classify by name pattern (TOKEN/KEY/SECRET/PASSWORD/CREDENTIAL/API_KEY/AUTH/CERT/PRIVATE → secret)
 - Classify by value pattern (JWT, sk-..., ghp_..., AKIA..., long base64/hex → secret)
-- Replace in YAML with `{{ env.VAR_NAME }}`
 
-Generate `workflows/<name>.envrc.example`:
-- Secrets: `export GITHUB_TOKEN="<your-token-here>"` (placeholder only, NEVER actual value)
+For each **secret**: declare a `secrets:` entry that promotes the existing OS env var, and reference it as `{{ secrets.VAR_NAME }}` in the workflow. Secrets resolve lazily, are masked everywhere (logs/output/context), and are excluded from the run history:
+```yaml
+secrets:
+  GITHUB_TOKEN: { env: GITHUB_TOKEN }   # promote OS env var into the masked secrets namespace
+```
+For each **non-secret**: keep `{{ env.VAR_NAME }}` (unchanged behavior — reads the OS env).
+
+Generate `workflows/<name>.envrc.example` (documents what the user must provide in their environment before replay):
+- Secrets: `export GITHUB_TOKEN="<your-token-here>"` (placeholder only, NEVER actual value) — promoted into `secrets:` at run time
 - Non-secrets: `export ENV="staging"` (actual captured value)
 
 ### Step 8: Add Error Handling Where Warranted

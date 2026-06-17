@@ -32,7 +32,7 @@ Comment to add:
   # Consider replacing with @orchstep/slack-notify module — cleaner config + retry built in
   func: shell
   do: |
-    curl -X POST {{ env.SLACK_WEBHOOK }} \
+    curl -X POST {{ secrets.SLACK_WEBHOOK }} \
       -H "Content-Type: application/json" \
       -d '{"text": "Deploy complete"}'
 ```

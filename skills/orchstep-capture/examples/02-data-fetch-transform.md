@@ -52,6 +52,9 @@ defaults:
   api_url: "https://api.internal.example.com"
   output_path: "/tmp/active-users-report.md"
 
+secrets:
+  API_TOKEN: { env: API_TOKEN }     # name pattern "TOKEN" -> secret; masked, kept out of run history
+
 tasks:
   main:
     desc: "Fetch, transform, report on active users"
@@ -62,7 +65,7 @@ tasks:
           url: "{{ vars.api_url }}/v2/users?active=true"
           method: GET
           headers:
-            Authorization: "Bearer {{ env.API_TOKEN }}"
+            Authorization: "Bearer {{ secrets.API_TOKEN }}"
         retry:
           max_attempts: 3
           interval: 2s

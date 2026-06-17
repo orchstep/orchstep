@@ -18,7 +18,9 @@ For each captured event, ask in order:
    → `func: wait`
 6. **Was it user input / decision?**
    → `func: prompt`
-7. **Anything else** (git, kubectl, terraform, docker, npm, custom binaries, file ops)
+7. **Was it a common git operation?** (clone, checkout, fetch, push, list-tags, list-branches, commit-info)
+   → `func: git` (first-class, structured outputs). Arbitrary git plumbing (`git rebase`, `git cherry-pick`, custom porcelain) stays `func: shell`.
+8. **Anything else** (kubectl, terraform, docker, npm, custom binaries, file ops)
    → `func: shell`
 
 ## Function-by-Function Mapping
@@ -57,7 +59,7 @@ Optional args:
     url: "https://{{ vars.env }}.example.com/health"
     method: GET
     headers:
-      Authorization: "Bearer {{ env.API_TOKEN }}"
+      Authorization: "Bearer {{ secrets.API_TOKEN }}"   # secret -> secrets namespace, not {{ env }}
     timeout: 10s
   outputs:
     status: '{{ result.status_code }}'
@@ -68,12 +70,12 @@ Auth shortcuts:
 ```yaml
 auth:
   type: bearer
-  token: "{{ env.API_TOKEN }}"
+  token: "{{ secrets.API_TOKEN }}"
 # OR
 auth:
   type: basic
-  username: "{{ env.USER }}"
-  password: "{{ env.PASS }}"
+  username: "{{ env.API_USER }}"
+  password: "{{ secrets.API_PASSWORD }}"
 ```
 
 ### `func: assert` — verification
@@ -160,9 +162,30 @@ Types: `text`, `password`, `select`, `confirm`, `multiselect`.
 
 In non-interactive mode, the user can override via `--var prompt_name=value`.
 
-## Special Case: Git
+### `func: git` — first-class git operations
 
-Git has no dedicated function. All git operations use `func: shell`.
+**When:** Common git operations — clone, checkout, fetch, push, list-tags, list-branches, commit-info — where structured outputs (commit SHA, tag list, branch list) are useful. Two arg forms:
+
+```yaml
+# do: shortcut syntax
+- name: clone
+  func: git
+  do: clone {{ vars.repo_url }} /tmp/repo      # "clone URL DEST", "checkout REF -d REPO", "list-tags REPO", "push REPO BRANCH -m MSG"
+
+# args form (explicit operation)
+- name: clone_pinned
+  func: git
+  args:
+    operation: clone
+    url: "{{ vars.repo_url }}"
+    dest: /tmp/repo
+    branch: "{{ vars.version }}"       # optional: branch/tag/commit_sha, depth, single_branch, recursive
+    token: "{{ secrets.GITHUB_TOKEN }}"  # optional HTTPS token auth
+  outputs:
+    sha: '{{ result.commit_sha }}'     # also: result.tags, result.branches, result.ref, result.success
+```
+
+**When NOT:** Arbitrary git plumbing not covered by an operation (`git rebase`, `git cherry-pick`, `git config`, inline `$(git ...)` substitutions) — use `func: shell`.
 
 ```yaml
 - name: tag_release
@@ -172,18 +195,38 @@ Git has no dedicated function. All git operations use `func: shell`.
     git push origin "v{{ vars.version }}"
 ```
 
-For HTTPS auth, use env vars:
+For HTTPS auth in either form, supply a token from the secrets namespace (`{{ secrets.GITHUB_TOKEN }}`), or inline it in a shell URL:
 ```yaml
 - name: clone_private
   func: shell
   do: |
-    git clone "https://x-access-token:{{ env.GITHUB_TOKEN }}@github.com/owner/repo.git"
+    git clone "https://x-access-token:{{ secrets.GITHUB_TOKEN }}@github.com/owner/repo.git"
 ```
+
+## Step Flags
+
+A step's optional `flags:` list (separate from what the step does) toggles extra output or pausing. Supported on `shell`, `http`, and task/module calls; `breakpoint` is valid on any function step:
+
+```yaml
+- name: deploy
+  func: shell
+  do: ./deploy.sh
+  flags: [log_result, log_outputs]   # log_result | log_outputs | log_context | breakpoint
+```
+
+| Flag | Effect |
+|---|---|
+| `log_result` | print the step's raw result (output/response) |
+| `log_outputs` | print values extracted by the step's `outputs:` block |
+| `log_context` | print the vars/env context the step ran with |
+| `breakpoint` | pause before the step (interactive read-only inspector; no-op in CI/`--dry-run`) |
+
+Capture rarely emits flags — leave them out unless the user asked for verbose logging or a pause.
 
 ## Anti-Patterns
 
 - DON'T use `func: task` — task calling is `task: name` + `with:` (different mechanism)
-- DON'T use `func: git` — doesn't exist; use `func: shell`
+- DON'T fake git args — `func: git` covers clone/checkout/fetch/push/list ops; everything else git is `func: shell`
 - DON'T use `func: http` for fire-and-forget curls — `func: shell` is fine
 - DON'T add `func: assert` after every step — only for explicit goal verification
 - DON'T use `func: transform` for things `jq` could do better in shell

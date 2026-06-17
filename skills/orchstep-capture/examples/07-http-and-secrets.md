@@ -41,12 +41,18 @@ User said "great — make this a daily workflow."
 
 ```yaml
 name: jira_to_slack_summary
-desc: "Fetch active Jira issues, summarize, post to Slack (captured 2026-04-23)"
+desc: "Fetch active Jira issues, summarize, post to Slack (captured 2026-06-18)"
 
 defaults:
   jira_host: "mycompany.atlassian.net"
   jql: "status%3DIn+Progress"      # URL-encoded: status=In Progress
   summary_max_lines: 10
+
+# Secrets: promoted from the OS env vars the session used. Resolved lazily,
+# masked everywhere (logs/output/context), and excluded from the run history.
+secrets:
+  JIRA_API_TOKEN: { env: JIRA_API_TOKEN }
+  SLACK_WEBHOOK:  { env: SLACK_WEBHOOK }
 
 tasks:
   main:
@@ -58,7 +64,7 @@ tasks:
           url: "https://{{ vars.jira_host }}/rest/api/3/search?jql={{ vars.jql }}"
           method: GET
           headers:
-            Authorization: "Bearer {{ env.JIRA_API_TOKEN }}"
+            Authorization: "Bearer {{ secrets.JIRA_API_TOKEN }}"
             Accept: "application/json"
         retry:
           max_attempts: 3
@@ -84,7 +90,7 @@ tasks:
         # Consider replacing with @orchstep/slack-notify module — cleaner config + retry built in
         func: http
         args:
-          url: "{{ env.SLACK_WEBHOOK }}"
+          url: "{{ secrets.SLACK_WEBHOOK }}"
           method: POST
           headers:
             Content-Type: "application/json"
@@ -125,14 +131,16 @@ The original session had two secrets in shell:
 1. `JIRA_API_TOKEN="ATATT3xFfGF0_v3rys3cret_token_here_dont_share_xyzABC"` — Atlassian API token (real shape)
 2. `SLACK_WEBHOOK="https://hooks.slack.com/services/T01XXXX/B01XXXX/abc123def456ghi789"` — webhook with embedded token
 
-**Both detected as secrets:**
+**Both detected as secrets → routed through the `secrets:` namespace:**
 
 | Var | Detection trigger | Treatment |
 |---|---|---|
-| `JIRA_API_TOKEN` | Name pattern: contains "TOKEN" | Placeholder `<your-jira-api-token>`, NEVER actual value |
-| `SLACK_WEBHOOK` | Value pattern: URL with long opaque path token | Placeholder `<your-slack-webhook-url>`, NEVER actual URL |
+| `JIRA_API_TOKEN` | Name pattern: contains "TOKEN" | `secrets: { env: JIRA_API_TOKEN }`, referenced `{{ secrets.JIRA_API_TOKEN }}`; placeholder `<your-jira-api-token>` in envrc.example |
+| `SLACK_WEBHOOK` | Value pattern: URL with long opaque path token | `secrets: { env: SLACK_WEBHOOK }`, referenced `{{ secrets.SLACK_WEBHOOK }}`; placeholder `<your-slack-webhook-url>` in envrc.example |
 
-**The skill MUST NEVER write the actual token values into `.envrc.example`.**
+**Why `secrets:` and not `{{ env.X }}`:** secrets are masked everywhere (logs, command output, the captured run history) and excluded from the context DB. A plain `{{ env.X }}` can leak into output or history unless its name matches a mask pattern. The capture skill promotes the OS env var the session already used (`{ env: NAME }`) — the zero-config form. A power user can later swap to `{ cmd: "op read ..." }` / `{ cmd: "vault kv get ..." }` to fetch straight from their tool.
+
+**The skill MUST NEVER write the actual token values into `.envrc.example` — only placeholders.**
 
 **Function choices:**
 - `fetch_issues` → `http`: structured response access via `outputs.issues_data` is needed for the next step

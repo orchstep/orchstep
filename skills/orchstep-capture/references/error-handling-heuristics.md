@@ -74,7 +74,7 @@ Add `catch` when:
     - name: alert
       func: http
       args:
-        url: "{{ env.SLACK_WEBHOOK }}"
+        url: "{{ secrets.SLACK_WEBHOOK }}"   # declare: secrets: { SLACK_WEBHOOK: { env: SLACK_WEBHOOK } }
         method: POST
         body:
           text: "Deploy {{ vars.version }} failed and was rolled back"
