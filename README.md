@@ -91,6 +91,14 @@ orchstep menu
 
 > **Interactive picker:** Run `orchstep menu` in any directory with an `orchstep.yml` to open a keyboard-driven task picker. Single-keystroke hotkeys, fuzzy search (arrow keys or `/`), and a filter cycle (`f` to cycle all → a-z → public → internal). Running plain `orchstep` in a terminal also auto-launches the menu; in a pipeline it exits cleanly instead of hanging.
 
+## 🎬 OrchStep CLI — 90-second tour
+
+`run` with live logs, `menu`, `--dry-run` preview, environments, JSON for CI/agents, and **capture → replay** (zero tokens) — the whole CLI in a minute and a half.
+
+[![OrchStep CLI — 90-second feature tour](https://img.youtube.com/vi/f8p4Gz6XUo8/maxresdefault.jpg)](https://youtu.be/f8p4Gz6XUo8)
+
+▶ **[Watch the 90-second tour](https://youtu.be/f8p4Gz6XUo8)**
+
 ## 🖥️ OrchStep Pipeline — a web dashboard for the CLI
 
 The command line is the product. `orchstep run`, `orchstep menu`, `orchstep mcp` — that's the first-class interface: scriptable, CI-friendly, agent-friendly, no browser required.
