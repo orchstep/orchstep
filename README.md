@@ -91,6 +91,22 @@ orchstep menu
 
 > **Interactive picker:** Run `orchstep menu` in any directory with an `orchstep.yml` to open a keyboard-driven task picker. Single-keystroke hotkeys, fuzzy search (arrow keys or `/`), and a filter cycle (`f` to cycle all → a-z → public → internal). Running plain `orchstep` in a terminal also auto-launches the menu; in a pipeline it exits cleanly instead of hanging.
 
+## 🖥️ OrchStep Pipeline — a web dashboard for the CLI
+
+The command line is the product. `orchstep run`, `orchstep menu`, `orchstep mcp` — that's the first-class interface: scriptable, CI-friendly, agent-friendly, no browser required.
+
+**OrchStep Pipeline** is the *optional* companion to it — a second-class citizen by design. It's a local web dashboard you open with a single command when you'd rather click, watch, and inspect. Everything it does is an `orchstep` command underneath, and it prints the exact CLI invocation for every run, so nothing you do in the browser is locked to the browser.
+
+```bash
+orchstep serve     # -> http://127.0.0.1:7777  (one static binary, nothing else to set up)
+```
+
+Pick a task and read it as source, a resolved plan, or the full execution graph; launch it with an environment and pretty logs; watch every step light up live as the run descends into each called task; jump from a step straight to its logs; and inspect exactly what any step saw — its variables, environment, and output. Run history lives in a single SQLite file, it binds to `127.0.0.1`, and there's no infra or signup.
+
+[![OrchStep Pipeline — 60-second feature tour](https://img.youtube.com/vi/4xZm_ZmSC_g/maxresdefault.jpg)](https://youtu.be/4xZm_ZmSC_g)
+
+▶ **[Watch the 60-second tour](https://youtu.be/4xZm_ZmSC_g)** · full walkthrough at [orchstep.dev/learn/serve](https://orchstep.dev/learn/serve)
+
 ## What's in This Repo
 
 | Directory | Contents |
