@@ -8,6 +8,7 @@ import tarfile
 import tempfile
 import urllib.request
 import json
+import hashlib
 
 REPO = "orchstep/orchstep"
 BIN_NAME = "orchstep"
@@ -51,6 +52,35 @@ def get_latest_version():
         return data["tag_name"].lstrip("v")
 
 
+def verify_checksum(archive_path, filename, version):
+    """Abort unless the archive's SHA-256 matches the release's checksums.txt.
+
+    HTTPS protects transit; this also catches a corrupted download or a tampered
+    release asset before we extract and execute it.
+    """
+    url = f"https://github.com/{REPO}/releases/download/v{version}/checksums.txt"
+    req = urllib.request.Request(url, headers={"User-Agent": "orchstep-pip"})
+    with urllib.request.urlopen(req) as resp:
+        sums = resp.read().decode()
+
+    want = None
+    for line in sums.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[1] == filename:
+            want = parts[0].lower()
+            break
+    if not want:
+        raise RuntimeError(f"no checksum listed for {filename}")
+
+    h = hashlib.sha256()
+    with open(archive_path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    got = h.hexdigest()
+    if got != want:
+        raise RuntimeError(f"checksum mismatch for {filename}: expected {want}, got {got}")
+
+
 def install_binary():
     """Download and install the binary matching the package version."""
     os_name, arch_name = get_platform()
@@ -68,6 +98,8 @@ def install_binary():
     with tempfile.TemporaryDirectory() as tmp:
         archive_path = os.path.join(tmp, filename)
         urllib.request.urlretrieve(url, archive_path)
+
+        verify_checksum(archive_path, filename, version)
 
         if ext == "tar.gz":
             with tarfile.open(archive_path, "r:gz") as tar:

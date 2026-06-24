@@ -4,6 +4,7 @@ const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const https = require("https");
+const crypto = require("crypto");
 
 const REPO = "orchstep/orchstep";
 const BIN_DIR = path.join(__dirname, "bin");
@@ -49,6 +50,32 @@ function getLatestVersion() {
   });
 }
 
+// verifyChecksum aborts the install unless the downloaded archive's SHA-256
+// matches the entry in the release's checksums.txt. HTTPS protects transit, but
+// this also catches a corrupted download or a tampered release asset.
+function verifyChecksum(file, filename, version) {
+  const url = `https://github.com/${REPO}/releases/download/v${version}/checksums.txt`;
+  let sums;
+  try {
+    sums = execSync(`curl -fsSL "${url}"`).toString();
+  } catch (e) {
+    throw new Error(`could not fetch checksums.txt for verification: ${e.message}`);
+  }
+  const entry = sums
+    .split("\n")
+    .map((l) => l.trim().split(/\s+/))
+    .find((p) => p.length === 2 && p[1] === filename);
+  if (!entry) {
+    throw new Error(`no checksum listed for ${filename}`);
+  }
+  const want = entry[0].toLowerCase();
+  const got = crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+  if (got !== want) {
+    throw new Error(`checksum mismatch for ${filename}: expected ${want}, got ${got}`);
+  }
+  console.log("Checksum verified.");
+}
+
 async function install() {
   const { os, arch } = getPlatform();
 
@@ -70,10 +97,14 @@ async function install() {
   try {
     execSync(`curl -fsSL "${url}" -o "${tmpFile}"`, { stdio: "inherit" });
 
+    verifyChecksum(tmpFile, filename, version);
+
     if (ext === "tar.gz") {
       execSync(`tar -xzf "${tmpFile}" -C "${BIN_DIR}"`, { stdio: "inherit" });
     } else {
-      execSync(`unzip -o "${tmpFile}" -d "${BIN_DIR}"`, { stdio: "inherit" });
+      // Windows .zip: extract with `tar` (bsdtar ships with Windows 10 1803+ and
+      // handles zip) rather than `unzip`, which is not present on a stock Windows.
+      execSync(`tar -xf "${tmpFile}" -C "${BIN_DIR}"`, { stdio: "inherit" });
     }
 
     // Cleanup archive
