@@ -11,11 +11,11 @@
 ![Release](https://img.shields.io/github/v/release/orchstep/orchstep)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 
-**YAML-first workflow orchestration engine.** Run anywhere, no vendor lock-in.
+**Automate everything — built for developers and AI agents.** Run anywhere as a single binary, no vendor lock-in.
 
 📖 **Docs & live demos:** [orchstep.dev](https://www.orchstep.dev/)
 
-OrchStep orchestrates multi-step workflows defined in YAML. It delegates to your existing tools (terraform, kubectl, aws, docker) rather than reimplementing them.
+OrchStep runs multi-step workflows for developers and AI agents. It delegates to your existing tools (terraform, kubectl, aws, docker) rather than reimplementing them.
 
 ### CI/CD Pipeline — with YAML editor and syntax highlighting
 
