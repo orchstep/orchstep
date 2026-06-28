@@ -20,6 +20,16 @@ OrchStep follows [Semantic Versioning](https://semver.org/).
   resolves; `?` = optional). This is the externalized, declared home for dotenv —
   OrchStep no longer auto-loads a stray `.env`/`.envrc` from the current directory
   (loading is always from a committed file, a trust boundary).
+- **Module instances — `instance_profile` + `isolate`.** A called module can now run
+  as a self-contained, configured instance instead of only as a caller-driven
+  library. `instance_profile: <name>` loads the module's OWN bundled context — its
+  `environments/<name>` vars, its `dotenv:`, and its `env:`, resolved relative to the
+  module (`"@caller"` follows the caller's active environment name). `isolate: true`
+  runs it clean-room, excluding the caller's context and overrides. The two combine
+  into four modes — Inherited (default, unchanged), Configured, Sealed, Pinned. The
+  module's bundled context is scoped: it unwinds on return, so two instances of one
+  module in a single run stay independent. (This also closes a gap: a module's own
+  `dotenv:`/`env:` are now loaded for the first time.)
 
 
 - **Ad-hoc runner (`orchstep do`).** Run any shell command or script with your
