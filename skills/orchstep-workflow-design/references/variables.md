@@ -63,6 +63,38 @@ Step-level `env:` overrides task-level `env:` for that step only:
   do: echo "{{ env.DB_HOST }}"
 ```
 
+### Scoped environment (env: / dotenv: unwind on return)
+
+Environment scopes like variables. A called task's own `env:`/`dotenv:` load
+when it runs (batteries included); a value the caller passes down **overrides**
+the callee's own (inversion of control); and everything the callee added
+**unwinds when it returns** — so a callee's environment does NOT leak into the
+caller's later steps or sibling tasks.
+
+```yaml
+tasks:
+  smoke_test:
+    dotenv: [staging.env]        # its own batteries -> DATABASE_URL
+    env: { TIMEOUT: "30s" }
+    steps: [ { func: shell, do: 'run-smoke --db "$DATABASE_URL"' } ]
+  main:
+    steps:
+      - { task: smoke_test }     # loads staging.env FOR the callee only
+      - { task: deploy_prod }    # does NOT inherit staging DATABASE_URL (unwound)
+```
+
+Precedence (high→low): caller call-step `env:` > task `env:` > task `dotenv:` >
+workflow `env:`/`dotenv:` > OS env.
+
+### dotenv: files
+
+`dotenv: [.env, "deploy_{{ vars.environment }}.env?"]` loads KEY=value files into
+the OS env (`.envrc` = only `export KEY=value` lines). Paths are template-resolved;
+a trailing `?` makes a missing file optional. Use `<required>` as an `env:` value to
+require-don't-set (fail fast if missing). A stray `.env` is never auto-loaded —
+loading is always from a declared file (a trust boundary). Project-wide dotenv can
+be declared in `orchstep_config.yml` `dotenv:` (applied after `--env`).
+
 ## Environment Groups (Multi-Env)
 
 ```yaml
@@ -90,6 +122,13 @@ environments:
 Run with: `orchstep run --env dev`
 
 Resolution order: Step > Task > Environment > Group > Defaults
+
+External env files: instead of inline `env_groups:`/`environments:`, drop an
+`environments/` directory beside the workflow (auto-discovered). Files layer
+hierarchically by name — `defaults.yml` → `<group>.yml` → `<group>-<env>.yml` —
+and values can be whole objects (`{{ vars.resources.cpu }}`), not just strings.
+A module ships its own `environments/` to be run as a configured instance
+(see modules.md → context modes).
 
 ## Variable Types
 

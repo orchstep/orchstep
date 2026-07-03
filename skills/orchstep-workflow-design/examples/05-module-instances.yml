@@ -1,0 +1,48 @@
+# Pattern: modules as CONFIGURED INSTANCES (instance_profile + isolate).
+# When each service is packaged as a module that ships its OWN per-environment
+# config (environments/<profile> + dotenv + env), a release workflow selects a
+# profile per call instead of re-passing config. One --env fans the whole fleet
+# out to each module's matching profile. The bundled context is scoped, so the
+# instances stay independent and nothing leaks back into this workflow.
+name: release-fleet
+desc: Deploy every service to its own per-environment profile from one workflow.
+
+defaults:
+  # No per-service config here on purpose — each module owns its own truth.
+  region: eu
+
+modules:
+  # Each module ships modules/<svc>/environments/{staging,prod}.yml + its dotenv + env.
+  - { name: billing,  source: ./modules/billing }
+  - { name: search,   source: ./modules/search }
+  - { name: checkout, source: ./modules/checkout }
+
+tasks:
+  ship:
+    steps:
+      # "@caller" resolves to the run's --env (e.g. `orchstep run ship --env prod`),
+      # and each module loads ITS OWN same-named profile. Configured mode keeps the
+      # caller able to nudge with with:/env: if ever needed.
+      - name: deploy_billing
+        module: billing
+        task: deploy
+        instance_profile: "@caller"
+
+      - name: deploy_search
+        module: search
+        task: deploy
+        instance_profile: "@caller"
+
+      # PINNED (isolate) for the money path: the deploy is EXACTLY the module's
+      # prod profile — nothing this workflow does can perturb it. Audit-friendly.
+      - name: deploy_checkout
+        module: checkout
+        task: deploy
+        instance_profile: prod
+        isolate: true
+
+      # Back here, none of the modules' secrets/vars are in scope — they unwound.
+      - name: announce
+        func: shell
+        on_error: warn                 # non-critical: don't fail the release on a notify blip
+        do: 'echo "fleet released to {{ vars.region }}"'

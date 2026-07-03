@@ -28,7 +28,7 @@ Read the user's request and decide which mode to use:
 |------|------|-------------|
 | **Quick** | User gives a concrete task name, clear steps, or a specific output they want. e.g. "Write a deploy pipeline," "I need a workflow that calls an API then deploys," "Build a CI chain" | Read relevant `references/*.md` file(s), produce the workflow directly. No questions. |
 | **Wizard** | User says "help me design," "what's the best way," "show me options," or gives a vague requirement. | Read `wizard.md`, ask 2-4 intent questions, then produce the workflow. |
-| **Deep dive** | User references a specific version, flag, or edge case. | Subagent: fetch real examples from `orchstep-website/src/content/docs/examples/` via public GitHub URL, or reference the examples/ directory. |
+| **Deep dive** | User references a specific version, flag, or edge case. | Subagent: fetch the relevant page from the live docs site (`https://orchstep.dev/...`), or reference the examples/ directory. |
 
 ## Quick Mode Flow
 
@@ -65,18 +65,21 @@ Read the user's request and decide which mode to use:
 ## Deep Dive Flow
 
 For edge cases, complex module configurations, or version-specific
-behavior, dispatch a subagent:
+behavior, dispatch a subagent to fetch the relevant page from the live docs
+site (root-level paths, no `/docs` prefix):
 
-> Fetch a specific file from the public OrchStep website source:
-> - Functions: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/functions/shell.md (same path for assert, git, http, prompt, render, transform, wait)
-> - Spec docs: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/templates.md
-> - Variables: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/variables.md
-> - Control flow: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/control-flow.md
-> - Error handling: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/error-handling.md
-> - Shell execution: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/shell-execution.md
-> - Stdin/pipes: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/stdin-pipe.md
-> - Parallel: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/spec/parallel.md
-> - Modules: https://raw.githubusercontent.com/orchstep/orchstep-website/main/src/content/docs/modules/overview.md
+> Fetch from the live OrchStep docs (https://orchstep.dev):
+> - Functions: https://orchstep.dev/functions/shell (same path for assert, git, http, prompt, render, transform, wait)
+> - Templates: https://orchstep.dev/spec/templates
+> - Variables: https://orchstep.dev/learn/environment-variables
+> - Control flow: https://orchstep.dev/spec/control-flow
+> - Error handling: https://orchstep.dev/spec/error-handling
+> - Shell execution: https://orchstep.dev/spec/shell-execution
+> - Stdin/pipes: https://orchstep.dev/spec/stdin-pipe
+> - Parallel: https://orchstep.dev/spec/parallel
+> - Working directory (`dir:`): https://orchstep.dev/spec/working-directory
+> - Modules + context modes (instance_profile/isolate): https://orchstep.dev/modules/using
+> - Ad-hoc runner (`orchstep do` / OrchShell): https://orchstep.dev/learn/ad-hoc-commands
 
 ## Output Quality Rules
 

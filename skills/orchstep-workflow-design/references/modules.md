@@ -42,16 +42,54 @@ dependencies:
 
 ## Using a Module
 
-Once imported, module tasks are callable like local tasks:
+Call a module task with the dedicated `module:` + `task:` keys (a dotted
+`task: ci-cd.deploy` is **not** valid):
 
 ```yaml
 tasks:
   main:
     steps:
-      - task: ci-cd.deploy    # module-name.task-name
+      - module: ci-cd         # the import alias
+        task: deploy          # an exported task
         with:
-          environment: production
+          environment: production   # parameters -> the task's vars
 ```
+
+## Context modes: library vs configured instance
+
+A module call runs one of two ways, selected by two call-step keys:
+
+- **`instance_profile: <name>`** — run the module as a self-contained
+  **configured instance**: it loads its OWN bundled context (its
+  `environments/<name>` vars + its `dotenv:` + its `env:`), resolved relative
+  to the module. Template-resolved; `"@caller"` follows the caller's active
+  `--env` name (so one `--env` fans a fleet out to each module's matching profile).
+- **`isolate: true`** — clean-room: exclude the caller's context and overrides
+  (`with:` / `env:` / import `config:`). The OS environment is always inherited.
+
+They're independent — four modes:
+
+| | `isolate: false` | `isolate: true` |
+|---|---|---|
+| no `instance_profile` | **Inherited** (default) — caller drives; module defaults fill gaps | **Sealed** — module's own baseline, isolated |
+| `instance_profile: p` | **Configured** — profile `p`, caller can still override | **Pinned** — profile `p`, clean-room |
+
+```yaml
+steps:
+  # Library call (Inherited, default) — caller drives.
+  - { module: notifier, task: send, with: { message: "starting" } }
+  # Configured instance — module loads its own prod profile + dotenv + env.
+  - { module: billing, task: deploy, instance_profile: prod }
+  # Monorepo fan-out — one --env drives each module's own same-named profile.
+  - { module: billing, task: deploy, instance_profile: "@caller" }
+```
+
+The bundled context (`environments/`/`dotenv:`/`env:`) loads ONLY in a
+non-Inherited mode, and is **scoped** — it unwinds when the module returns, so
+two instances of one module in a run stay independent and nothing leaks into the
+caller. Inherited calls are unchanged from earlier versions. A named
+`instance_profile` the module doesn't declare fails fast.
+Deep dive: https://orchstep.dev/modules/using
 
 ## Version Constraints
 
