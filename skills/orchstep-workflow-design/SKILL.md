@@ -41,6 +41,8 @@ Read the user's request and decide which mode to use:
    - Need conditionals/loops/parallel? → `references/control-flow.md`
    - Need error handling/retry? → `references/error-handling.md`
    - Need modules? → `references/modules.md`
+   - Need a common recipe (env / env-group / env-var / module patterns)? → `references/patterns.md`
+   - Need to run an ad-hoc command or work with no `orchstep.yml`? → `references/adhoc-commands.md`
    - Need anti-patterns? → `references/anti-patterns.md`
 2. Scan `examples/*.yml` for a pattern that matches — use it as a starting
    point, then adapt to the user's exact requirements.
