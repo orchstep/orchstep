@@ -67,8 +67,21 @@ annotated examples, and a guided wizard:
 - **Quick mode** — give a concrete task, get a correct workflow, no questions.
 - **Wizard mode** — "help me design this" → 2–4 intent questions → a tailored workflow.
 
-Install it from [`skills/orchstep-workflow-design/`](skills/orchstep-workflow-design/)
-and your agent designs reusable workflows that are right the first time.
+Install it for Claude Code or Codex, then start a new agent session:
+
+```bash
+# Claude Code (user-wide)
+mkdir -p ~/.claude/skills && curl -fsSL https://github.com/orchstep/orchstep/archive/refs/heads/main.tar.gz \
+  | tar -xz --strip-components=2 -C ~/.claude/skills orchstep-main/skills/orchstep-workflow-design
+
+# Codex (user-wide)
+mkdir -p ~/.codex/skills && curl -fsSL https://github.com/orchstep/orchstep/archive/refs/heads/main.tar.gz \
+  | tar -xz --strip-components=2 -C ~/.codex/skills orchstep-main/skills/orchstep-workflow-design
+```
+
+For a project-scoped Claude Code install, use `.claude/skills/` in the project instead. Verify the installation by checking that `orchstep-workflow-design/SKILL.md` exists below the selected skills directory, then ask the agent to "design an OrchStep workflow that builds and tests my app".
+
+See [`skills/README.md`](skills/README.md#installing-skills) for details and alternatives.
 
 ## Quick Start
 
