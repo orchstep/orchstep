@@ -13,6 +13,7 @@ desc: "Demos, prompt generators, and utilities — start with: orchstep menu"
 
 defaults:
   greet_name: "world"
+  serve_port: "7777"
   get_url: "https://example.com"
   post_url: "https://httpbin.org/post"
   installer_url: "https://orchstep.dev/install.sh"
@@ -99,9 +100,13 @@ tasks:
       - name: launch
         func: shell
         do: |
-          echo "Starting the OrchStep dashboard — it prints its URL below."
-          echo "Run any task from the browser and watch it execute live. Ctrl-C to stop."
-          orchstep serve
+          echo ""
+          echo "  Dashboard:  http://127.0.0.1:{{ vars.serve_port }}"
+          echo ""
+          echo "  Open it in your browser, run any task, and watch it execute live."
+          echo "  Ctrl-C here stops the dashboard. Change the port with --var serve_port=8080"
+          echo ""
+          orchstep serve --port {{ vars.serve_port }}
 
   # ------------------------------------------------------ prompt generators --
   # Each task interviews you, then prints a prompt between COPY markers.

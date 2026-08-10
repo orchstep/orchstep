@@ -21,6 +21,25 @@
 > migrates your existing Makefile / Justfile / Taskfile / Gradle build / shell
 > scripts / CI pipeline for you. Generated once — replayed forever, zero tokens.
 
+## 🚀 Setup — 1, 2, 3
+
+```bash
+# 1. Install OrchStep
+curl -fsSL https://orchstep.dev/install.sh | sh
+#    or: brew tap orchstep/tap && brew install orchstep · npm install -g orchstep · pip install orchstep
+
+# 2. Grab this repo — it ships runnable demos
+git clone https://github.com/orchstep/orchstep.git && cd orchstep
+
+# 3. The must-see demo — interactive task menu
+orchstep menu
+
+# 4. The GUI — run tasks from a local web dashboard
+orchstep serve        # -> http://127.0.0.1:7777   (or pick "dashboard" in the menu)
+```
+
+More install options: [Distribution](#distribution) below · full guide: [installation docs](https://orchstep.dev/getting-started/installation) on orchstep.dev.
+
 📖 **Docs & live demos:** [orchstep.dev](https://www.orchstep.dev/)
 
 OrchStep runs multi-step workflows for developers and AI agents. It delegates to your existing tools (terraform, kubectl, aws, docker) rather than reimplementing them.
@@ -91,30 +110,11 @@ For a project-scoped Claude Code install, use `.claude/skills/` in the project i
 
 See [`skills/README.md`](skills/README.md#installing-skills) for details and alternatives.
 
-## Quick Start
-
-```bash
-# Install
-curl -fsSL https://orchstep.dev/install.sh | sh
-
-# Or via package managers
-brew tap orchstep/tap && brew install orchstep
-npm install -g orchstep
-pip install orchstep
-
-# Try it — this repo's root orchstep.yml has built-in demos
-git clone https://github.com/orchstep/orchstep.git && cd orchstep
-orchstep run demo
-
-# Or pick a task interactively
-orchstep menu
-```
-
-> **Interactive picker:** Run `orchstep menu` in any directory with an `orchstep.yml` to open a keyboard-driven task picker. Single-keystroke hotkeys, fuzzy search (arrow keys or `/`), and a filter cycle (`f` to cycle all → a-z → public → internal). Running plain `orchstep` in a terminal also auto-launches the menu; in a pipeline it exits cleanly instead of hanging.
-
 ## 🚀 Try it right in this repo
 
 The repo root ships an [`orchstep.yml`](orchstep.yml) so a fresh clone gives you something to run immediately — `orchstep menu` opens the picker, or run any task directly:
+
+> **Interactive picker:** Run `orchstep menu` in any directory with an `orchstep.yml` to open a keyboard-driven task picker. Single-keystroke hotkeys, fuzzy search (arrow keys or `/`), and a filter cycle (`f` to cycle all → a-z → public → internal). Running plain `orchstep` in a terminal also auto-launches the menu; in a pipeline it exits cleanly instead of hanging.
 
 | Task | What it shows |
 |------|---------------|
@@ -256,3 +256,11 @@ We welcome module contributions from humans and AI agents! See [CONTRIBUTING.md]
 
 Open content in this repo (spec, modules, skills, demos, docs) is licensed under Apache 2.0.
 The OrchStep engine binary has a separate [proprietary license](https://orchstep.com/license).
+
+---
+
+<p align="center">
+  <a href="https://orchstep.dev">
+    <img src="https://orchstep.dev/blog/automate-everything-hero.jpg" alt="OrchStep — automate everything" width="720">
+  </a>
+</p>
