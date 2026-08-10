@@ -1,0 +1,347 @@
+# OrchStep repository workflow — demos, LLM prompt generators, and utilities.
+#
+#   orchstep menu          interactive task picker (like `make`, but friendlier)
+#   orchstep serve         local web dashboard — run tasks from the browser
+#   orchstep run demo      run every demo in sequence
+#   orchstep list-tasks    plain list of everything here
+#
+# The prompt_* tasks ask a few questions and print a ready-to-paste prompt for
+# the orchstep-workflow-design skill (skills/orchstep-workflow-design/).
+
+name: orchstep-repo
+desc: "Demos, prompt generators, and utilities — start with: orchstep menu"
+
+defaults:
+  greet_name: "world"
+  get_url: "https://example.com"
+  post_url: "https://httpbin.org/post"
+  installer_url: "https://orchstep.dev/install.sh"
+  repo_tarball: "https://github.com/orchstep/orchstep/archive/refs/heads/main.tar.gz"
+
+tasks:
+  # ------------------------------------------------------------------ demos --
+
+  hello:
+    desc: "Hello world with variable substitution (try: orchstep run hello --var greet_name=you)"
+    steps:
+      - name: greet
+        func: shell
+        do: echo "Hello, {{ vars.greet_name }}! This message was orchestrated by OrchStep."
+
+  http_get:
+    desc: "HTTP GET demo — templated URL, retry, and a status assertion"
+    steps:
+      - name: fetch
+        func: http
+        args:
+          url: "{{ vars.get_url }}"
+          method: GET
+        timeout: 15s
+        retry:
+          max_attempts: 3
+          interval: 2s
+        outputs:
+          status: "{{ result.status_code }}"
+
+      - name: verify
+        func: assert
+        args:
+          condition: '{{ eq (printf "%v" steps.fetch.status) "200" }}'
+          desc: "GET must return HTTP 200"
+
+      - name: report
+        func: shell
+        do: echo "GET {{ vars.get_url }} -> HTTP {{ steps.fetch.status }}"
+
+  http_post:
+    desc: "HTTP POST demo — JSON body built from variables, echoed back by httpbin"
+    steps:
+      - name: send
+        func: http
+        args:
+          url: "{{ vars.post_url }}"
+          method: POST
+          body:
+            project: "orchstep"
+            greeting: "Hello, {{ vars.greet_name }}!"
+        timeout: 15s
+        retry:
+          max_attempts: 3
+          interval: 2s
+        outputs:
+          status: "{{ result.status_code }}"
+
+      - name: verify
+        func: assert
+        args:
+          condition: '{{ eq (printf "%v" steps.send.status) "200" }}'
+          desc: "POST must return HTTP 200"
+
+      - name: report
+        func: shell
+        do: |
+          echo "POST {{ vars.post_url }} -> HTTP {{ steps.send.status }}"
+          echo "The body above was assembled from vars at run time — change it with --var greet_name=..."
+
+  demo:
+    desc: "Run all demos in sequence: hello, HTTP GET, HTTP POST"
+    steps:
+      - name: run_hello
+        task: hello
+      - name: run_get
+        task: http_get
+      - name: run_post
+        task: http_post
+
+  dashboard:
+    desc: "Launch the local web dashboard (orchstep serve) — run tasks from a browser with live output"
+    steps:
+      - name: launch
+        func: shell
+        do: |
+          echo "Starting the OrchStep dashboard — it prints its URL below."
+          echo "Run any task from the browser and watch it execute live. Ctrl-C to stop."
+          orchstep serve
+
+  # ------------------------------------------------------ prompt generators --
+  # Each task interviews you, then prints a prompt between COPY markers.
+  # Paste it into any LLM agent that has the orchstep-workflow-design skill
+  # installed (run: orchstep run install_skill) and it designs the workflow.
+
+  prompt_migrate:
+    desc: "Generate an LLM prompt to migrate Make/Just/Task/Ant/Gradle/scripts/CI to OrchStep"
+    steps:
+      - name: source_tool
+        func: prompt
+        args:
+          message: "What are you migrating from?"
+          type: select
+          options:
+            - Makefile
+            - Justfile
+            - Taskfile
+            - Ant build.xml
+            - Gradle build
+            - shell scripts
+            - GitHub Actions workflow
+            - other / mixed
+          default: Makefile
+
+      - name: source_path
+        func: prompt
+        args:
+          message: "Path(s) to the existing file(s), relative to your repo"
+          type: text
+          default: "Makefile"
+
+      - name: features
+        func: prompt
+        args:
+          message: "Which OrchStep features should the migration use?"
+          type: multiselect
+          options:
+            - "env groups (shared variable sets)"
+            - "dotenv support (.env/.envrc loading)"
+            - "per-environment variables (dev/staging/prod)"
+            - "interactive prompts (select/confirm inputs)"
+            - "retries and error handling (catch/finally)"
+            - "parallel steps"
+            - "HTTP steps (webhooks, health checks)"
+            - "secrets kept out of logs"
+          default:
+            - "env groups (shared variable sets)"
+            - "dotenv support (.env/.envrc loading)"
+
+      - name: emit
+        func: shell
+        do: |
+          cat <<'PROMPT'
+
+          ==================== COPY FROM HERE ====================
+          Use the orchstep-workflow-design skill.
+
+          Migrate my existing automation to an OrchStep workflow (orchstep.yml).
+
+          - Source: {{ steps.source_tool.value }} at: {{ steps.source_path.value }}
+          - Read the source file(s) first and preserve every existing
+            target/task and its behavior.
+          - Use these OrchStep features where they fit:
+            {{ steps.features.value }}
+          - Keep task names close to the originals.
+          - Extract repeated values into defaults: — nothing hardcoded.
+          - Add timeouts and error handling per the skill's quality rules.
+          - When done, validate with `orchstep lint orchstep.yml` and show me
+            the migrated task list with `orchstep list-tasks`.
+          ==================== COPY TO HERE ======================
+          PROMPT
+
+  prompt_features:
+    desc: "Generate an LLM prompt to build a new workflow from a feature checklist"
+    steps:
+      - name: goal
+        func: prompt
+        args:
+          message: "In one or two sentences, what should the workflow do?"
+          type: text
+          default: "Build, test, and deploy my application"
+
+      - name: features
+        func: prompt
+        args:
+          message: "Which features should it use?"
+          type: multiselect
+          options:
+            - "env groups (shared variable sets)"
+            - "dotenv support (.env/.envrc loading)"
+            - "per-environment variables (dev/staging/prod)"
+            - "interactive prompts (select/confirm inputs)"
+            - "retries and error handling (catch/finally)"
+            - "parallel steps"
+            - "HTTP steps (webhooks, health checks)"
+            - "reusable modules"
+            - "CI-friendly non-interactive mode"
+          default:
+            - "retries and error handling (catch/finally)"
+            - "per-environment variables (dev/staging/prod)"
+
+      - name: emit
+        func: shell
+        do: |
+          cat <<'PROMPT'
+
+          ==================== COPY FROM HERE ====================
+          Use the orchstep-workflow-design skill.
+
+          Design a new OrchStep workflow (orchstep.yml) for me.
+
+          - Goal: {{ steps.goal.value }}
+          - Look at my current repository first and infer the build/test/run
+            commands from what is actually here before writing anything.
+          - Use these OrchStep features:
+            {{ steps.features.value }}
+          - Extract repeated values into defaults: — nothing hardcoded.
+          - Add timeouts, retries, and assertions per the skill's quality rules.
+          - When done, validate with `orchstep lint orchstep.yml` and show me
+            how to run it with `orchstep menu`.
+          ==================== COPY TO HERE ======================
+          PROMPT
+
+  prompt_scenario:
+    desc: "Generate an LLM prompt for a common scenario (env setup, CI/CD, release, runbook, data)"
+    steps:
+      - name: scenario
+        func: prompt
+        args:
+          message: "Which scenario?"
+          type: select
+          options:
+            - "development environment setup (tools, services, config)"
+            - "CI/CD pipeline (build, test, deploy with gates)"
+            - "release automation (version bump, tag, changelog, publish)"
+            - "operations runbook (backup, restore, health checks)"
+            - "data pipeline (fetch, transform, load)"
+            - "scheduled maintenance (cleanup, rotation, reports)"
+          default: "CI/CD pipeline (build, test, deploy with gates)"
+
+      - name: details
+        func: prompt
+        args:
+          message: "Anything specific? (stack, targets, constraints — or leave the default)"
+          type: text
+          default: "Infer the details from my repository"
+
+      - name: emit
+        func: shell
+        do: |
+          cat <<'PROMPT'
+
+          ==================== COPY FROM HERE ====================
+          Use the orchstep-workflow-design skill.
+
+          Design an OrchStep workflow (orchstep.yml) for this scenario:
+
+          - Scenario: {{ steps.scenario.value }}
+          - Specifics: {{ steps.details.value }}
+          - Look at my current repository first and base every command on what
+            is actually here — do not invent tooling I don't use.
+          - Extract repeated values into defaults: — nothing hardcoded.
+          - Add timeouts, retries, and assertions per the skill's quality rules.
+          - Docs for reference: https://orchstep.dev
+          - When done, validate with `orchstep lint orchstep.yml` and show me
+            how to run it with `orchstep menu`.
+          ==================== COPY TO HERE ======================
+          PROMPT
+
+  # -------------------------------------------------------------- utilities --
+
+  upgrade:
+    desc: "Upgrade the OrchStep binary via the official installer (asks first)"
+    steps:
+      - name: current
+        func: shell
+        do: orchstep version
+        on_error: warn
+
+      - name: confirm
+        func: prompt
+        args:
+          message: "Upgrade via the official install script? (brew/npm/pip users: use your package manager instead)"
+          type: confirm
+          default: false
+
+      - name: run_installer
+        if: '{{ eq (printf "%v" steps.confirm.value) "true" }}'
+        func: shell
+        do: curl -fsSL {{ vars.installer_url }} | sh
+        timeout: 300s
+
+      - name: verify
+        if: '{{ eq (printf "%v" steps.confirm.value) "true" }}'
+        func: shell
+        do: orchstep version
+
+  install_skill:
+    desc: "Install the orchstep-workflow-design skill into Claude Code (~/.claude/skills)"
+    steps:
+      - name: confirm
+        func: prompt
+        args:
+          message: "Install the skill into ~/.claude/skills? (other agents: see skills/README.md)"
+          type: confirm
+          default: false
+
+      - name: install
+        if: '{{ eq (printf "%v" steps.confirm.value) "true" }}'
+        func: shell
+        do: |
+          mkdir -p ~/.claude/skills
+          curl -fsSL {{ vars.repo_tarball }} \
+            | tar -xz --strip-components=2 -C ~/.claude/skills orchstep-main/skills/orchstep-workflow-design
+        timeout: 120s
+
+      - name: verify
+        if: '{{ eq (printf "%v" steps.confirm.value) "true" }}'
+        func: shell
+        do: |
+          test -f ~/.claude/skills/orchstep-workflow-design/SKILL.md
+          echo "Installed. Start a new Claude Code session and ask it to design an OrchStep workflow,"
+          echo "or generate a tailored prompt with: orchstep run prompt_migrate"
+
+  todos:
+    desc: "Planned additions to this workflow, and how to contribute"
+    steps:
+      - name: show
+        func: shell
+        do: |
+          cat <<'TODOS'
+          Planned additions to this workflow:
+            - prompt generators for more sources (npm scripts, Jenkins, CircleCI)
+            - a guided build-your-first-workflow tutorial task
+            - skill install helpers for more agents as recipes are confirmed
+
+          Contribute or report problems:
+            https://github.com/orchstep/orchstep/issues
+
+          Help wanted right now — verify the workflow-design skill with your agent:
+            Cursor #4 - Copilot #5 - Gemini CLI #6 - Windsurf #7 - Cline #8 - Aider #9
+          TODOS

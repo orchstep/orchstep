@@ -13,6 +13,14 @@
 
 **Automate everything — built for developers and AI agents.** Run anywhere as a single binary, no vendor lock-in.
 
+> **⚡ Describe it. Get automation.** Install the
+> [`orchstep-workflow-design`](skills/orchstep-workflow-design/) skill, answer a
+> few questions from a built-in [prompt generator](#-try-it-right-in-this-repo)
+> (`orchstep run prompt_migrate`), and paste the result into your AI agent — it
+> builds your OrchStep workflow **from the codebase you already have**, or
+> migrates your existing Makefile / Justfile / Taskfile / Gradle build / shell
+> scripts / CI pipeline for you. Generated once — replayed forever, zero tokens.
+
 📖 **Docs & live demos:** [orchstep.dev](https://www.orchstep.dev/)
 
 OrchStep runs multi-step workflows for developers and AI agents. It delegates to your existing tools (terraform, kubectl, aws, docker) rather than reimplementing them.
@@ -94,15 +102,34 @@ brew tap orchstep/tap && brew install orchstep
 npm install -g orchstep
 pip install orchstep
 
-# Run a demo
-cd demos/01-post-deploy-smoke-test
-orchstep run
+# Try it — this repo's root orchstep.yml has built-in demos
+git clone https://github.com/orchstep/orchstep.git && cd orchstep
+orchstep run demo
 
 # Or pick a task interactively
 orchstep menu
 ```
 
 > **Interactive picker:** Run `orchstep menu` in any directory with an `orchstep.yml` to open a keyboard-driven task picker. Single-keystroke hotkeys, fuzzy search (arrow keys or `/`), and a filter cycle (`f` to cycle all → a-z → public → internal). Running plain `orchstep` in a terminal also auto-launches the menu; in a pipeline it exits cleanly instead of hanging.
+
+## 🚀 Try it right in this repo
+
+The repo root ships an [`orchstep.yml`](orchstep.yml) so a fresh clone gives you something to run immediately — `orchstep menu` opens the picker, or run any task directly:
+
+| Task | What it shows |
+|------|---------------|
+| `orchstep run demo` | All demos in sequence: hello world, HTTP GET, HTTP POST |
+| `orchstep run hello --var greet_name=you` | Variable substitution from the CLI |
+| `orchstep run http_get` / `http_post` | Templated HTTP calls with retries and status assertions |
+| `orchstep run dashboard` | The local web GUI (`orchstep serve`) — run tasks from a browser, watch live output |
+| `orchstep run prompt_migrate` | Interview → prompt: migrate a Makefile / Justfile / Taskfile / Ant / Gradle / shell scripts / GitHub Actions to OrchStep |
+| `orchstep run prompt_features` | Checkbox feature picker (env groups, dotenv, retries, parallel, …) → prompt to design a new workflow |
+| `orchstep run prompt_scenario` | Common scenarios (dev env setup, CI/CD, release automation, ops runbooks, data pipelines) → prompt |
+| `orchstep run install_skill` | Install the workflow-design skill into Claude Code |
+| `orchstep run upgrade` | Upgrade the OrchStep binary via the official installer |
+| `orchstep run todos` | Planned additions + how to contribute |
+
+The `prompt_*` tasks are OrchStep dogfooding itself: the engine interviews you with select/checkbox/text prompts, then prints a copy-paste prompt engineered for the [`orchstep-workflow-design`](skills/orchstep-workflow-design/) skill. Paste it into any agent that has the skill installed and it writes the workflow — from your actual codebase, with error handling and assertions included. More classic examples live in [`demos/`](demos/).
 
 ## 🎬 OrchStep CLI — 90-second tour
 
