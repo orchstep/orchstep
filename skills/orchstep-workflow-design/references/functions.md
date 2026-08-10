@@ -148,3 +148,5 @@
 - Non-interactive mode: when stdin is not a TTY, uses `default` value with no prompt
 - Prompt responses available as `steps.step_name.value`
 - Options for select/multiselect can be list of strings or list of `{label:, value:}` objects
+- Multiselect `value` renders in templates as a comma-joined STRING (`"a,b"`), not a list —
+  use direct interpolation `{{ steps.pick.value }}`; Sprig `join`/`range` on it FAIL
