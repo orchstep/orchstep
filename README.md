@@ -110,6 +110,18 @@ For a project-scoped Claude Code install, use `.claude/skills/` in the project i
 
 See [`skills/README.md`](skills/README.md#installing-skills) for details and alternatives.
 
+**Or let OrchStep write the prompt for you.** This repo's built-in prompt generators interview you with select/checkbox/text questions, then emit a ready-to-paste prompt engineered for this skill — CI/CD pipelines, release automation, environment setup, and migrations from Make / Just / Task / Ant / Gradle / shell scripts / GitHub Actions, out of the box:
+
+```bash
+orchstep run prompt_migrate    # migrate existing automation (Make, Gradle, CI, scripts) to OrchStep
+orchstep run prompt_features   # design a new workflow from a feature checklist
+orchstep run prompt_scenario   # common scenarios: env setup, CI/CD, release, runbooks, data pipelines
+```
+
+Paste the generated prompt into Claude Code (or any agent with the skill installed) and it designs the workflow for you — from your actual codebase, with error handling and assertions included:
+
+![Generating a tailored migration prompt with orchstep run prompt_migrate](docs/images/prompt-generator-demo.gif)
+
 ## 🚀 Try it right in this repo
 
 The repo root ships an [`orchstep.yml`](orchstep.yml) so a fresh clone gives you something to run immediately — `orchstep menu` opens the picker, or run any task directly:
@@ -248,6 +260,12 @@ Browse available modules in the `modules/` directory or search with:
 orchstep module search deploy
 ```
 
+<p align="center">
+  <a href="https://orchstep.dev">
+    <img src="https://orchstep.dev/blog/automate-everything-hero.jpg" alt="OrchStep — automate everything" width="720">
+  </a>
+</p>
+
 ## Contributing
 
 We welcome module contributions from humans and AI agents! See [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -256,11 +274,3 @@ We welcome module contributions from humans and AI agents! See [CONTRIBUTING.md]
 
 Open content in this repo (spec, modules, skills, demos, docs) is licensed under Apache 2.0.
 The OrchStep engine binary has a separate [proprietary license](https://orchstep.com/license).
-
----
-
-<p align="center">
-  <a href="https://orchstep.dev">
-    <img src="https://orchstep.dev/blog/automate-everything-hero.jpg" alt="OrchStep — automate everything" width="720">
-  </a>
-</p>
