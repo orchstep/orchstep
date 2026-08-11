@@ -7,3 +7,6 @@ pip/orchstep.egg-info/
 .gstack/
 packages/workflow-viewer/node_modules/
 packages/workflow-viewer/dist/
+
+# Local run state (context DB, dashboard history) from running the root orchstep.yml
+.orchstep/
