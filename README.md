@@ -9,7 +9,7 @@
 
 ![Tests](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Forchstep%2Forchstep%2Fmain%2Ftest-results.json)
 ![Release](https://img.shields.io/github/v/release/orchstep/orchstep)
-![License](https://img.shields.io/badge/license-Apache%202.0-blue)
+![Engine: free for individual and commercial use](https://img.shields.io/badge/engine-free%20for%20commercial%20use-brightgreen) ![Content: Apache 2.0](https://img.shields.io/badge/content-Apache%202.0-blue)
 
 **Automate everything — built for developers and AI agents.** Run anywhere as a single binary, no vendor lock-in.
 
@@ -280,5 +280,5 @@ We welcome module contributions from humans and AI agents! See [CONTRIBUTING.md]
 
 ## License
 
-Open content in this repo (spec, modules, skills, demos, docs) is licensed under Apache 2.0.
-The OrchStep engine binary has a separate [proprietary license](https://orchstep.com/license).
+- **The OrchStep engine binary is free for individual and commercial use** under the one-page [OrchStep Binary License](EULA.md) (also at [orchstep.dev/license](https://orchstep.dev/license)).
+- **Open content in this repo** (spec, modules, skills, demos, docs) is licensed under [Apache 2.0](LICENSE).

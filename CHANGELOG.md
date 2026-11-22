@@ -9,16 +9,60 @@ OrchStep follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
-- **Claude Code plugin.** This repo is now a Claude Code marketplace:
-  `/plugin install orchstep --marketplace orchstep/orchstep` installs the five public
-  OrchStep skills (workflow-design, capture, task-runner, module-creation,
-  mcp-integration) plus the `orchstep mcp serve` MCP server in one step.
+## [0.15.0] - 2026-11-22
 
 ### Security
-- **Installer verifies checksums.** `install.sh` now checks the downloaded archive
-  against the release's `checksums.txt` (SHA-256) and aborts on a mismatch. New
+- **`orchstep serve` hardened against malicious web pages — upgrade recommended.**
+  On v0.14.0 and earlier, a web page open in your browser while `orchstep serve`
+  was running could send requests to the dashboard: start tasks with chosen
+  variables (cross-site request forgery) and, via DNS rebinding, read files the
+  dashboard can display. The dashboard now validates the `Host` header on loopback
+  binds, rejects cross-site requests (`Origin` / `Sec-Fetch-Site`), and requires
+  `Content-Type: application/json` on state-changing requests. The CLI, `curl` and
+  scripts are unaffected. See the [security advisory](https://github.com/orchstep/orchstep/security/advisories).
+- **`serve --host <non-loopback>` now requires `--token`**, so the dashboard can no
+  longer be exposed to a network without authentication. Token comparison is
+  constant-time and `Authorization` must use the `Bearer` scheme.
+- **Dependency and toolchain updates** clearing every reachable known
+  vulnerability (`govulncheck`: 0), including go-git 5.19.3 (path traversal via
+  crafted refs, symlink-following worktree operations, credential leak on
+  cross-host redirect — all on the remote-module fetch path), x/crypto 0.59,
+  x/net 0.63, x/text 0.44, go-billy 5.9.2 and Go 1.26.11.
+- **Installer verifies checksums.** `install.sh` checks the archive against the
+  release's `checksums.txt` (SHA-256) and aborts on a mismatch. New
   `ORCHSTEP_INSTALL_DIR` and `ORCHSTEP_VERSION` overrides.
+
+### Added
+- **`shellquote` template function** (alias `shq`): renders a value as a single,
+  inert POSIX shell word — `do: git checkout {{ vars.branch | shellquote }}`.
+  Use it for any value you don't fully control (`--var`, MCP arguments, HTTP
+  outputs). Available in step commands, outputs and assert conditions.
+- **MCP `orchstep_plan` tool**: a read-only dry-run returning the JSON plan
+  (rendered commands, condition verdicts, variable provenance) so an agent can
+  show what will execute before calling `orchstep_run`.
+- **MCP `orchstep_run` returns the structured JSON run result** and accepts an
+  `environment` argument (`--env`).
+- **MCP tool annotations** (`readOnlyHint`, `destructiveHint`, …) on every tool,
+  protocol-version negotiation (2024-11-05 through 2025-11-25), and the real
+  build version in `serverInfo`.
+- **Claude Code plugin.** This repo is a Claude Code marketplace:
+  `/plugin install orchstep --marketplace orchstep/orchstep` installs the five
+  public skills plus the MCP server in one step.
+- **License terms published.** The engine binary is free for individual and
+  commercial use under the one-page [OrchStep Binary License](EULA.md), now shipped
+  inside every release archive.
+
+### Changed
+- Pro-only commands (`team`, `audit`, `governance`, `inspect`, `report`, private
+  registry `module` subcommands) are hidden from `--help` unless licensed. They
+  still run and explain what they need.
+- MCP tool calls reject task names, environments and var keys that would be
+  parsed as CLI flags.
+
+### Fixed
+- Docs and the task-runner skill used `orchstep run --format json`; the flag is
+  `--output json` (and `--json` for `validate`).
+- MCP docs and the mcp-integration skill now describe the real tools.
 
 ## [0.14.0] - 2026-06-27
 

@@ -13,8 +13,8 @@ orchstep mcp serve
 | Tool | Read-only | Purpose |
 |------|-----------|---------|
 | `orchstep_list_tasks` | yes | List available tasks |
-| `orchstep_plan` | yes | Dry-run a task (rendered commands, verdicts); nothing executes *(next release)* |
-| `orchstep_run` | no | Execute a workflow task; returns the JSON run result *(JSON from next release)* |
+| `orchstep_plan` | yes | Dry-run a task (rendered commands, verdicts); nothing executes |
+| `orchstep_run` | no | Execute a workflow task; returns the JSON run result |
 | `orchstep_lint` | yes | Lint a workflow |
 | `orchstep_module_search` | yes | Search the module registry |
 | `orchstep_module_install` | no | Install a module |

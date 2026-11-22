@@ -26,7 +26,7 @@ Every tool carries MCP behaviour annotations (`readOnlyHint`, `destructiveHint`,
 | Tool | Read-only | What it does |
 |------|-----------|--------------|
 | `orchstep_list_tasks` | yes | List the non-internal tasks in a workflow file |
-| `orchstep_plan` | yes | Dry-run a task: rendered commands, condition verdicts, variable provenance. Nothing executes. *(next release)* |
+| `orchstep_plan` | yes | Dry-run a task: rendered commands, condition verdicts, variable provenance. Nothing executes. |
 | `orchstep_run` | no (destructive) | Execute a task and return the run result |
 | `orchstep_lint` | yes | Lint a workflow file for errors and anti-patterns |
 | `orchstep_module_search` | yes | Search the module registry |
@@ -40,7 +40,7 @@ Every tool carries MCP behaviour annotations (`readOnlyHint`, `destructiveHint`,
 | `task` | string | yes | Task name to run |
 | `file` | string | no | Workflow file (default `./orchstep.yml`) |
 | `vars` | object of strings | no | Runtime variables, same as `--var key=value` |
-| `environment` | string | no | Declared environment, same as `--env` *(next release)* |
+| `environment` | string | no | Declared environment, same as `--env` |
 
 ```json
 {
@@ -49,7 +49,7 @@ Every tool carries MCP behaviour annotations (`readOnlyHint`, `destructiveHint`,
 }
 ```
 
-From the next release the result text is the structured JSON run result (the same document `orchstep run --output json` prints), so the agent can branch on `status` and inspect `steps`:
+The result text is the structured JSON run result (the same document `orchstep run --output json` prints), so the agent can branch on `status` and inspect `steps`:
 
 ```json
 {
