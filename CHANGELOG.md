@@ -7,6 +7,19 @@ and on the docs site at [orchstep.dev/changelog](https://orchstep.dev/changelog)
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 OrchStep follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Claude Code plugin.** This repo is now a Claude Code marketplace:
+  `/plugin install orchstep --marketplace orchstep/orchstep` installs the five public
+  OrchStep skills (workflow-design, capture, task-runner, module-creation,
+  mcp-integration) plus the `orchstep mcp serve` MCP server in one step.
+
+### Security
+- **Installer verifies checksums.** `install.sh` now checks the downloaded archive
+  against the release's `checksums.txt` (SHA-256) and aborts on a mismatch. New
+  `ORCHSTEP_INSTALL_DIR` and `ORCHSTEP_VERSION` overrides.
+
 ## [0.14.0] - 2026-06-27
 
 ### Added

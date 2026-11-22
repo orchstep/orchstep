@@ -29,6 +29,16 @@ Install `orchstep-workflow-design` user-wide with one of these commands, then st
 
 ### Claude Code
 
+**Recommended — plugin (all five skills + the OrchStep MCP server, auto-updates):**
+
+```text
+/plugin install orchstep --marketplace orchstep/orchstep
+```
+
+Terminal equivalent: `claude plugin marketplace add orchstep/orchstep && claude plugin install orchstep@orchstep`.
+
+**Manual — a single skill:**
+
 ```bash
 mkdir -p ~/.claude/skills && curl -fsSL https://github.com/orchstep/orchstep/archive/refs/heads/main.tar.gz \
   | tar -xz --strip-components=2 -C ~/.claude/skills orchstep-main/skills/orchstep-workflow-design

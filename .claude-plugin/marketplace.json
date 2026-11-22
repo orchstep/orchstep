@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "orchstep",
+  "description": "Official OrchStep plugins for Claude Code: workflow design, session capture, and the OrchStep MCP server.",
+  "owner": { "name": "OrchStep", "url": "https://orchstep.dev" },
+  "plugins": [
+    {
+      "name": "orchstep",
+      "source": "./",
+      "description": "Design, capture, and run deterministic OrchStep workflows from Claude Code (skills + MCP server).",
+      "category": "development",
+      "tags": ["workflow", "automation", "ci-cd", "replay"],
+      "skills": [
+        "./skills/orchstep-workflow-design",
+        "./skills/orchstep-capture",
+        "./skills/orchstep-task-runner",
+        "./skills/orchstep-module-creation",
+        "./skills/orchstep-mcp-integration"
+      ]
+    }
+  ]
+}

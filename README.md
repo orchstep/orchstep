@@ -25,7 +25,7 @@
 
 ```bash
 # 1. Install OrchStep
-curl -fsSL https://orchstep.dev/install.sh | sh
+curl -fsSL https://orchstep.dev/install.sh | sh   # verifies the release SHA-256 checksum
 #    or: brew tap orchstep/tap && brew install orchstep · npm install -g orchstep · pip install orchstep
 
 # 2. Grab this repo — it ships runnable demos
@@ -94,10 +94,18 @@ annotated examples, and a guided wizard:
 - **Quick mode** — give a concrete task, get a correct workflow, no questions.
 - **Wizard mode** — "help me design this" → 2–4 intent questions → a tailored workflow.
 
-Install it for Claude Code or Codex, then start a new agent session:
+**Claude Code — one command** (installs all OrchStep skills + the MCP server as a plugin):
+
+```text
+/plugin install orchstep --marketplace orchstep/orchstep
+```
+
+Or from a terminal: `claude plugin marketplace add orchstep/orchstep && claude plugin install orchstep@orchstep`.
+
+The skills follow the open [Agent Skills](https://agentskills.io) `SKILL.md` format, so they also work in Codex, Gemini CLI, Copilot, Cursor and other compatible agents. Manual install:
 
 ```bash
-# Claude Code (user-wide)
+# Claude Code (user-wide, manual)
 mkdir -p ~/.claude/skills && curl -fsSL https://github.com/orchstep/orchstep/archive/refs/heads/main.tar.gz \
   | tar -xz --strip-components=2 -C ~/.claude/skills orchstep-main/skills/orchstep-workflow-design
 
@@ -184,11 +192,11 @@ The OrchStep engine is rigorously tested with a comprehensive regression suite:
 
 | Metric | Value |
 |--------|-------|
-| Regression test specs | **431** |
-| Pass rate | **100%** (431/431) |
+| Regression test cases | **545** across 182 spec directories |
+| Pass rate | **100%** (545/545) |
 | Feature categories tested | **14** (execution, variables, control flow, loops, error handling, HTTP, git, templates, environment, config, assertions, modules, data flow, advanced) |
 | Platforms verified | **6** (darwin/amd64, darwin/arm64, linux/amd64, linux/arm64, windows/amd64, windows/arm64) |
-| CI pipeline | Automated on every commit — build, lint, vet, unit tests, full regression suite |
+| CI pipeline | Build, lint, vet and unit tests on every engine change; full regression suite on a weekly schedule and before every release |
 
 Every release is gated by the full regression suite. The test infrastructure includes mock HTTP servers, mock CLI simulators, and authenticated git operation tests to ensure real-world reliability.
 
@@ -235,7 +243,7 @@ All channels pull binaries from [GitHub Releases](https://github.com/orchstep/or
 OrchStep is designed for AI agent integration:
 
 - **CLI:** `orchstep run task --format json` for structured output
-- **MCP Server:** `orchstep mcp serve` for native tool_call integration
+- **MCP Server:** `orchstep mcp serve` for native tool_call integration (bundled in the Claude Code plugin)
 - **Skills:** Install skill documents from `skills/` to teach agents OrchStep patterns — including [`orchstep-capture`](skills/orchstep-capture/) (turn a solved session into a replayable, zero-token workflow) and [`orchstep-workflow-design`](skills/orchstep-workflow-design/) (author production-grade workflows)
 - **Prompts:** Interactive input for humans, auto-skipped for CI/agents with `ORCHSTEP_NON_INTERACTIVE=true`
 

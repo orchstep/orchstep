@@ -1,0 +1,17 @@
+{
+  "name": "orchstep",
+  "displayName": "OrchStep",
+  "version": "0.14.0",
+  "description": "Turn solved agent work into deterministic, replayable YAML workflows. Skills to design, capture, and run OrchStep workflows, plus the OrchStep MCP server.",
+  "author": { "name": "OrchStep", "url": "https://orchstep.dev" },
+  "homepage": "https://orchstep.dev/agents/skills",
+  "repository": "https://github.com/orchstep/orchstep",
+  "license": "Apache-2.0",
+  "keywords": ["workflow", "automation", "ci-cd", "replay", "yaml", "task-runner", "mcp"],
+  "mcpServers": {
+    "orchstep": {
+      "command": "orchstep",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
