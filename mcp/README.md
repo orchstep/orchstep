@@ -10,15 +10,16 @@ orchstep mcp serve
 
 ## Available Tools
 
-| Tool | Purpose |
-|------|---------|
-| `orchstep.run` | Execute a workflow task |
-| `orchstep.list_tasks` | List available tasks |
-| `orchstep.lint` | Validate a workflow |
-| `orchstep.module_validate` | Validate a module |
-| `orchstep.module_search` | Search the module registry |
-| `orchstep.module_install` | Install a module |
-| `orchstep.workflow_generate` | Scaffold a workflow from description |
-| `orchstep.version` | Get version and edition info |
+| Tool | Read-only | Purpose |
+|------|-----------|---------|
+| `orchstep_list_tasks` | yes | List available tasks |
+| `orchstep_plan` | yes | Dry-run a task (rendered commands, verdicts); nothing executes *(next release)* |
+| `orchstep_run` | no | Execute a workflow task; returns the JSON run result *(JSON from next release)* |
+| `orchstep_lint` | yes | Lint a workflow |
+| `orchstep_module_search` | yes | Search the module registry |
+| `orchstep_module_install` | no | Install a module |
+| `orchstep_version` | yes | Get version and edition info |
 
-*Full MCP server specification and integration guide coming soon.*
+Claude Code users: `/plugin install orchstep --marketplace orchstep/orchstep` registers this server automatically.
+
+Full reference: [orchstep.dev/agents/mcp](https://orchstep.dev/agents/mcp).

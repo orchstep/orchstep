@@ -1,11 +1,11 @@
 ---
 name: orchstep-mcp-integration
-description: Use the OrchStep MCP server for native LLM agent integration. Use when building AI-powered automation that orchestrates workflows, manages modules, or generates workflow definitions.
+description: Use the OrchStep MCP server for native LLM agent integration. Use when an agent should list, preview (dry-run), lint, or run OrchStep workflows, or find and install modules, through MCP tools instead of the CLI.
 ---
 
 # OrchStep MCP Integration
 
-You are using the OrchStep MCP (Model Context Protocol) server for native LLM agent integration.
+The OrchStep MCP (Model Context Protocol) server lets an agent call OrchStep as native tools instead of shelling out and scraping terminal text. It speaks JSON-RPC 2.0 over stdio.
 
 ## Starting the MCP Server
 
@@ -13,274 +13,153 @@ You are using the OrchStep MCP (Model Context Protocol) server for native LLM ag
 orchstep mcp serve
 ```
 
-The server exposes OrchStep functionality as MCP tools that LLM agents can call directly.
+In Claude Code the easiest route is the plugin, which registers this server for you:
+
+```text
+/plugin install orchstep --marketplace orchstep/orchstep
+```
 
 ## Available Tools
 
-### orchstep.run
+Every tool carries MCP behaviour annotations (`readOnlyHint`, `destructiveHint`, ...) so a client can auto-approve the read-only ones and ask before anything executes.
 
-Execute a workflow task.
+| Tool | Read-only | What it does |
+|------|-----------|--------------|
+| `orchstep_list_tasks` | yes | List the non-internal tasks in a workflow file |
+| `orchstep_plan` | yes | Dry-run a task: rendered commands, condition verdicts, variable provenance. Nothing executes. *(next release)* |
+| `orchstep_run` | no (destructive) | Execute a task and return the run result |
+| `orchstep_lint` | yes | Lint a workflow file for errors and anti-patterns |
+| `orchstep_module_search` | yes | Search the module registry |
+| `orchstep_module_install` | no | Install a module from the registry |
+| `orchstep_version` | yes | Report version and edition |
 
-**Parameters:**
+### orchstep_run
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `task` | string | yes | Task name to execute |
-| `vars` | object | no | Variables to pass (key-value pairs) |
-| `vars_file` | string | no | Path to variables file |
-| `format` | string | no | Output format: `json` (default), `text` |
-| `log_level` | string | no | Logging level: `debug`, `info`, `warn`, `error` |
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `task` | string | yes | Task name to run |
+| `file` | string | no | Workflow file (default `./orchstep.yml`) |
+| `vars` | object of strings | no | Runtime variables, same as `--var key=value` |
+| `environment` | string | no | Declared environment, same as `--env` *(next release)* |
 
-**Example call:**
 ```json
 {
-  "tool": "orchstep.run",
-  "arguments": {
-    "task": "deploy",
-    "vars": {
-      "environment": "production",
-      "version": "2.0.0"
-    },
-    "format": "json"
-  }
+  "name": "orchstep_run",
+  "arguments": { "task": "hello", "vars": { "greet_name": "agent" } }
 }
 ```
 
-**Response:**
+From the next release the result text is the structured JSON run result (the same document `orchstep run --output json` prints), so the agent can branch on `status` and inspect `steps`:
+
 ```json
 {
-  "task": "deploy",
+  "workflow": "orchstep-repo",
+  "task": "hello",
   "status": "success",
-  "duration": "12.5s",
   "steps": [
     {
-      "name": "build",
-      "status": "success",
-      "outputs": { "image_tag": "app:2.0.0" }
+      "task": "hello",
+      "name": "greet",
+      "status": "ok",
+      "output": "Hello, agent! This message was orchestrated by OrchStep."
     }
   ]
 }
 ```
 
-### orchstep.list_tasks
+A failed run sets `isError: true` on the tool result and includes the `error` field. Task names, environments and var keys that look like CLI flags (for example a task named `--file=...`) are rejected before anything runs.
 
-List available tasks in the current workflow.
+### orchstep_plan
 
-**Parameters:** None
+Takes the same arguments as `orchstep_run` and returns the dry-run plan (`orchstep run <task> --dry-run --output json`). Use it to show the user exactly what will execute, then call `orchstep_run`.
 
-**Response:**
-```json
-{
-  "tasks": [
-    { "name": "deploy", "description": "Deploy the application" },
-    { "name": "rollback", "description": "Rollback to previous version" },
-    { "name": "health", "description": "Run health checks" }
-  ]
-}
-```
+### orchstep_list_tasks
 
-### orchstep.lint
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `file` | string | no | Workflow file (default `./orchstep.yml`) |
 
-Validate a workflow file.
+Returns task names, one per line.
 
-**Parameters:**
+### orchstep_lint
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `path` | string | no | Path to workflow file (defaults to `orchstep.yml`) |
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `file` | string | yes | Workflow file to lint |
 
-**Response:**
-```json
-{
-  "valid": true,
-  "warnings": [
-    {
-      "type": "duplicate_variable",
-      "message": "Variable 'region' duplicated at step level",
-      "location": "tasks.deploy.steps[2].vars.region"
-    }
-  ],
-  "errors": []
-}
-```
+### orchstep_module_search
 
-### orchstep.module_search
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `query` | string | no | Matches name, description and tags |
+| `tier` | string | no | `official`, `community` or `ai` |
 
-Search the module registry.
+### orchstep_module_install
 
-**Parameters:**
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | string | yes | Full module name, e.g. `@orchstep/slack-notify` |
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `query` | string | yes | Search term |
+### orchstep_version
 
-**Response:**
-```json
-{
-  "modules": [
-    {
-      "name": "ci-cd",
-      "version": "1.2.0",
-      "description": "CI/CD pipeline module",
-      "source": "github.com/orchstep-modules/ci-cd"
-    }
-  ]
-}
-```
-
-### orchstep.module_install
-
-Install a module from the registry.
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `source` | string | yes | Module source (e.g., `github.com/org/module`) |
-| `version` | string | no | Version constraint (e.g., `^1.2.0`) |
-
-**Response:**
-```json
-{
-  "installed": true,
-  "name": "ci-cd",
-  "version": "1.2.0",
-  "path": "~/.orchstep/modules/ci-cd"
-}
-```
-
-### orchstep.workflow_generate
-
-Scaffold a workflow from a natural language description.
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `description` | string | yes | What the workflow should do |
-| `output` | string | no | Output file path (defaults to stdout) |
-
-**Example call:**
-```json
-{
-  "tool": "orchstep.workflow_generate",
-  "arguments": {
-    "description": "Build a Docker image, run tests, deploy to staging, run health checks, then promote to production"
-  }
-}
-```
-
-**Response:** Generated `orchstep.yml` content.
-
-### orchstep.version
-
-Get version and edition information.
-
-**Parameters:** None
-
-**Response:**
-```json
-{
-  "version": "1.0.0",
-  "edition": "community",
-  "go_version": "1.25.5"
-}
-```
-
-## Error Codes
-
-| Code | Meaning | Action |
-|------|---------|--------|
-| `TASK_NOT_FOUND` | Task name does not exist | Call `list_tasks` to see available tasks |
-| `VALIDATION_ERROR` | Workflow YAML is invalid | Call `lint` to get detailed errors |
-| `EXECUTION_ERROR` | Step failed during execution | Check step outputs and error messages |
-| `TIMEOUT` | Operation exceeded time limit | Increase timeout or optimize the step |
-| `MODULE_NOT_FOUND` | Module not found in registry | Check module name and source URL |
-| `VARIABLE_ERROR` | Required variable not provided | Pass the variable via `vars` parameter |
+No arguments. Returns `{"version": "...", "edition": "community"}`.
 
 ## Usage Patterns
 
-### Pattern 1: Discover and Run
-
-First discover available tasks, then run the appropriate one:
+### Discover, preview, run
 
 ```
-1. Call orchstep.list_tasks -> get available tasks
-2. Call orchstep.run with task="deploy", vars={env: "staging"}
-3. Check response status
-4. If failed, inspect step outputs for error details
+1. orchstep_list_tasks            -> see what exists
+2. orchstep_plan  task="deploy"   -> show the user the rendered commands
+3. orchstep_run   task="deploy"   -> execute after approval
+4. read status / steps[]          -> report, or explain the failing step
 ```
 
-### Pattern 2: Validate Before Running
+### Validate before running
 
 ```
-1. Call orchstep.lint -> check for errors
-2. If warnings exist, review them
-3. Call orchstep.run -> execute workflow
+1. orchstep_lint file="orchstep.yml"
+2. fix any reported problem
+3. orchstep_run
 ```
 
-### Pattern 3: Module-Based Workflow
+### Reuse a module
 
 ```
-1. Call orchstep.module_search with query="ci-cd"
-2. Call orchstep.module_install with source and version
-3. Call orchstep.run to execute module tasks
-```
-
-### Pattern 4: Generate and Execute
-
-```
-1. Call orchstep.workflow_generate with description
-2. Review generated workflow
-3. Call orchstep.lint to validate
-4. Call orchstep.run to execute
-```
-
-### Pattern 5: Iterative Debugging
-
-```
-1. Call orchstep.run with log_level="debug"
-2. If failed, examine step outputs and error messages
-3. Fix the issue (edit workflow, add variables, etc.)
-4. Re-run with orchstep.run
+1. orchstep_module_search query="slack"
+2. orchstep_module_install name="@orchstep/slack-notify"
+3. orchstep_run a task that uses it
 ```
 
 ## MCP Client Configuration
 
-### Claude Desktop
+### Claude Code
+
+Use the plugin (above), or add the server manually:
+
+```bash
+claude mcp add orchstep -- orchstep mcp serve
+```
+
+### Claude Desktop and other stdio clients
 
 ```json
 {
   "mcpServers": {
     "orchstep": {
       "command": "orchstep",
-      "args": ["mcp", "serve"],
-      "cwd": "/path/to/project"
+      "args": ["mcp", "serve"]
     }
   }
 }
 ```
 
-### Generic MCP Client
-
-```json
-{
-  "servers": [
-    {
-      "name": "orchstep",
-      "transport": "stdio",
-      "command": "orchstep mcp serve"
-    }
-  ]
-}
-```
+The server runs tasks relative to its working directory; start the client from your project, or pass `file` explicitly.
 
 ## Tips for LLM Agents
 
-- Always call `list_tasks` first to understand what's available
-- Use `lint` before `run` to catch issues early
-- Pass `format: "json"` to `run` for structured, parseable output
-- When a run fails, check the `steps` array in the response for which step failed and why
-- Use `module_search` to find reusable modules before writing workflows from scratch
-- Use `workflow_generate` to scaffold new workflows from descriptions, then refine
-- Set `log_level: "debug"` when troubleshooting failures
+- Call `orchstep_list_tasks` first instead of guessing task names.
+- Call `orchstep_plan` before `orchstep_run` on anything that touches real systems.
+- Treat the workflow as the source of truth: run the task rather than re-deriving its commands.
+- Values you pass in `vars` are substituted into commands; workflow authors should pipe untrusted values through a quoting helper.
+- Use `orchstep_module_search` before writing a workflow from scratch.
