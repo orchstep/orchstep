@@ -23,7 +23,7 @@ orchstep run <task-name> [flags]
 |------|-------------|---------|
 | `--var key=value` | Set runtime variable | `--var env=production` |
 | `--vars-file path` | Load variables from file | `--vars-file prod.yml` |
-| `--format json` | Output as structured JSON | For agent consumption |
+| `--output json` | Output as structured JSON | For agent consumption |
 | `--log-level level` | Log verbosity | `debug`, `info`, `warn`, `error` |
 | `--dry-run` | Validate without executing | Check before running |
 | `--module @scope/name` | Run a task from a module (no workflow file needed) | `--module @community/github_action_git-checkout checkout` |
@@ -42,7 +42,7 @@ orchstep run deploy --var env=production --var version=2.0.0
 orchstep run deploy --vars-file environments/prod.yml --var version=2.0.0
 
 # JSON output for parsing
-orchstep run deploy --format json
+orchstep run deploy --output json
 
 # Debug logging
 orchstep run deploy --log-level debug
@@ -82,10 +82,10 @@ orchstep version
 
 ## Reading JSON Output
 
-When using `--format json`, output is machine-readable:
+When using `--output json`, output is machine-readable:
 
 ```bash
-orchstep run deploy --format json
+orchstep run deploy --output json
 ```
 
 ```json
@@ -115,13 +115,13 @@ orchstep run deploy --format json
 
 ```bash
 # Extract specific field with jq
-orchstep run deploy --format json | jq '.steps[0].outputs.image_tag'
+orchstep run deploy --output json | jq '.steps[0].outputs.image_tag'
 
 # Check overall status
-orchstep run deploy --format json | jq '.status'
+orchstep run deploy --output json | jq '.status'
 
 # Get duration
-orchstep run deploy --format json | jq '.duration'
+orchstep run deploy --output json | jq '.duration'
 ```
 
 ## Error Interpretation
@@ -199,7 +199,7 @@ jobs:
           orchstep run deploy \
             --var version=${{ github.sha }} \
             --var env=production \
-            --format json
+            --output json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
@@ -226,7 +226,7 @@ pipeline {
     stages {
         stage('Deploy') {
             steps {
-                sh 'orchstep run deploy --var version=${GIT_COMMIT} --var env=production --format json'
+                sh 'orchstep run deploy --var version=${GIT_COMMIT} --var env=production --output json'
             }
         }
     }
@@ -284,7 +284,7 @@ The TUI inspector shows variables, outputs, logs, and timing for each step.
 
 ```bash
 # Capture JSON output to variable
-RESULT=$(orchstep run deploy --format json)
+RESULT=$(orchstep run deploy --output json)
 STATUS=$(echo "$RESULT" | jq -r '.status')
 
 if [ "$STATUS" != "success" ]; then
@@ -315,14 +315,14 @@ orchstep run deploy --vars-file environments/production.yml
 
 ```bash
 # Cron job: check every 5 minutes
-*/5 * * * * orchstep run health_check --format json >> /var/log/health.log 2>&1
+*/5 * * * * orchstep run health_check --output json >> /var/log/health.log 2>&1
 ```
 
 ## Tips for LLM Agents
 
-- Always use `--format json` when parsing output programmatically
+- Always use `--output json` when parsing output programmatically
 - Use `orchstep list-tasks` to discover available tasks before running
 - Use `orchstep lint` to validate YAML before execution
 - Check exit code after `orchstep run` to determine success/failure
 - Use `--var` for dynamic values, `--vars-file` for environment configs
-- Combine `--log-level debug` with `--format json` for detailed diagnostics
+- Combine `--log-level debug` with `--output json` for detailed diagnostics

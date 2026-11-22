@@ -242,7 +242,7 @@ All channels pull binaries from [GitHub Releases](https://github.com/orchstep/or
 
 OrchStep is designed for AI agent integration:
 
-- **CLI:** `orchstep run task --format json` for structured output
+- **CLI:** `orchstep run task --output json` for structured output
 - **MCP Server:** `orchstep mcp serve` for native tool_call integration (bundled in the Claude Code plugin)
 - **Skills:** Install skill documents from `skills/` to teach agents OrchStep patterns — including [`orchstep-capture`](skills/orchstep-capture/) (turn a solved session into a replayable, zero-token workflow) and [`orchstep-workflow-design`](skills/orchstep-workflow-design/) (author production-grade workflows)
 - **Prompts:** Interactive input for humans, auto-skipped for CI/agents with `ORCHSTEP_NON_INTERACTIVE=true`

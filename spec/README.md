@@ -27,6 +27,6 @@ Detailed interface documentation for each built-in function:
 
 ## Schema Files
 
-- `cli-output-schemas/` -- JSON Schema for `--format json` output (coming soon)
+- `cli-output-schemas/` -- JSON Schema for `--output json` output (coming soon)
 - `workflow-schema.json` -- JSON Schema for workflow validation (coming soon)
 - `module-schema.json` -- JSON Schema for module validation (coming soon)

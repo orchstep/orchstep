@@ -16,7 +16,7 @@ Expected exit codes:
 
 For agent-friendly output:
 ```bash
-orchstep validate workflows/<name>.yml --format json
+orchstep validate --all-tasks -f workflows/<name>.yml --json
 ```
 
 JSON output includes structured error details (line numbers, error categories).

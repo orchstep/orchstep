@@ -111,7 +111,7 @@ Write the YAML anyway with a clear warning header:
 # Validation error: step 'experimental_thing': unsupported func 'newfeature'
 # This workflow was captured from your session but did not pass orchstep validate.
 # Fix the issue manually before running: orchstep run <name>
-# See: orchstep validate workflows/<name>.yml --format json for full details
+# See: orchstep validate --all-tasks -f workflows/<name>.yml --json for full details
 
 name: <name>
 ...
@@ -130,7 +130,7 @@ Specific error:
 The workflow was written to disk anyway with a CAPTURED WITH WARNINGS
 header. Review and fix before running.
 
-Detailed error: orchstep validate workflows/<name>.yml --format json
+Detailed error: orchstep validate --all-tasks -f workflows/<name>.yml --json
 ```
 
 ## Design Rationale

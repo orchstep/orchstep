@@ -25,7 +25,7 @@ Agents can self-install using whichever method matches their environment:
 
 ```bash
 # Check if installed
-orchstep version --format json 2>/dev/null
+orchstep version 2>/dev/null
 
 # Install if not
 npm install -g orchstep    # Node environment
