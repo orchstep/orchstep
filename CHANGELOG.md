@@ -9,6 +9,20 @@ OrchStep follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-11-23
+
+Works with any AI agent. Tested end to end (skills, MCP tools and CLI runs) in
+Claude Code, Kimi Code CLI and OpenCode, with Kimi, DeepSeek and Claude models.
+
+### Added
+- **Skills install into ~80 agents with one command:** `npx skills add orchstep/orchstep`
+  (Codex, Cursor, GitHub Copilot, Gemini CLI, Kimi Code, OpenCode, Cline, Windsurf, ...),
+  or copy them into the shared `.agents/skills/` directory. The capture skill no longer
+  assumes Claude Code. MCP setup is documented for Codex, Kimi Code, OpenCode, Cursor,
+  Gemini CLI, VS Code/Copilot and Claude.
+- `orchstep run --stdin` / `--no-stdin` and `ORCHSTEP_NO_STDIN=1`.
+- Docs: [migrating from Jenkins, GoCD and other CI servers](https://orchstep.dev/migrating/from-ci-servers).
+
 ### Fixed
 - **`orchstep run` no longer hangs inside AI agents and some CI runners.** Agent
   shells (Claude Code, Codex, Kimi Code, OpenCode and others) start commands with
