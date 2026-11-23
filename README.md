@@ -116,8 +116,8 @@ No Node? Copy the `skills/` folders into `.agents/skills/` in your project: most
 | Claude Code | plugin | plugin | tested |
 | Kimi Code CLI (with Kimi K3 and DeepSeek V4 models) | `.agents/skills` | `.kimi-code/mcp.json` | tested 2026-11 |
 | OpenCode (with a DeepSeek model) | `.agents/skills` | `opencode.json` | tested 2026-11 |
-| Codex | `.agents/skills` | `codex mcp add` | skills confirmed by a user report |
-| Cursor, GitHub Copilot, Gemini CLI, Windsurf, Cline | `.agents/skills` | standard `mcpServers` config | documented, [help us verify](https://github.com/orchstep/orchstep/issues?q=is%3Aissue+label%3A%22help+wanted%22) |
+| Codex | `.agents/skills` | `codex mcp add` | skills confirmed by a user report; [MCP + CLI: help verify](https://github.com/orchstep/orchstep/issues/22) |
+| Cursor, GitHub Copilot, Gemini CLI, Windsurf, Cline | `.agents/skills` | standard `mcpServers` config | documented; help verify: [Cursor](https://github.com/orchstep/orchstep/issues/4), [Copilot](https://github.com/orchstep/orchstep/issues/5), [Gemini CLI](https://github.com/orchstep/orchstep/issues/6), [Windsurf](https://github.com/orchstep/orchstep/issues/7), [Cline](https://github.com/orchstep/orchstep/issues/8) |
 
 See [`skills/README.md`](skills/README.md#installing-skills) for details and alternatives.
 
