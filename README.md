@@ -27,6 +27,7 @@
 # 1. Install OrchStep
 curl -fsSL https://orchstep.dev/install.sh | sh   # verifies the release SHA-256 checksum
 #    or: brew tap orchstep/tap && brew install orchstep · npm install -g orchstep · pip install orchstep
+#    or let your AI agent do it: npx skills add orchstep/orchstep, then ask it to "install orchstep"
 
 # 2. Grab this repo — it ships runnable demos
 git clone https://github.com/orchstep/orchstep.git && cd orchstep
@@ -247,7 +248,7 @@ OrchStep is designed for AI agent integration:
 
 - **CLI:** `orchstep run task --output json` for structured output
 - **MCP Server:** `orchstep mcp serve` for native tool_call integration (bundled in the Claude Code plugin)
-- **Skills:** Install skill documents from `skills/` to teach agents OrchStep patterns — including [`orchstep-capture`](skills/orchstep-capture/) (turn a solved session into a replayable, zero-token workflow) and [`orchstep-workflow-design`](skills/orchstep-workflow-design/) (author production-grade workflows)
+- **Skills:** Install skill documents from `skills/` to teach agents OrchStep patterns — including [`orchstep-install`](skills/orchstep-install/) (ask your agent to install and set up OrchStep), [`orchstep-capture`](skills/orchstep-capture/) (turn a solved session into a replayable, zero-token workflow) and [`orchstep-workflow-design`](skills/orchstep-workflow-design/) (author production-grade workflows)
 - **Prompts:** Interactive input for humans, auto-skipped for CI/agents with `ORCHSTEP_NON_INTERACTIVE=true`
 
 ## Cross-Platform

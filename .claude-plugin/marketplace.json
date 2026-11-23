@@ -15,7 +15,8 @@
         "./skills/orchstep-capture",
         "./skills/orchstep-task-runner",
         "./skills/orchstep-module-creation",
-        "./skills/orchstep-mcp-integration"
+        "./skills/orchstep-mcp-integration",
+        "./skills/orchstep-install"
       ]
     }
   ]

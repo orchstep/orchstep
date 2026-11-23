@@ -1,7 +1,7 @@
 {
   "name": "orchstep",
   "displayName": "OrchStep",
-  "version": "0.15.2",
+  "version": "0.15.3",
   "description": "Turn solved agent work into deterministic, replayable YAML workflows. Skills to design, capture, and run OrchStep workflows, plus the OrchStep MCP server.",
   "author": {
     "name": "OrchStep",

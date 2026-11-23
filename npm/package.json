@@ -1,7 +1,8 @@
 {
   "name": "orchstep",
-  "version": "0.15.2",
+  "version": "0.15.3",
   "description": "OrchStep — YAML-first workflow orchestration engine",
+  "mcpName": "io.github.orchstep/orchstep",
   "homepage": "https://orchstep.dev",
   "repository": {
     "type": "git",

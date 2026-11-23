@@ -9,6 +9,19 @@ OrchStep follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.3] - 2026-11-23
+
+### Added
+- **`orchstep-install` skill: ask your agent to install OrchStep.** After
+  `npx skills add orchstep/orchstep`, tell any agent "install orchstep". It picks
+  the right method for the machine (Homebrew, npm, pipx/pip, the checksum-verifying
+  `install.sh` into `~/.local/bin`, Docker, or the GitHub Action in CI), never uses
+  `sudo`, fixes PATH, runs a smoke test and offers to connect the MCP server. It
+  also handles upgrades and uninstalls. Included in the Claude Code plugin.
+- **Listed in the official MCP Registry** as `io.github.orchstep/orchstep`
+  (`npx orchstep mcp serve`), published automatically on every release. Directories
+  that read the registry (PulseMCP, Glama and others) pick it up from there.
+
 ## [0.15.2] - 2026-11-23
 
 ### Changed

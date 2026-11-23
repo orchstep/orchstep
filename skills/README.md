@@ -7,6 +7,7 @@ Skill documents teach LLM agents how to use OrchStep effectively. Each skill is 
 | Skill | Description | Use When |
 |-------|-------------|----------|
 | **[orchstep-capture](orchstep-capture/SKILL.md)** | **Capture an agent session as a replayable workflow** | **You just finished a multi-step task with an agent (Claude Code, Codex, Cursor, Kimi Code, OpenCode, ...) and want to replay it later or share it. The "session-to-YAML" magic moment.** |
+| [orchstep-install](orchstep-install/SKILL.md) | Install, upgrade or uninstall the OrchStep CLI, then connect it to the agent | Someone wants OrchStep set up: just ask the agent "install orchstep". No sudo, checksum-verified |
 | [orchstep-workflow-design](orchstep-workflow-design/SKILL.md) | Write production-grade OrchStep YAML workflows | Building deployment pipelines, automation runbooks, multi-step workflows from a blank YAML |
 | [orchstep-module-creation](orchstep-module-creation/SKILL.md) | Create and publish reusable modules | Packaging patterns for team sharing and distribution |
 | [orchstep-task-runner](orchstep-task-runner/SKILL.md) | Run and manage workflows via CLI | Executing pipelines, debugging failures, CI/CD integration |
@@ -43,7 +44,7 @@ mkdir -p .agents/skills && curl -fsSL https://github.com/orchstep/orchstep/archi
   | tar -xz --strip-components=2 -C .agents/skills \
     orchstep-main/skills/orchstep-capture orchstep-main/skills/orchstep-workflow-design \
     orchstep-main/skills/orchstep-task-runner orchstep-main/skills/orchstep-mcp-integration \
-    orchstep-main/skills/orchstep-module-creation
+    orchstep-main/skills/orchstep-module-creation orchstep-main/skills/orchstep-install
 ```
 
 For a user-wide install use `~/.agents/skills/` (Codex, Kimi Code), or your agent's own directory: `~/.codex/skills` (or `$CODEX_HOME/skills`), `~/.cursor/skills`, `~/.gemini/skills`, `~/.copilot/skills`, `~/.config/opencode/skills`.

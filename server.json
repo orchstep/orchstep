@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.orchstep/orchstep",
+  "title": "OrchStep",
+  "description": "Run, plan and lint OrchStep YAML workflows: deterministic, replayable tasks for CI/CD and agents.",
+  "repository": {
+    "url": "https://github.com/orchstep/orchstep",
+    "source": "github"
+  },
+  "websiteUrl": "https://orchstep.dev/agents/mcp",
+  "version": "0.15.3",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "orchstep",
+      "version": "0.15.3",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        { "type": "positional", "value": "mcp" },
+        { "type": "positional", "value": "serve" }
+      ]
+    }
+  ]
+}
