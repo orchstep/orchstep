@@ -30,12 +30,8 @@ jobs:
           npm version $VERSION --no-git-tag-version --allow-same-version
       - name: Publish
         working-directory: npm
+        # OIDC only: no NPM_TOKEN. Validated by v0.15.2 (signed provenance).
         run: npm publish --access public
-        env:
-          # Transition fallback: npm tries OIDC first and falls back to this token.
-          # Remove once a release has published via OIDC (log shows a provenance
-          # statement), then set npm "Publishing access" to disallow tokens.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-pip:
     name: Publish to PyPI
