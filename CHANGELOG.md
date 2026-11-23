@@ -9,6 +9,13 @@ OrchStep follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.2] - 2026-11-23
+
+### Changed
+- **npm package now published with trusted publishing (OIDC).** Releases on npm
+  carry a provenance attestation linking each version to the GitHub Actions run
+  that built it, and no long-lived npm token is used. No change to the CLI.
+
 ## [0.15.1] - 2026-11-23
 
 Works with any AI agent. Tested end to end (skills, MCP tools and CLI runs) in
