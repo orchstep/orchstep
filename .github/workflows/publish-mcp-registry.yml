@@ -1,0 +1,62 @@
+name: Publish to MCP Registry
+
+# Lists the OrchStep MCP server (built into the binary, run via `npx orchstep mcp
+# serve`) in the official MCP Registry, which PulseMCP, Glama and others copy.
+# Ownership: "mcpName" in npm/package.json must equal server.json "name", and the
+# registry checks the PUBLISHED npm package, so this waits for npm to serve the
+# release first. Login: GitHub OIDC for the io.github.orchstep namespace; no secrets.
+# Separate from publish-packages.yml so it can be re-run by hand (workflow_dispatch)
+# with fixes from main, without republishing npm/PyPI.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version to list, without the v (e.g. 0.15.3)"
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.1
+      VERSION: ${{ inputs.version || github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.1.2
+      - name: Download and verify mcp-publisher
+        run: |
+          set -euo pipefail
+          archive="mcp-publisher_linux_amd64.tar.gz"
+          base_url="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+          curl -fsSL -o "$archive" "$base_url/$archive"
+          curl -fsSL -o "$archive.sigstore.json" "$base_url/$archive.sigstore.json"
+          cosign verify-blob \
+            --bundle "$archive.sigstore.json" \
+            --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "$archive"
+          tar xzf "$archive" mcp-publisher
+      - name: Set version in server.json
+        run: |
+          V="${VERSION#v}"
+          jq --arg v "$V" '.version = $v | .packages[0].version = $v' server.json > server.tmp && mv server.tmp server.json
+          cat server.json
+      - name: Wait for npm to serve the release with mcpName
+        run: |
+          V="${VERSION#v}"
+          for i in $(seq 1 60); do
+            npm view "orchstep@$V" mcpName 2>/dev/null | grep -q "io.github.orchstep/orchstep" && exit 0
+            sleep 10
+          done
+          echo "npm never served orchstep@$V with mcpName"; exit 1
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login github-oidc
+      - name: Publish server to MCP Registry
+        run: ./mcp-publisher publish
