@@ -1,6 +1,8 @@
 ---
 name: orchstep-test-to-example
 description: Convert internal OrchStep test specs into public-facing usage examples. Use after implementing a new feature with test cases, or when expanding the example library. Ensures examples show capabilities without exposing engine internals or test assertions.
+metadata:
+  internal: true
 ---
 
 # Test-to-Example Conversion

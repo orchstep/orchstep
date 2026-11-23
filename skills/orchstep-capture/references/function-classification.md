@@ -1,6 +1,6 @@
 # Function Classification
 
-How to map an observed shell command in a Claude Code session to the correct OrchStep `func:` value.
+How to map an observed shell command in an agent session to the correct OrchStep `func:` value.
 
 ## Classification Decision Tree
 

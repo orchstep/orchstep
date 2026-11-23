@@ -102,19 +102,22 @@ annotated examples, and a guided wizard:
 
 Or from a terminal: `claude plugin marketplace add orchstep/orchstep && claude plugin install orchstep@orchstep`.
 
-The skills follow the open [Agent Skills](https://agentskills.io) `SKILL.md` format, so they also work in Codex, Gemini CLI, Copilot, Cursor and other compatible agents. Manual install:
+**Any other agent: one command.** The skills use the open [Agent Skills](https://agentskills.io) `SKILL.md` format, and the [`skills`](https://github.com/vercel-labs/skills) installer puts them where your agent looks (Codex, Cursor, GitHub Copilot, Gemini CLI, Kimi Code, OpenCode, Cline, Windsurf, Amp, Goose, Qwen Code and about 70 more):
 
 ```bash
-# Claude Code (user-wide, manual)
-mkdir -p ~/.claude/skills && curl -fsSL https://github.com/orchstep/orchstep/archive/refs/heads/main.tar.gz \
-  | tar -xz --strip-components=2 -C ~/.claude/skills orchstep-main/skills/orchstep-workflow-design
-
-# Codex (user-wide)
-mkdir -p ~/.codex/skills && curl -fsSL https://github.com/orchstep/orchstep/archive/refs/heads/main.tar.gz \
-  | tar -xz --strip-components=2 -C ~/.codex/skills orchstep-main/skills/orchstep-workflow-design
+npx skills add orchstep/orchstep          # pick agents interactively; add -g for user-wide
+npx skills add orchstep/orchstep -a codex -a cursor -a kimi-code-cli -y
 ```
 
-For a project-scoped Claude Code install, use `.claude/skills/` in the project instead. Verify the installation by checking that `orchstep-workflow-design/SKILL.md` exists below the selected skills directory, then ask the agent to "design an OrchStep workflow that builds and tests my app".
+No Node? Copy the `skills/` folders into `.agents/skills/` in your project: most agents read that shared directory. Then connect the MCP server (`orchstep mcp serve`) so the agent can list, preview and run workflows as tools. Per-agent config is in [`skills/orchstep-mcp-integration`](skills/orchstep-mcp-integration/SKILL.md#mcp-client-configuration).
+
+| Agent | Skills | MCP | Status |
+| --- | --- | --- | --- |
+| Claude Code | plugin | plugin | tested |
+| Kimi Code CLI (with Kimi K3 and DeepSeek V4 models) | `.agents/skills` | `.kimi-code/mcp.json` | tested 2026-11 |
+| OpenCode (with a DeepSeek model) | `.agents/skills` | `opencode.json` | tested 2026-11 |
+| Codex | `.agents/skills` | `codex mcp add` | skills confirmed by a user report |
+| Cursor, GitHub Copilot, Gemini CLI, Windsurf, Cline | `.agents/skills` | standard `mcpServers` config | documented, [help us verify](https://github.com/orchstep/orchstep/issues?q=is%3Aissue+label%3A%22help+wanted%22) |
 
 See [`skills/README.md`](skills/README.md#installing-skills) for details and alternatives.
 

@@ -9,6 +9,17 @@ OrchStep follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **`orchstep run` no longer hangs inside AI agents and some CI runners.** Agent
+  shells (Claude Code, Codex, Kimi Code, OpenCode and others) start commands with
+  stdin attached to a pipe that never closes, and `run` waited for it to end. Stdin
+  is now read only when the workflow uses `{{ stdin }}` or `--stdin-var` is set; a
+  read that is still waiting after 3 seconds prints a hint. New flags: `--stdin`
+  (always read) and `--no-stdin` (never read; also `ORCHSTEP_NO_STDIN=1`).
+- **MCP `orchstep_list_tasks` with a `file` argument failed** with "unknown flag:
+  --file". It now passes the file correctly. `orchstep_lint` and
+  `orchstep_module_search` no longer treat a value starting with `-` as a flag.
+
 ## [0.15.0] - 2026-11-22
 
 ### Security

@@ -326,3 +326,5 @@ orchstep run deploy --vars-file environments/production.yml
 - Check exit code after `orchstep run` to determine success/failure
 - Use `--var` for dynamic values, `--vars-file` for environment configs
 - Combine `--log-level debug` with `--output json` for detailed diagnostics
+- Preview with `orchstep run <task> --dry-run` before running anything that touches real systems
+- If `orchstep run` produces no output and never finishes, it is waiting for stdin: agent shells often leave stdin open. Add `< /dev/null` (any version) or `--no-stdin` (v0.15.1+). Only workflows that use `{{ stdin }}` read stdin from v0.15.1 on.

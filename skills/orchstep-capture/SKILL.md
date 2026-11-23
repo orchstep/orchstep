@@ -1,17 +1,21 @@
 ---
 name: orchstep-capture
-description: Capture the current Claude Code session's solved work as a clean replayable OrchStep YAML workflow. Use when the user has just finished a multi-step task (deploy, debug, refactor, data pipeline, infra change) and wants to replay or share it. Triggers on phrases like "capture this", "save this as a workflow", "make this replayable", "/orchstep-capture".
+description: Capture the work just solved in this agent session (Claude Code, Codex, Cursor, Gemini CLI, Kimi Code, OpenCode, Copilot or any agent that runs shell commands) as a clean replayable OrchStep YAML workflow. Use when the user has just finished a multi-step task (deploy, debug, refactor, data pipeline, infra change) and wants to replay or share it. Triggers on phrases like "capture this", "save this as a workflow", "make this replayable", "/orchstep-capture".
 ---
 
 # OrchStep Capture
 
-Convert what just happened in this Claude Code session into a clean, replayable OrchStep YAML workflow plus an env template.
+Convert what just happened in this agent session into a clean, replayable OrchStep YAML workflow plus an env template.
+
+This skill works in any agent that keeps its own conversation and tool history in context: Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot, Kimi Code CLI, OpenCode and others. Tool names below are generic: "shell command" means whatever tool your agent uses to run commands (Bash, `shell`, `run_terminal_cmd`, ...), and "task list" means its todo/plan tool, if it has one.
 
 ## Invocation
 
 ```
 /orchstep-capture <name> [optional description] [--raw] [--out PATH]
 ```
+
+Agents without slash commands: the user can say "capture this as an OrchStep workflow named <name>" (or `$orchstep-capture` in Codex). Treat it the same way.
 
 - `<name>` (required) — workflow name, used as filename: `workflows/<name>.yml`
 - `[description]` (optional) — natural-language scope: "the deploy I just did", "the data fetch and transform"
@@ -31,10 +35,10 @@ Follow these steps in order. Load reference files lazily — only when the step 
 ### Step 1: Determine Scope
 
 - If `[description]` provided → use it to identify which session events matter (e.g., "deploy" → focus on shell/http/git events near the deploy keyword and after the user said "deploy this").
-- If no `[description]` → auto-detect last meaningful task. Signals: most recent completed TodoWrite item, most recent successful sequence of related shell commands, most recent natural ending ("looks good!", "that worked", commit made).
+- If no `[description]` → auto-detect last meaningful task. Signals: most recent completed task-list item, most recent successful sequence of related shell commands, most recent natural ending ("looks good!", "that worked", commit made).
 - If scope is genuinely ambiguous (multiple unrelated tasks recently completed) → ask ONE clarifying question: "I see N recent tasks: (A) ..., (B) .... Which to capture? (Type a letter, or 'all' to combine into one workflow with sub-tasks)". If user picks 'all', emit ONE workflow whose `main` task calls each sub-task in sequence with `task:` + `with:`.
 - If session is very long (60+ tool calls) → auto-scope to the most recent meaningful task and explicitly say in the final report: "Captured the most recent task. To capture earlier work, re-run with a `[description]` argument."
-- If no meaningful work in scope → refuse politely: "I don't see substantial work to capture in the recent session. Try doing the work first, then run /orchstep-capture."
+- If no meaningful work in scope → refuse politely: "I don't see substantial work to capture in the recent session. Try doing the work first, then ask me to capture it."
 
 ### Step 2: Identify the GOAL
 
@@ -42,7 +46,7 @@ What was the user trying to ACHIEVE? Multiple signals (use the strongest):
 - The `[description]` argument
 - User's natural-language statements at session start
 - The verification commands at the end (curl /health, kubectl get pods, test runs) — these reveal implicit success criteria
-- TodoWrite items: their text often states the goal
+- Task-list (todo/plan) items: their text often states the goal
 - Git commit messages
 
 If no clear goal can be inferred, ask ONE question: "What was the goal? (e.g., 'deploy v1.2.3 to staging and verify health')". The goal becomes the workflow's `desc` and informs which `assert` steps to add.
@@ -53,11 +57,11 @@ Read `references/yaml-syntax.md` now. This contains the canonical OrchStep YAML 
 
 ### Step 4: Inventory Session Events
 
-Walk back through your own recent tool-use history. Categorize each event:
+Walk back through your own recent tool calls in this conversation (every agent has them in context; no session file is needed). Categorize each event:
 
-- **Capture** — Bash commands that did real work, file edits, HTTP calls, git operations
+- **Capture** — shell commands that did real work, file edits, HTTP calls, git operations
 - **Skip as noise** — `ls`, `cd`, `pwd`, `cat` (for inspection only), failed retries that succeeded later (just keep the success)
-- **Skip as context** — Read tool calls (not user-actionable steps), grep/glob (search only)
+- **Skip as context** — file reads (not user-actionable steps), grep/glob/search calls (search only)
 
 Roughly 30-70% of session events should be skipped. A captured workflow is leaner than the session that produced it.
 

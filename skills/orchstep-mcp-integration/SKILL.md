@@ -141,6 +141,47 @@ Use the plugin (above), or add the server manually:
 claude mcp add orchstep -- orchstep mcp serve
 ```
 
+### Codex
+
+```bash
+codex mcp add orchstep -- orchstep mcp serve
+```
+
+### Kimi Code CLI
+
+Project `.kimi-code/mcp.json` (or user-level `~/.kimi-code/mcp.json`). Kimi only loads project-level servers in a trusted folder:
+
+```json
+{ "mcpServers": { "orchstep": { "command": "orchstep", "args": ["mcp", "serve"] } } }
+```
+
+### OpenCode
+
+Project `opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": { "orchstep": { "type": "local", "command": ["orchstep", "mcp", "serve"], "enabled": true } }
+}
+```
+
+### Cursor
+
+Project `.cursor/mcp.json` (or `~/.cursor/mcp.json`), using the `mcpServers` format below.
+
+### Gemini CLI
+
+`~/.gemini/settings.json` (or project `.gemini/settings.json`), using the `mcpServers` format below.
+
+### VS Code / GitHub Copilot
+
+Project `.vscode/mcp.json`:
+
+```json
+{ "servers": { "orchstep": { "type": "stdio", "command": "orchstep", "args": ["mcp", "serve"] } } }
+```
+
 ### Claude Desktop and other stdio clients
 
 ```json
